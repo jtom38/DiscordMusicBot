@@ -1,0 +1,18 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="discordMusicBot" GeneratedClassName="config">
+  <Profiles />
+  <Settings>
+    <Setting Name="botToken" Type="System.String" Scope="User">
+      <Value Profile="(Default)">MjQ1NjE5OTMwNTY3OTMzOTUy.CwPFSg.BFYfCONZVcpYLBeym_hDGigfm80</Value>
+    </Setting>
+    <Setting Name="ownerID" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="commandPrefix" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="bindToChannels" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+  </Settings>
+</SettingsFile>
