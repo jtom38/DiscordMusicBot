@@ -68,7 +68,7 @@ namespace discordMusicBot.src
         //todo thread this
         public async updatePlaylistFile()
         {
-            
+            test
             if (File.Exists("autoplaylist2.txt"))
             {
                 //delete file?
