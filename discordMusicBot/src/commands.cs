@@ -34,8 +34,11 @@ namespace discordMusicBot.src.Commands
                     .Do(async e =>
                     {
                         await e.Channel.SendMessage($"Please wait... fetching the file");
+
                         playlist _playlist = new playlist();
-                        await _playlist.updatePlaylistFile();
+                        string responce = _playlist.updatePlaylistFile();
+
+                        await e.Channel.SendMessage(responce);
                     });
 
                 _client.GetService<CommandService>().CreateCommand("greet") //create command greet

@@ -10,7 +10,7 @@ namespace discordMusicBot.src
 {
     class playlist
     {
-        private configuration _config;
+        configuration _config = new configuration();
 
         public void getPlaylistFile()
         {
@@ -53,6 +53,8 @@ namespace discordMusicBot.src
 
                         }                 
                     }
+
+                    
                 }
             }
             else
@@ -62,24 +64,53 @@ namespace discordMusicBot.src
                 {
                     writer.Write("# the comment character is '#'");
                 }
+
+                
             }
         }
         
         //todo thread this
-        public async updatePlaylistFile()
+        public string updatePlaylistFile()
         {
-            test
-            if (File.Exists("autoplaylist2.txt"))
-            {
-                //delete file?
-                File.Delete("autoplaylist2.txt");
-            }
+            string returnText = null;
 
-            using (WebClient download = new WebClient())
+            //this is slop atm I know.  I need to think of a better way to look for a url compared to a junk text
+            if (_config.PlaylistURL.Contains("www."))
             {
-                 download.DownloadFile(_config.PlaylistURL, "autoplaylist2.txt");
+                //we have a url
+                if (File.Exists("autoplaylist2.txt"))
+                {
+                    //delete file?
+                    File.Delete("autoplaylist2.txt");
+                }
+
+                using (WebClient download = new WebClient())
+                {
+                    string t = _config.PlaylistURL;
+                    try
+                    {
+                        download.DownloadFile(_config.PlaylistURL, "autoplaylist2.txt");
+                        returnText = "Updated the playlist.";
+                        return returnText;
+                    }
+                    catch (Exception e)
+                    {
+                        //failed to download the file
+                        Console.WriteLine("Failed to download autoplaylist.txt");
+                        Console.WriteLine(e);
+
+                        returnText = "Failed to download autoplaylist.txt.  Check the console for more info.";
+                        return returnText;
+                    }
+                }
             }
-            return null;
+            else
+            {
+                //we have something wrong with the url
+                Console.WriteLine("Error: Failed to check the url in config.json.  Please check the string and try again.");
+                returnText = "Error: Failed to check the url in config.json.  Please check the string and try again.";
+                return returnText;
+            }
         }
 
     }
