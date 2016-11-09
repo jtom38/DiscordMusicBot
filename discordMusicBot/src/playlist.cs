@@ -10,6 +10,8 @@ namespace discordMusicBot.src
 {
     class playlist
     {
+        private configuration _config;
+
         public void getPlaylistFile()
         {
             // check for the local file
@@ -62,8 +64,23 @@ namespace discordMusicBot.src
                 }
             }
         }
+        
+        //todo thread this
+        public async updatePlaylistFile()
+        {
+            
+            if (File.Exists("autoplaylist2.txt"))
+            {
+                //delete file?
+                File.Delete("autoplaylist2.txt");
+            }
 
-
+            using (WebClient download = new WebClient())
+            {
+                 download.DownloadFile(_config.PlaylistURL, "autoplaylist2.txt");
+            }
+            return null;
+        }
 
     }
 }

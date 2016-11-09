@@ -1,10 +1,5 @@
 ﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace discordMusicBot.src
 {
@@ -18,6 +13,8 @@ namespace discordMusicBot.src
         public string Token { get; set; }
         /// <summary> The ID of the room the bot should bind to on startup </summary>
         public ulong[] BindToChannels { get; set; }
+        /// <summary> The URL for the public google doc to download. </summary>
+        public string PlaylistURL { get; set; }
 
         public configuration()
         {
@@ -25,6 +22,7 @@ namespace discordMusicBot.src
             Owners = new ulong[] { 0 };
             Token = "";
             BindToChannels = new ulong[] { 0 };
+            PlaylistURL = "";
         }
 
         /// <summary> Save the current configuration object to a file. </summary>
