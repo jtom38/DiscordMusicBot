@@ -10,6 +10,7 @@ namespace discordMusicBot.src.Commands
     {
         private ModuleManager _manager;
         private DiscordClient _client;
+        private configuration _config;
 
         void IModule.Install(ModuleManager manager)
         {
@@ -19,16 +20,21 @@ namespace discordMusicBot.src.Commands
             manager.CreateCommands("", group =>
             {
                 //group.PublicOnly();
+                _config = configuration.LoadFile("config.json");
 
-                _client.GetService<CommandService>().CreateCommand("about")
-                    .Alias("about")
-                    .Description("test")
+                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "play")
+                    .Alias(_config.Prefix + "play")
+                    .Description("Adds the requested song to the queue.")
+                    .Parameter("play_url", ParameterType.Required)
                     .Do(async e =>
                     {
-                        await e.Channel.SendMessage($"Hi, {e.User.Name} my name is Music-Bot-Test aka Momo. :smile:");
+                        downloader _downloader = new downloader();
+                        string t = e.GetArg("play_url");
+                        string responce = _downloader.cmd_play(t);
+                        await e.Channel.SendMessage($" {e.User.Name} I have queued up " + responce +" for you. :smile:");
                     });
 
-                _client.GetService<CommandService>().CreateCommand("plupdate")
+                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "plupdate")
                     .Alias("plupdate")
                     .Description("Goes out and fetches our google doc playlist file and updates the local copy.")
                     .Do(async e =>
@@ -40,7 +46,7 @@ namespace discordMusicBot.src.Commands
                         await e.Channel.SendMessage(responce);
                     });
 
-                _client.GetService<CommandService>().CreateCommand("greet") //create command greet
+                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "greet") //create command greet
                     .Alias(new string[] { "gr", "hi" }) //add 2 aliases, so it can be run with ~gr and ~hi
                     .Description("Greets a person.") //add description, it will be shown when ~help is used
                     .Parameter("GreetedPerson", ParameterType.Required) //as an argument, we have a person we want to greet
