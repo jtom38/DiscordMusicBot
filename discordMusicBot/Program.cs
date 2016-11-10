@@ -19,29 +19,17 @@ namespace discordMusicBot
 
         private DiscordClient _client;
         private configuration _config;
-        
+
+        playlist _playlist = new playlist();
+
+        const string configFile = "config.json";
 
         public void Start()
         {
-            playlist _playlist = new playlist();
 
-            const string configFile = "config.json";
+            startupCheck();
 
-            try
-            {
-                _config = configuration.LoadFile(configFile);
-                Console.WriteLine("Token has been found in config.json");
-            }
-            catch
-            {
-                _config = new configuration();                          // Create a new configuration file if it doesn't exist.
-
-                Console.WriteLine("The example bot's configuration file has been created. Please enter a valid token.");
-                Console.Write("Token: ");
-
-                _config.Token = Console.ReadLine();                     // Read the user's token from the console.
-                _config.SaveFile(configFile);
-            }
+            _config = configuration.LoadFile(configFile);
 
             _client = new DiscordClient(x =>
             {
@@ -92,6 +80,83 @@ namespace discordMusicBot
                     }
                 }
             });
+        }
+
+        private void startupCheck()
+        {
+            checkConfigFile();
+            checkToken();
+            checkPlaylistURL();
+            checkCommandPrefix();
+        }
+
+        private void checkConfigFile()
+        {
+            try
+            {
+                _config = configuration.LoadFile(configFile);
+
+            }
+            catch
+            {
+                //unable to find the file
+                _config = new configuration();
+                _config.SaveFile(configFile);
+            }
+        }
+
+        private void checkToken()
+        {
+            //check for the bot token
+            try
+            {
+                _config = configuration.LoadFile(configFile);
+                if(_config.Token != "")
+                {
+                    Console.WriteLine("Token has been found in config.json");
+                }
+                else
+                {
+                    Console.WriteLine("Please enter a valid token.");
+                    Console.Write("Token: ");
+
+                    _config.Token = Console.ReadLine();                     // Read the user's token from the console.
+                    _config.SaveFile(configFile);
+                }          
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine("Error: " + e);
+            }
+        }
+
+        private void checkPlaylistURL()
+        {
+            try
+            {
+                _config = configuration.LoadFile(configFile);
+                if (_config.PlaylistURL != "")
+                {
+                    Console.WriteLine("PlaylistURL has been found in config.json");
+                }
+                else
+                {
+                    Console.WriteLine("Please enter a valid url for a txt.  \r If you want to disable this type 'disable'.");
+                    Console.Write("PlaylistURL: ");
+
+                    _config.PlaylistURL = Console.ReadLine();                     // Read the user's token from the console.
+                    _config.SaveFile(configFile);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Error: " + e);
+            }
+        }
+        
+        private void checkCommandPrefix()
+        {
+            Console.WriteLine("Current commandPrefix = " + _config.Prefix);
         }
 
         private void OnCommandError(object sender, CommandErrorEventArgs e)

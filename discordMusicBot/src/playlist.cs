@@ -54,7 +54,11 @@ namespace discordMusicBot.src
                         }                 
                     }
 
+                    //debug
+                    int c = links.Count();
                     
+                    //we would want to pass this to the player with the list of links.
+
                 }
             }
             else
@@ -74,24 +78,23 @@ namespace discordMusicBot.src
         {
             string returnText = null;
 
-            //this is slop atm I know.  I need to think of a better way to look for a url compared to a junk text
-            if (_config.PlaylistURL.Contains("www."))
-            {
-                //we have a url
-                if (File.Exists("autoplaylist2.txt"))
-                {
-                    //delete file?
-                    File.Delete("autoplaylist2.txt");
-                }
+            _config = configuration.LoadFile("config.json");
 
+            //this is slop atm I know.  I need to think of a better way to look for a url compared to a junk text
+            if (_config.PlaylistURL.Contains("docs.google.com"))
+            {
+                //logic
+                //check to see if we can get the file first
+                //if we have the file good, delete the old one and rename the new file
+                //pass to the function to 
+
+                //we have a url
                 using (WebClient download = new WebClient())
                 {
                     string t = _config.PlaylistURL;
                     try
                     {
-                        download.DownloadFile(_config.PlaylistURL, "autoplaylist2.txt");
-                        returnText = "Updated the playlist.";
-                        return returnText;
+                        download.DownloadFile(_config.PlaylistURL, "autoplaylist_download.txt");
                     }
                     catch (Exception e)
                     {
@@ -102,6 +105,40 @@ namespace discordMusicBot.src
                         returnText = "Failed to download autoplaylist.txt.  Check the console for more info.";
                         return returnText;
                     }
+                }
+
+                //we would make it here if we where able to get the file.
+                //so we have the new file, purge the old one and rename the downloaded file
+
+                if (File.Exists("autoplaylist.txt"))
+                {
+                    try
+                    {
+                        //delete file?
+                        File.Delete("autoplaylist.txt");
+                                               
+                    }
+                    catch(Exception e)
+                    {
+                        Console.WriteLine("Error: Deleting autoplaylist.txt.");
+                        Console.WriteLine("Dump info: " + e);
+
+                        returnText = "Error: Failed to delete autoplaylist.txt";
+                        return returnText;
+                    }
+                }
+
+                try
+                {
+                    File.Move("autoplaylist_download.txt", "autoplaylist.txt");
+                    returnText = "Updated the playlist.";
+                    return returnText;
+                }
+                catch
+                {
+                    //failed to rename the downloaded file.
+                    returnText = "Error: Failed to rename autoplaylist.txt";
+                    return returnText;
                 }
             }
             else

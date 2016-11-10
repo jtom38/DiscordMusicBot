@@ -28,13 +28,12 @@ namespace discordMusicBot.src.Commands
                         await e.Channel.SendMessage($"Hi, {e.User.Name} my name is Music-Bot-Test aka Momo. :smile:");
                     });
 
-                _client.GetService<CommandService>().CreateCommand("getpl")
-                    .Alias("getpl")
+                _client.GetService<CommandService>().CreateCommand("plupdate")
+                    .Alias("plupdate")
                     .Description("Goes out and fetches our google doc playlist file and updates the local copy.")
                     .Do(async e =>
                     {
-                        await e.Channel.SendMessage($"Please wait... fetching the file");
-
+                        //await e.Channel.SendMessage($"Please wait... fetching the file");
                         playlist _playlist = new playlist();
                         string responce = _playlist.updatePlaylistFile();
 
