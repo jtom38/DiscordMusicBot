@@ -3,6 +3,7 @@ using Discord.Commands;
 using Discord.Commands.Permissions.Levels;
 using Discord.Commands.Permissions.Visibility;
 using Discord.Modules;
+using Discord.Audio;
 
 namespace discordMusicBot.src.Commands
 {
@@ -20,9 +21,31 @@ namespace discordMusicBot.src.Commands
             manager.CreateCommands("", group =>
             {
                 //group.PublicOnly();
+
+                //get the config file
                 _config = configuration.LoadFile("config.json");
 
-                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "play")
+                _client.GetService<CommandService>().CreateCommand("test")
+                    .Alias(_config.Prefix + "test")
+                    .Description("Placeholder for testing.")
+                    .Do(async e =>
+                    {
+                        downloader _download = new downloader();
+                        string[] file = _download.download_audio("https://www.youtube.com/watch?v=oY9m2sHQwLs");
+
+                        /// <summary>
+                        ///     File returns the following values currently 
+                        ///     [0] Title
+                        ///     [1] fileName
+                        ///     [2] Full path to file
+                        ///     [3] Bitrate
+                        /// </summary>
+
+                        await e.Channel.SendMessage($"Test: " + file);
+                    });
+
+                
+                _client.GetService<CommandService>().CreateCommand("play")
                     .Alias(_config.Prefix + "play")
                     .Description("Adds the requested song to the queue.")
                     .Parameter("play_url", ParameterType.Required)
@@ -30,7 +53,7 @@ namespace discordMusicBot.src.Commands
                     {
                         downloader _downloader = new downloader();
                         string t = e.GetArg("play_url");
-                        string responce = _downloader.cmd_play(t);
+                        string[] responce = _downloader.download_audio(t);
                         await e.Channel.SendMessage($" {e.User.Name} I have queued up " + responce +" for you. :smile:");
                     });
 
@@ -46,7 +69,19 @@ namespace discordMusicBot.src.Commands
                         await e.Channel.SendMessage(responce);
                     });
 
-                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "greet") //create command greet
+
+                _client.GetService<CommandService>().CreateCommand("summon")
+                    .Alias(_config.Prefix + "summon")
+                    .Description("Summons bot to current voice channel")
+                    .Do(async e =>
+                    {
+                        Channel voiceChan = e.User.VoiceChannel;
+
+                        await voiceChan.JoinAudio();
+                    });
+
+
+                _client.GetService<CommandService>().CreateCommand( "greet") //create command greet
                     .Alias(new string[] { "gr", "hi" }) //add 2 aliases, so it can be run with ~gr and ~hi
                     .Description("Greets a person.") //add description, it will be shown when ~help is used
                     .Parameter("GreetedPerson", ParameterType.Required) //as an argument, we have a person we want to greet

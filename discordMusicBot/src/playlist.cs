@@ -150,5 +150,10 @@ namespace discordMusicBot.src
             }
         }
 
+        public void cmd_shuffle()
+        {
+
+        }
+
     }
 }

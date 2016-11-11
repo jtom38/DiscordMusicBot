@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
 using Discord;
 using Discord.Audio;
 using Discord.Commands;
@@ -84,10 +85,23 @@ namespace discordMusicBot
 
         private void startupCheck()
         {
+            makeCacheFolder();
             checkConfigFile();
             checkToken();
             checkPlaylistURL();
             checkCommandPrefix();
+        }
+
+        private void makeCacheFolder()
+        {
+            if (Directory.Exists("cache"))
+            {
+                return;
+            }
+            else
+            {
+                Directory.CreateDirectory("cache");
+            }        
         }
 
         private void checkConfigFile()
