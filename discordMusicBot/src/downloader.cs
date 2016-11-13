@@ -47,8 +47,8 @@ namespace discordMusicBot.src
 
             string[] returnVar = {
                 audio[0].Title,                     //pass the title back
-                fileAAC,                           //pass the filename, not sure if we need to retain this
-                cacheDir + fileAAC,              //pass the full path to the file to be played back
+                fileAAC,                            //pass the filename, not sure if we need to retain this
+                cacheDir + fileAAC,                 //pass the full path to the file to be played back
                 audio[0].AudioBitrate.ToString()    //pass the bitrate so we can return the value
             };
 
@@ -85,6 +85,7 @@ namespace discordMusicBot.src
 
             return videoList[0].Title;
         }
+
 
     }
 }

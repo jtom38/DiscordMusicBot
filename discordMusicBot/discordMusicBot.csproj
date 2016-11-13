@@ -93,7 +93,9 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="src\commands.cs" />
+    <Compile Include="src\Modules\commandsPlayer.cs" />
+    <Compile Include="src\Modules\commandsPlaylist.cs" />
+    <Compile Include="src\Modules\commandsSystem.cs" />
     <Compile Include="src\configuration.cs" />
     <Compile Include="src\downloader.cs" />
     <Compile Include="src\player.cs" />

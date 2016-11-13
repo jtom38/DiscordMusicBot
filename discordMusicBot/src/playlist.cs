@@ -10,6 +10,10 @@ namespace discordMusicBot.src
 {
     class playlist
     {
+        public static List<string> listPlaylist = new List<string>();
+        public static List<string> listQueue = new List<string>();
+        public static List<string> listBlacklist = new List<string>();
+
         configuration _config = new configuration();
 
         public void getPlaylistFile()
@@ -22,9 +26,6 @@ namespace discordMusicBot.src
                 {
                     //string we are going to fill per line
                     string line = null;
-
-                    //going to add all the potential url's to this list
-                    List<string> links = new List<string>();
 
                     while((line = reader.ReadLine()) != null)
                     {
@@ -42,7 +43,7 @@ namespace discordMusicBot.src
                                         line.Contains("http://www.youtube.com"))
                                     {
                                         //Console.WriteLine(line);
-                                        links.Add(line);
+                                        listPlaylist.Add(line);
                                     }
                                 }
                             }
@@ -50,12 +51,12 @@ namespace discordMusicBot.src
                         }
                         catch(Exception e)
                         {
-
+                            Console.WriteLine("Error in _playlist.getPlaylistFile.  Error: " + e);
                         }                 
                     }
 
                     //debug
-                    int c = links.Count();
+                    int c = listPlaylist.Count();
                     
                     //we would want to pass this to the player with the list of links.
 
@@ -72,6 +73,19 @@ namespace discordMusicBot.src
                 
             }
         }
+
+        public void getBlacklistFile()
+        {
+            if (File.Exists("blacklist.txt"))
+            {
+
+            }
+        }
+
+        public void autoPlayList()
+        {
+
+        } 
         
         //todo thread this
         public string updatePlaylistFile()

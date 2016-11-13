@@ -9,7 +9,7 @@ using Discord.Audio;
 using Discord.Commands;
 using Discord.Modules;
 using discordMusicBot.src;
-using discordMusicBot.src.Commands;
+using discordMusicBot.src.Modules;
 
 namespace discordMusicBot
 {
@@ -55,9 +55,10 @@ namespace discordMusicBot
                 x.BufferLength = 10000;
             });
             
-
             //this CommandsModule is tied behind discordMusicBot.src
-            _client.AddModule<CommandsModule>("Commands", ModuleFilter.ServerWhitelist);
+            _client.AddModule<commandsPlayer>("commandsPlayer", ModuleFilter.ServerWhitelist);
+            _client.AddModule<commandsSystem>("commandsSystem", ModuleFilter.ServerWhitelist);
+            _client.AddModule<commandsPlaylist>("commandsPlaylist", ModuleFilter.ServerWhitelist);
             _client.GetService<AudioService>();
 
             //check the playlist file
@@ -146,6 +147,7 @@ namespace discordMusicBot
             }
         }
 
+        //might be dropped
         private void checkPlaylistURL()
         {
             try
