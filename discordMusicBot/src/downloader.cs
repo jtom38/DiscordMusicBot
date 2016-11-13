@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using VideoLibrary;
 using System.IO;
+using NAudio.Wave;
 
 namespace discordMusicBot.src
 {
@@ -17,7 +18,6 @@ namespace discordMusicBot.src
             /// https://github.com/jamesqo/libvideo/blob/master/docs/README.md
             ///</summary>
 
-
             var youtube = YouTube.Default;
             var video = youtube.GetAllVideos(url);
 
@@ -27,12 +27,12 @@ namespace discordMusicBot.src
                 .Where(e => e.AudioFormat == AudioFormat.Aac && e.AdaptiveKind == AdaptiveKind.Audio)
                 .ToList();
 
-            string currentDir = Directory.GetCurrentDirectory();
-            currentDir = currentDir + "\\cache\\";
+            string workingDir = Directory.GetCurrentDirectory();
+            string cacheDir = workingDir + "\\cache\\";
 
-            string fileName = audio[0].FullName + ".aac";
+            string fileAAC = audio[0].FullName + ".aac";
 
-            if(File.Exists(currentDir + fileName))
+            if(File.Exists(cacheDir + fileAAC))
             {
                 // do nothing
             }
@@ -41,18 +41,49 @@ namespace discordMusicBot.src
                 //download the file
                 if (audio.Count > 0)
                 {
-                    File.WriteAllBytes(currentDir + fileName, audio[0].GetBytes());
+                    File.WriteAllBytes(cacheDir + fileAAC, audio[0].GetBytes());
                 }
             }
 
             string[] returnVar = {
                 audio[0].Title,                     //pass the title back
-                fileName,                           //pass the filename, not sure if we need to retain this
-                currentDir + fileName,              //pass the full path to the file to be played back
+                fileAAC,                           //pass the filename, not sure if we need to retain this
+                cacheDir + fileAAC,              //pass the full path to the file to be played back
                 audio[0].AudioBitrate.ToString()    //pass the bitrate so we can return the value
             };
 
             return returnVar;
+        }
+
+        public string ConvertAACToWAV(string songTitle, string cacheDir)
+        {
+            // im going to add this in an atempt to have easier playback though naudio
+            // https://stackoverflow.com/questions/13486747/convert-aac-to-wav
+
+            // create media foundation reader to read the AAC encoded file
+            using (MediaFoundationReader reader = new MediaFoundationReader(cacheDir + songTitle + ".aac"))
+            // resample the file to PCM with same sample rate, channels and bits per sample
+            using (ResamplerDmoStream resampledReader = new ResamplerDmoStream(reader,
+                new WaveFormat(reader.WaveFormat.SampleRate, reader.WaveFormat.BitsPerSample, reader.WaveFormat.Channels)))
+            // create WAVe file
+            using (WaveFileWriter waveWriter = new WaveFileWriter(cacheDir + songTitle + ".wav", resampledReader.WaveFormat))
+            {
+                // copy samples
+                resampledReader.CopyTo(waveWriter);
+            }
+
+            return cacheDir+songTitle+".wav";
+
+        }
+
+        //used in _playlist.cmd_plAdd()
+        public string returnYoutubeTitle(string url)
+        {
+            var youtube = YouTube.Default;
+            var video = youtube.GetAllVideos(url);
+            var videoList = video.ToList();
+
+            return videoList[0].Title;
         }
 
     }

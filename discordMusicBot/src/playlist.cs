@@ -150,6 +150,23 @@ namespace discordMusicBot.src
             }
         }
 
+        //used to insert lines to the playlist file
+        public string cmd_plAdd(string user, string url)
+        {
+            downloader _downloader = new downloader();
+
+            string title = _downloader.returnYoutubeTitle(url);
+
+            using (FileStream fs = new FileStream("autoplaylist.txt", FileMode.Append, FileAccess.Write))
+            using (StreamWriter sw = new StreamWriter(fs))
+            {
+                sw.WriteLine("# User:   " + user);
+                sw.WriteLine("# Title:  " + title);
+                sw.WriteLine(url);
+            }
+            return title;
+        }
+
         public void cmd_shuffle()
         {
 

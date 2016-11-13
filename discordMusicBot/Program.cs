@@ -54,9 +54,11 @@ namespace discordMusicBot
                 x.Bitrate = AudioServiceConfig.MaxBitrate;
                 x.BufferLength = 10000;
             });
+            
 
             //this CommandsModule is tied behind discordMusicBot.src
             _client.AddModule<CommandsModule>("Commands", ModuleFilter.ServerWhitelist);
+            _client.GetService<AudioService>();
 
             //check the playlist file
             _playlist.getPlaylistFile();
