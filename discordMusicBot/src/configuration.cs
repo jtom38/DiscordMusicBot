@@ -15,6 +15,8 @@ namespace discordMusicBot.src
         public ulong[] BindToChannels { get; set; }
         /// <summary> The URL for the public google doc to download. </summary>
         public string PlaylistURL { get; set; }
+        /// <summary> Sets the default room by its ID value. </summary>
+        public ulong defaultRoomID { set; get; }
 
         public configuration()
         {
@@ -23,6 +25,7 @@ namespace discordMusicBot.src
             Token = "";
             BindToChannels = new ulong[] { 0 };
             PlaylistURL = "";
+            defaultRoomID = 0;
         }
 
         /// <summary> Save the current configuration object to a file. </summary>

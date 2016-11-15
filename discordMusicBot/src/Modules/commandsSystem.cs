@@ -28,6 +28,7 @@ namespace discordMusicBot.src.Modules
                 _client.GetService<CommandService>().CreateCommand(_config.Prefix + "rm")
                     .Alias("rm")
                     .Description("Removes messages from a text channel.")
+                    .Description("Permissions: Everyone")
                     .Parameter("count", ParameterType.Optional)
                     .Do(async e =>
                     {
@@ -55,12 +56,64 @@ namespace discordMusicBot.src.Modules
                 _client.GetService<CommandService>().CreateCommand(_config.Prefix + "summon")
                     .Alias("summon")
                     .Description("Summons bot to current voice channel")
+                    .Description("Permissions: Everyone")
                     .Do(async e =>
                     {
-                        Channel voiceChan = e.User.VoiceChannel;
-
-                        await voiceChan.JoinAudio();
+                        //0 = default
+                        Channel voiceChan = e.Server.GetChannel(0);
+                        if (_config.defaultRoomID == 0)
+                        {
+                            voiceChan = e.Server.GetChannel(_config.defaultRoomID);
+                            await voiceChan.JoinAudio();
+                        }
+                        else
+                        {
+                            voiceChan = e.User.VoiceChannel;
+                            await voiceChan.JoinAudio();
+                        }
                     });
+
+                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "exportpl")
+                    .Alias("exportpl")
+                    .Description("Exports current playlist")
+                    .Description("Permissions: Mods")
+                    .Do(async e =>
+                    {
+                        await e.Channel.SendFile("playlist.json");
+                    });
+
+                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "exportbl")
+                    .Alias("exportpl")
+                    .Description("Exports current blacklist")
+                    .Description("Permissions: Mods")
+                    .Do(async e =>
+                    {
+                        await e.Channel.SendFile("blacklist.json");
+                    });
+
+                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "defaultRoom")
+                    .Alias("defaultRoom")
+                    .Description("Sets the bots default voice room.")
+                    .Description("Permission: Owner")
+                    .Parameter("roomID", ParameterType.Optional)
+                    .Do(async e =>
+                    {
+                        if(e.GetArg("roomID") == null)
+                        {
+                            await e.Channel.SendMessage("Oops, you forgot to give me the room ID to make my home by default.");
+                            return;
+                        }
+
+                        ulong id = Convert.ToUInt64(e.GetArg("roomID"));
+
+                        _config.defaultRoomID = id;
+                        _config.SaveFile("config.json");
+
+                        await e.Channel.SendMessage("I have updated the config file for you.");
+                        Console.WriteLine("Config.json update: defaultRoomID = " + id);
+                        //await e.Channel.SendFile("blacklist.json");
+                    });
+
             });
         }
     }

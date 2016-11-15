@@ -3,6 +3,7 @@ using Discord.Commands;
 using Discord.Commands.Permissions.Levels;
 using Discord.Commands.Permissions.Visibility;
 using Discord.Modules;
+using Discord.Audio;
 
 namespace discordMusicBot.src.Modules
 {
@@ -30,34 +31,18 @@ namespace discordMusicBot.src.Modules
 
                 _client.GetService<CommandService>().CreateCommand(_config.Prefix + "test")
                     .Alias("test")
-                    .Description("Placeholder for testing.")
-                    .Parameter("count", ParameterType.Optional)
+                    .Description("Placeholder for testing.")                   
                     .Do(async e =>
                     {
-                        if(e.GetArg("count") == "")
-                        {
-                            await e.Channel.SendMessage($"@{e.User.Name}, Cant delete if you dont tell me how many to remove..");
-                            return;
-                        }
-                        
-                        //make var to store messages from the server
-                        Message[] messagesToDelete;
+                        string[] result = _playlist.cmd_np();
 
-                        //convert arg to int
-                        int count = int.Parse(e.GetArg("count"));
-
-                        //tell server to download messages to memory
-                        messagesToDelete = await e.Channel.DownloadMessages(count);
-
-                        //tell bot to delete them from server
-                        await e.Channel.DeleteMessages(messagesToDelete);
-
-                        //await e.Channel.SendMessage($"@{e.User.Name}, I have added {e.GetArg("url")} to autoplaylist.txt.");
+                        await e.Channel.SendMessage("placeholder.");
                     });
             
                 _client.GetService<CommandService>().CreateCommand(_config.Prefix + "play")
                     .Alias("play")
                     .Description("Adds the requested song to the queue.")
+                    .Description("Permissions: Mods")
                     .Parameter("url", ParameterType.Optional)
                     .Do(async e =>
                     {
@@ -73,6 +58,19 @@ namespace discordMusicBot.src.Modules
                             return;
                         }
 
+                        //0 = default
+                        Channel voiceChan = e.Server.GetChannel(0);
+                        if (_config.defaultRoomID == 0)
+                        {
+                            voiceChan = e.Server.GetChannel(_config.defaultRoomID);
+                            await voiceChan.JoinAudio();
+                        }
+                        else
+                        {
+                            voiceChan = e.User.VoiceChannel;
+                            await voiceChan.JoinAudio();
+                        }
+
                         /// <summary>
                         ///     File returns the following values currently 
                         ///     [0] Title
@@ -80,11 +78,8 @@ namespace discordMusicBot.src.Modules
                         ///     [2] Full path to file
                         ///     [3] Bitrate
                         /// </summary>
+
                         string[] responce = _downloader.download_audio(e.GetArg("url"));
-
-                        Channel voiceChan = e.User.VoiceChannel;
-
-                        //await voiceChan.JoinAudio();
 
                         playingSong = true;
 
@@ -94,6 +89,17 @@ namespace discordMusicBot.src.Modules
 
                         playingSong = false;
                         //await e.Channel.SendMessage($" @{e.User.Name} I have queued up " + responce +" for you. :smile:");
+                    });
+
+                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "startpl")
+                    .Alias("startpl")
+                    .Description("Summons and starts the playlist.")
+                    .Description("Permissions: Everyone")
+                    .Do(async e =>
+                    {
+                        string[] result = _playlist.cmd_np();
+
+                        await e.Channel.SendMessage("placeholder.");
                     });
 
             });

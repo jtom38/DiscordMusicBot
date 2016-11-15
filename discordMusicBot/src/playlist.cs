@@ -5,89 +5,238 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Net;
+using Newtonsoft.Json;
+using Discord;
+using Discord.Audio;
+using Discord.Modules;
 
 namespace discordMusicBot.src
 {
+    public class ListPlaylist
+    {
+        public string title { get; set; }
+        public string user { get; set; }
+        public string url { get; set; }       
+        public string[] like { get; set; }
+        public string[] skips { get; set; }
+    }
+
     class playlist
     {
-        public static List<string> listPlaylist = new List<string>();
-        public static List<string> listQueue = new List<string>();
-        public static List<string> listBlacklist = new List<string>();
+        public static List<ListPlaylist> listLibrary = new List<ListPlaylist>();        
+        public static List<ListPlaylist> listBlacklist = new List<ListPlaylist>();
+        public static List<ListPlaylist> listQueue = new List<ListPlaylist>();
+        public static List<ListPlaylist> listSubmitted = new List<ListPlaylist>();
+        public static List<ListPlaylist> listBeenPlayed = new List<ListPlaylist>();
+
+        private DiscordClient _client;
+        private ModuleManager _manager;
+        //private AudioExtensions _audio;
 
         configuration _config = new configuration();
+        downloader _downloader = new downloader();
+        player _player = new player();
 
-        public void getPlaylistFile()
+        public void savePlaylist()
         {
-            // check for the local file
-            if (File.Exists("autoplaylist.txt"))
+            string loc = "playlist.json";
+            string json = JsonConvert.SerializeObject(listLibrary);
+
+            if (!File.Exists(loc))
+                File.Create(loc).Close();
+
+            File.WriteAllText(loc, json);
+        }
+
+        public void loadPlaylist()
+        {
+            if (File.Exists("playlist.json"))
             {
-                //read the file
-                using (StreamReader reader = new StreamReader("autoplaylist.txt"))
-                {
-                    //string we are going to fill per line
-                    string line = null;
+                string json = File.ReadAllText("playlist.json");
 
-                    while((line = reader.ReadLine()) != null)
-                    {
-                        //look for the start of the string for #
-                        try
-                        {
-                            //check for "" first
-                            if(line != "")
-                            {
-                                //get the first character
-                                string s = line.Substring(0, 1);
-                                if(s != "#")
-                                {
-                                    if(line.Contains("https://www.youtube.com") ||
-                                        line.Contains("http://www.youtube.com"))
-                                    {
-                                        //Console.WriteLine(line);
-                                        listPlaylist.Add(line);
-                                    }
-                                }
-                            }
-
-                        }
-                        catch(Exception e)
-                        {
-                            Console.WriteLine("Error in _playlist.getPlaylistFile.  Error: " + e);
-                        }                 
-                    }
-
-                    //debug
-                    int c = listPlaylist.Count();
-                    
-                    //we would want to pass this to the player with the list of links.
-
-                }
+                listLibrary = JsonConvert.DeserializeObject<List<ListPlaylist>>(json);
             }
             else
             {
-                Console.WriteLine("Unable to find autoplaylist.txt, generating one for you.");
-                using (StreamWriter writer = new StreamWriter("autoplaylist.txt"))
-                {
-                    writer.Write("# the comment character is '#'");
-                }
-
-                
+                savePlaylist();
             }
         }
 
-        public void getBlacklistFile()
+        public void saveBlacklist()
         {
-            if (File.Exists("blacklist.txt"))
+            string loc = "blacklist.json";
+            string json = JsonConvert.SerializeObject(listBlacklist);
+
+            if (!File.Exists(loc))
+                File.Create(loc).Close();
+
+            File.WriteAllText(loc, json);
+        }
+
+        public void loadBlacklist()
+        {
+            if (File.Exists("blacklist.json"))
             {
+                string json = File.ReadAllText("blacklist.json");
 
+                listBlacklist = JsonConvert.DeserializeObject<List<ListPlaylist>>(json);
+            }
+            else
+            {
+                saveBlacklist();
+            }
+
+        }
+
+        private void getTrack()
+        {
+            //1. check if something has been submitted by a user
+            string[] trackSubmitted = getTrackSubmitted();
+
+            if (trackSubmitted != null)
+            {
+                //we have a user file to play
+            }
+
+            //2. Pick from the Library
+            string[] trackLibrary = getTrackLibrary();
+            if (trackLibrary != null)
+            {
+                //
+            }
+
+            //3. Check to see if it was blacklisted
+
+            //4. Check to see if has been played already
+
+            //5. Return the value back to be submiited to queue
+        }
+
+        /// <summary>
+        /// Picks random tacks from the library and returns the values of the song
+        /// </summary>
+        /// <returns></returns>
+        public string[] getTrackLibrary()
+        {
+            Random rng = new Random();
+            int counter = rng.Next(0, listLibrary.Count);
+
+            string[] value = { listLibrary[counter].title, listLibrary[counter].user, listLibrary[counter].url, "Library" };
+
+            return value;
+        }
+
+        /// <summary>
+        /// Used to find values if a user submited a song to be played
+        /// takes prority over library tracks
+        /// </summary>
+        /// <returns></returns>
+        public string[] getTrackSubmitted()
+        {            
+            // extract the values
+            if(listSubmitted.Count >= 1)
+            {
+                string[] value = { listLibrary[0].title, listLibrary[0].user, listLibrary[0].url, "Submitted" };
+                return value;
+            }
+            else
+            {
+                return null;
+            }
+
+        }
+
+        /// <summary>
+        /// Checkes to see if the values passed was found on the blacklist
+        /// 
+        /// returns true if match found
+        /// reutnrs false if no match found
+        /// </summary>
+        /// <param name="title"></param>
+        /// <param name="url"></param>
+        /// <returns></returns>
+        private bool checkBlacklist(string title, string url)
+        {
+            //check to make sure it wasnt in the blacklist
+            var titleResult = listBlacklist.Find(x => x.title == title);
+            var urlResult = listBlacklist.Find(x => x.url == url);
+
+            //if not null, we found a match on the name or the url
+            if(titleResult.title != null || urlResult.url != null)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
             }
         }
 
-        public void autoPlayList()
+        /// <summary>
+        /// Adds values to the listBeenPlayed so we know what has been done
+        /// </summary>
+        /// <param name="title"></param>
+        /// <param name="user"></param>
+        /// <param name="url"></param>
+        private void addBeenPlayed(string title, string user, string url)
         {
+            //get the 10% of the library
+            double threshold = listLibrary.Count * 0.1;
 
+            //get the count of items in listBeenPlayed
+            if(listBeenPlayed.Count >= threshold)
+            {
+                //delete the first object
+                listBeenPlayed.RemoveAt(0);
+            }
+
+            listBeenPlayed.Add(new ListPlaylist
+            {
+                title = title,
+                user = user,
+                url = url
+            });
+
+        }
+        
+        /// <summary>
+        /// Checks to see if the track was already played.
+        /// 
+        /// returns true if match found
+        /// reutnr false if not found
+        /// </summary>
+        /// <param name="title"></param>
+        /// <param name="url"></param>
+        /// <returns></returns>
+        private bool checkBeenPlayed(string title, string url)
+        {
+            //check to make sure it wasnt in the blacklist
+            var titleResult = listSubmitted.Find(x => x.title == title);
+            var urlResult = listSubmitted.Find(x => x.url == url);
+
+            //if not null, we found a match on the name or the url
+            if (titleResult.title != null || urlResult.url != null)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public void startAutoPlayList()
+        {
+            loadPlaylist();
+            loadBlacklist();
+
+            bool songActive = true;
+            while(songActive == true)
+            {
+                getTrack();
+            }
         } 
         
-        //todo thread this
         public string updatePlaylistFile()
         {
             string returnText = null;
@@ -171,19 +320,58 @@ namespace discordMusicBot.src
 
             string title = _downloader.returnYoutubeTitle(url);
 
-            using (FileStream fs = new FileStream("autoplaylist.txt", FileMode.Append, FileAccess.Write))
-            using (StreamWriter sw = new StreamWriter(fs))
+            listLibrary.Add(new ListPlaylist
             {
-                sw.WriteLine("# User:   " + user);
-                sw.WriteLine("# Title:  " + title);
-                sw.WriteLine(url);
-            }
+                title = title,
+                user = user,
+                url = url
+            });
+
+            savePlaylist();
             return title;
         }
 
+        /// <summary>
+        /// Users to add lines to the blacklist file
+        /// </summary>
+        /// <param name="user"> username of who sent it</param>
+        /// <param name="url"> url of what to blacklist</param>
+        /// <returns></returns>
+        public string cmd_blacklistAdd(string user, string url)
+        {
+            downloader _downloader = new downloader();
+
+            string title = _downloader.returnYoutubeTitle(url);
+
+            listBlacklist.Add(new ListPlaylist
+            {
+                title = title,
+                user = user,
+                url = url
+            });
+
+            saveBlacklist();
+            return title;
+
+        }
+
+        /// <summary>
+        /// Used to discard the current queue and pick new files.
+        /// </summary>
         public void cmd_shuffle()
         {
 
+        }
+
+        /// <summary>
+        /// Responds with the infomation of the current playing track.
+        /// </summary>
+        /// <returns></returns>
+        public string[] cmd_np()
+        {
+            string[] result = { listLibrary[0].title, listLibrary[0].url, listLibrary[0].user };
+
+            return result;
         }
 
     }

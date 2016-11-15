@@ -72,7 +72,5 @@ namespace discordMusicBot.src
             await _nAudio.Disconnect();
         }
 
-
-
     }
 }

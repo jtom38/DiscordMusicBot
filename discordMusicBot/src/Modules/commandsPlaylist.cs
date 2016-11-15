@@ -30,20 +30,20 @@ namespace discordMusicBot.src.Modules
                 _client.GetService<CommandService>().CreateCommand(_config.Prefix + "plupdate")
                     .Alias("plupdate")
                     .Description("Goes out and fetches our google doc playlist file and updates the local copy.")
+                    .Description("Permissions: Mods")
                     .Do(async e =>
                     {
-                        //await e.Channel.SendMessage($"Please wait... fetching the file");
+                        await e.Channel.SendMessage($"Please wait... fetching the file");
                         //playlist _playlist = new playlist();
                         string responce = _playlist.updatePlaylistFile();
-
-                        //string responce = _playlist.listPlaylist.Count().ToString();
-
+                        
                         await e.Channel.SendMessage(responce);
                     });
 
                 _client.GetService<CommandService>().CreateCommand(_config.Prefix + "plAdd")
                     .Alias("plAdd")
                     .Description("Adds a url to the playlist file.")
+                    .Description("Permissions: Mods")
                     .Parameter("url", ParameterType.Optional)
                     .Do(async e =>
                     {
@@ -56,6 +56,7 @@ namespace discordMusicBot.src.Modules
                         string title = _playlist.cmd_plAdd(e.User.Name, e.GetArg("url"));
 
                         await e.Channel.SendMessage($"@{e.User.Name}, I have added " + title + " to the playlist file.");
+                        Console.WriteLine($"{e.User.Name} added " + title + " to the playlist.json file.");
                     });
 
             });

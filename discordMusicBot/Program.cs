@@ -62,7 +62,9 @@ namespace discordMusicBot
             _client.GetService<AudioService>();
 
             //check the playlist file
-            _playlist.getPlaylistFile();
+            //_playlist.getPlaylistFile();
+            _playlist.loadPlaylist();
+            _playlist.loadBlacklist();
 
             //turns the bot on and connects to discord.
             _client.ExecuteAndWait(async () =>
