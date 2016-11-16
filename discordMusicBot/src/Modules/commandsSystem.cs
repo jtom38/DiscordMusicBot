@@ -16,6 +16,8 @@ namespace discordMusicBot.src.Modules
         private DiscordClient _client;
         private configuration _config;
 
+        playlist _playlist = new playlist();
+
         void IModule.Install(ModuleManager manager)
         {
             _manager = manager;
@@ -27,8 +29,7 @@ namespace discordMusicBot.src.Modules
             {
                 _client.GetService<CommandService>().CreateCommand(_config.Prefix + "rm")
                     .Alias("rm")
-                    .Description("Removes messages from a text channel.")
-                    .Description("Permissions: Everyone")
+                    .Description("Removes messages from a text channel.\rPermissions: Everyone")
                     .Parameter("count", ParameterType.Optional)
                     .Do(async e =>
                     {
@@ -53,48 +54,42 @@ namespace discordMusicBot.src.Modules
                         //await e.Channel.SendMessage($"@{e.User.Name}, I have added {e.GetArg("url")} to autoplaylist.txt.");
                     });
 
-                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "summon")
-                    .Alias("summon")
-                    .Description("Summons bot to current voice channel")
-                    .Description("Permissions: Everyone")
+                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "exportpl")
+                    .Alias("exportpl")
+                    .Description("Exports current playlist \rPermission: Mods")
                     .Do(async e =>
                     {
-                        //0 = default
-                        Channel voiceChan = e.Server.GetChannel(0);
-                        if (_config.defaultRoomID == 0)
+                        bool result = _playlist.cmd_plexport();
+                        if(result == true)
                         {
-                            voiceChan = e.Server.GetChannel(_config.defaultRoomID);
-                            await voiceChan.JoinAudio();
+                            await e.Channel.SendFile("playlist_export.json");
                         }
                         else
                         {
-                            voiceChan = e.User.VoiceChannel;
-                            await voiceChan.JoinAudio();
-                        }
-                    });
-
-                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "exportpl")
-                    .Alias("exportpl")
-                    .Description("Exports current playlist")
-                    .Description("Permissions: Mods")
-                    .Do(async e =>
-                    {
-                        await e.Channel.SendFile("playlist.json");
+                            await e.Channel.SendMessage("Error generating file.\rPlease inform the server owner for more infomation.");
+                        }                    
                     });
 
                 _client.GetService<CommandService>().CreateCommand(_config.Prefix + "exportbl")
                     .Alias("exportpl")
-                    .Description("Exports current blacklist")
-                    .Description("Permissions: Mods")
+                    .Description("Exports current blacklist\rPermission: Mods")
                     .Do(async e =>
                     {
-                        await e.Channel.SendFile("blacklist.json");
+                        bool result = _playlist.cmd_blexport();
+
+                        if(result == true)
+                        {
+                            await e.Channel.SendFile("blacklist_export.json");
+                        }
+                        else
+                        {
+                            await e.Channel.SendMessage("Error generating file.\rPlease inform the server owner for more infomation.");
+                        }
                     });
 
                 _client.GetService<CommandService>().CreateCommand(_config.Prefix + "defaultRoom")
                     .Alias("defaultRoom")
-                    .Description("Sets the bots default voice room.")
-                    .Description("Permission: Owner")
+                    .Description("Sets the bots default voice room.\rPermission: Owner")
                     .Parameter("roomID", ParameterType.Optional)
                     .Do(async e =>
                     {

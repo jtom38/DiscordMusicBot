@@ -65,7 +65,7 @@ namespace discordMusicBot.src
         public void saveBlacklist()
         {
             string loc = "blacklist.json";
-            string json = JsonConvert.SerializeObject(listBlacklist);
+            string json = JsonConvert.SerializeObject(listBlacklist, Formatting.Indented);
 
             if (!File.Exists(loc))
                 File.Create(loc).Close();
@@ -88,28 +88,60 @@ namespace discordMusicBot.src
 
         }
 
-        private void getTrack()
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns>
+        ///     null = reroll
+        ///     !null = send to player
+        /// </returns>
+        private string[] getTrack()
         {
+            string title = null;
+            string user = null;
+            string url = null;
+            string source = null;
+
             //1. check if something has been submitted by a user
             string[] trackSubmitted = getTrackSubmitted();
 
             if (trackSubmitted != null)
             {
                 //we have a user file to play
+                title = trackSubmitted[0];
+                user = trackSubmitted[1];
+                url = trackSubmitted[2];
+                source = trackSubmitted[3];
             }
-
-            //2. Pick from the Library
-            string[] trackLibrary = getTrackLibrary();
-            if (trackLibrary != null)
+            else
             {
-                //
+                //2. Pick from the Library
+                string[] trackLibrary = getTrackLibrary();
+                title = trackLibrary[0];
+                user = trackLibrary[1];
+                url = trackLibrary[2];
+                source = trackLibrary[3];
             }
 
             //3. Check to see if it was blacklisted
+            bool blacklist = checkBlacklist(title, url);
+            if(blacklist == true)
+            {
+                //we found a match in the blacklist, need to reroll
+                return null;
+            }
 
             //4. Check to see if has been played already
+            bool beenPlayed = checkBeenPlayed(title, url);
+            if(beenPlayed == true)
+            {
+                //found a match in the beenPlayed list, need to reroll
+                return null;
+            }
 
             //5. Return the value back to be submiited to queue
+            string[] returnValue = { title, user, url, source };
+            return returnValue;
         }
 
         /// <summary>
@@ -147,29 +179,36 @@ namespace discordMusicBot.src
         }
 
         /// <summary>
-        /// Checkes to see if the values passed was found on the blacklist
-        /// 
-        /// returns true if match found
-        /// reutnrs false if no match found
+        ///     Checkes to see if the values passed was found on the blacklist
         /// </summary>
         /// <param name="title"></param>
         /// <param name="url"></param>
-        /// <returns></returns>
+        /// <returns>
+        ///     returns true if match found
+        ///     reutnrs false if no match found
+        /// </returns>
         private bool checkBlacklist(string title, string url)
         {
             //check to make sure it wasnt in the blacklist
-            var titleResult = listBlacklist.Find(x => x.title == title);
+            //var titleResult = listBlacklist.Find(x => x.title == title);
             var urlResult = listBlacklist.Find(x => x.url == url);
 
             //if not null, we found a match on the name or the url
-            if(titleResult.title != null || urlResult.url != null)
+            //using try catch given when it parses a null value it hard errors, this catches it and returns the value
+            try
             {
-                return true;
+                if (urlResult.url != null)
+                {
+                    return true;
+                }
+
+                return false;
             }
-            else
+            catch
             {
                 return false;
             }
+
         }
 
         /// <summary>
@@ -178,7 +217,7 @@ namespace discordMusicBot.src
         /// <param name="title"></param>
         /// <param name="user"></param>
         /// <param name="url"></param>
-        private void addBeenPlayed(string title, string user, string url)
+        private void addBeenPlayed(string title, string url)
         {
             //get the 10% of the library
             double threshold = listLibrary.Count * 0.1;
@@ -193,7 +232,6 @@ namespace discordMusicBot.src
             listBeenPlayed.Add(new ListPlaylist
             {
                 title = title,
-                user = user,
                 url = url
             });
 
@@ -210,22 +248,28 @@ namespace discordMusicBot.src
         /// <returns></returns>
         private bool checkBeenPlayed(string title, string url)
         {
-            //check to make sure it wasnt in the blacklist
-            var titleResult = listSubmitted.Find(x => x.title == title);
+            //check to make sure it wasnt in the beenPlayed list
             var urlResult = listSubmitted.Find(x => x.url == url);
 
             //if not null, we found a match on the name or the url
-            if (titleResult.title != null || urlResult.url != null)
+            //using try catch given when it parses a null value it hard errors, this catches it and returns the value
+            try
             {
-                return true;
+                if (urlResult.url != null)
+                {
+                    return true;
+                }
+
+                return false;
             }
-            else
+            catch
             {
                 return false;
             }
+
         }
 
-        public void startAutoPlayList()
+        public async Task startAutoPlayList(Channel voiceChannel)
         {
             loadPlaylist();
             loadBlacklist();
@@ -233,7 +277,25 @@ namespace discordMusicBot.src
             bool songActive = true;
             while(songActive == true)
             {
-                getTrack();
+                string[] parsedTrack = getTrack();
+
+                if(parsedTrack == null)
+                {
+                    //reroll                   
+                }
+                else
+                {
+                    //pass off to download the file for cache
+                    string[] file = _downloader.download_audio(parsedTrack[2]);
+
+                    await _player.SendAudio(file[2], voiceChannel, songActive, _client);
+
+                    //if a user submitted the song remove it from the disk
+                    if(parsedTrack[3] == "Submitted")
+                    {
+                        File.Delete(file[2]);
+                    }
+                }
             }
         } 
         
@@ -337,7 +399,7 @@ namespace discordMusicBot.src
         /// <param name="user"> username of who sent it</param>
         /// <param name="url"> url of what to blacklist</param>
         /// <returns></returns>
-        public string cmd_blacklistAdd(string user, string url)
+        public string cmd_blAdd(string user, string url)
         {
             downloader _downloader = new downloader();
 
@@ -372,6 +434,62 @@ namespace discordMusicBot.src
             string[] result = { listLibrary[0].title, listLibrary[0].url, listLibrary[0].user };
 
             return result;
+        }
+
+        /// <summary>
+        /// Makes a readable version of the json file.
+        /// returns true if it work
+        /// returns false if it failed
+        /// </summary>
+        /// <returns></returns>
+        public bool cmd_plexport()
+        {
+            try
+            {
+                string loc = "playlist_export.json";
+                string json = JsonConvert.SerializeObject(listLibrary, Formatting.Indented);
+
+                if (!File.Exists(loc))
+                    File.Create(loc).Close();
+
+                File.WriteAllText(loc, json);
+
+                return true;
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine("Error running plExport.  Error dump: " + e);
+                return false;
+            }
+
+        }
+
+        /// <summary>
+        /// Makes a readable version of the json file.
+        /// returns True if it worked
+        /// returns false if failed.
+        /// </summary>
+        /// <returns></returns>
+        public bool cmd_blexport()
+        {
+            try
+            {
+                string loc = "blacklist_export.json";
+                string json = JsonConvert.SerializeObject(listBlacklist, Formatting.Indented);
+
+                if (!File.Exists(loc))
+                    File.Create(loc).Close();
+
+                File.WriteAllText(loc, json);
+
+                return true;
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine("Error running blExport.  Error dump: " + e);
+                return false;
+            }
+
         }
 
     }

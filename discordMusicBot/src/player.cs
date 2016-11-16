@@ -27,8 +27,15 @@ namespace discordMusicBot.src
             // So... join the voice channel:
 
             //try to find a way to tell if she is already in 1. connect to a voice room and 2 in your voice room
-            _nAudio = await _client.GetService<AudioService>().Join(voiceChannel);
-
+            try
+            {
+                _nAudio = await _client.GetService<AudioService>().Join(voiceChannel);
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+            
             // Simple try and catch.
             try
             {
@@ -62,14 +69,16 @@ namespace discordMusicBot.src
 
                         _nAudio.Send(buffer, 0, blockSize); // Send the buffer to Discord
                     }
-                    await _nAudio.Disconnect();
+
+                    //await _nAudio.Disconnect();
                 }
             }
             catch
             {
                 System.Console.WriteLine("Something went wrong. :(");
             }
-            await _nAudio.Disconnect();
+
+            //await _nAudio.Disconnect();
         }
 
     }

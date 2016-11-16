@@ -29,7 +29,7 @@ namespace discordMusicBot.src.Modules
             {
                 _client.GetService<CommandService>().CreateCommand(_config.Prefix + "plupdate")
                     .Alias("plupdate")
-                    .Description("Goes out and fetches our google doc playlist file and updates the local copy.")
+                    .Description("Goes out and fetches our google doc playlist file and updates the local copy.\r Permissions: Mods")
                     .Description("Permissions: Mods")
                     .Do(async e =>
                     {
@@ -53,10 +53,42 @@ namespace discordMusicBot.src.Modules
                             return;
                         }
 
+                        Message[] mess;
+
+                        mess = await e.Channel.DownloadMessages(1);
+
+                        await e.Channel.DeleteMessages(mess);
+                        
                         string title = _playlist.cmd_plAdd(e.User.Name, e.GetArg("url"));
 
-                        await e.Channel.SendMessage($"@{e.User.Name}, I have added " + title + " to the playlist file.");
+                        await e.Channel.SendMessage($"@{e.User.Name}\rTitle: " + title + "\rHas been added to the playlist file.");
                         Console.WriteLine($"{e.User.Name} added " + title + " to the playlist.json file.");
+                    });
+
+                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "blAdd")
+                    .Alias("blAdd")
+                    .Description("Adds a url to the blacklist file.\rPermissions: Mods")
+                    .Parameter("url", ParameterType.Optional)
+                    .Do(async e =>
+                    {
+                        if (e.GetArg("url") == "")
+                        {
+                            await e.Channel.SendMessage($"@{e.User.Name}, Unable to add to the blacklist if you dont give me a url.");
+                            return;
+                        }
+
+                        //make the var we will store the messages in from the server
+                        Message[] mess = await e.Channel.DownloadMessages(1);
+
+                        //send delete command.  THis will delete the message that the user sent with the url
+                        await e.Channel.DeleteMessages(mess);
+
+                        //parse the url and get the infomation then append to the blacklist.json
+                        string title = _playlist.cmd_blAdd(e.User.Name, e.GetArg("url"));
+
+                        //send the infomation back to the user letting them know we added it to the blacklist.
+                        await e.Channel.SendMessage($"{e.User.Name}\rTitle: " + title + "\rHas been added to the blacklist file.");
+                        Console.WriteLine($"{e.User.Name} added " + title + " to the blacklist.json file.");
                     });
 
             });

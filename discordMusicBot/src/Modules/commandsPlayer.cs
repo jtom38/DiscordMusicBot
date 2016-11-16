@@ -4,6 +4,7 @@ using Discord.Commands.Permissions.Levels;
 using Discord.Commands.Permissions.Visibility;
 using Discord.Modules;
 using Discord.Audio;
+using System;
 
 namespace discordMusicBot.src.Modules
 {
@@ -91,15 +92,33 @@ namespace discordMusicBot.src.Modules
                         //await e.Channel.SendMessage($" @{e.User.Name} I have queued up " + responce +" for you. :smile:");
                     });
 
-                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "startpl")
-                    .Alias("startpl")
-                    .Description("Summons and starts the playlist.")
-                    .Description("Permissions: Everyone")
+                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "summon")
+                    .Alias("summon")
+                    .Description("Summons bot to current voice channel and starts playing from the library.\rPermission: Everyone")
                     .Do(async e =>
                     {
-                        string[] result = _playlist.cmd_np();
+                        //0 = default
+                        Channel voiceChan = e.Server.GetChannel(0);
+                        if (_config.defaultRoomID != 0)
+                        {
+                            voiceChan = e.Server.GetChannel(_config.defaultRoomID);
+                            await voiceChan.JoinAudio();
+                        }
+                        else
+                        {
+                            voiceChan = e.User.VoiceChannel;
+                            await voiceChan.JoinAudio();
+                        }
 
-                        await e.Channel.SendMessage("placeholder.");
+                        try
+                        {
+                            await _playlist.startAutoPlayList(voiceChan);
+                        }
+                        catch(Exception t)
+                        {
+                            Console.WriteLine(t);
+                        }
+                        
                     });
 
             });
