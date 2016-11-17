@@ -30,7 +30,6 @@ namespace discordMusicBot.src.Modules
                 _client.GetService<CommandService>().CreateCommand(_config.Prefix + "plupdate")
                     .Alias("plupdate")
                     .Description("Goes out and fetches our google doc playlist file and updates the local copy.\r Permissions: Mods")
-                    .Description("Permissions: Mods")
                     .Do(async e =>
                     {
                         await e.Channel.SendMessage($"Please wait... fetching the file");
@@ -40,10 +39,30 @@ namespace discordMusicBot.src.Modules
                         await e.Channel.SendMessage(responce);
                     });
 
+                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "shuffle")
+                    .Alias("shuffle")
+                    .Description("Adds a url to the playlist file.\rPermissions: Everyone")
+                    .Do(async e =>
+                    {
+                        bool result = _playlist.cmd_shuffle();
+
+                        if(result == true)
+                        {
+                            await e.Channel.SendMessage($"@{e.User.Name}\rThe curren queuet has been shuffled.");
+                        }
+
+                        if(result == false)
+                        {
+                            await e.Channel.SendMessage($"{e.User.Name}\rError please check the console for more information.");
+                        }
+
+                        
+                        Console.WriteLine($"{e.User.Name} shuffled the queue.");
+                    });
+
                 _client.GetService<CommandService>().CreateCommand(_config.Prefix + "plAdd")
                     .Alias("plAdd")
-                    .Description("Adds a url to the playlist file.")
-                    .Description("Permissions: Mods")
+                    .Description("Adds a url to the playlist file.\rPermissions: Mods")
                     .Parameter("url", ParameterType.Optional)
                     .Do(async e =>
                     {

@@ -42,8 +42,7 @@ namespace discordMusicBot.src.Modules
             
                 _client.GetService<CommandService>().CreateCommand(_config.Prefix + "play")
                     .Alias("play")
-                    .Description("Adds the requested song to the queue.")
-                    .Description("Permissions: Mods")
+                    .Description("Adds the requested song to the queue.\rExample: !play url\rPermissions: Mods")
                     .Parameter("url", ParameterType.Optional)
                     .Do(async e =>
                     {
@@ -112,7 +111,7 @@ namespace discordMusicBot.src.Modules
 
                         try
                         {
-                            await _playlist.startAutoPlayList(voiceChan);
+                            await _playlist.startAutoPlayList(voiceChan, _client);
                         }
                         catch(Exception t)
                         {

@@ -39,53 +39,81 @@ namespace discordMusicBot.src
 
         public void savePlaylist()
         {
-            string loc = "playlist.json";
-            string json = JsonConvert.SerializeObject(listLibrary);
+            try
+            {
+                string loc = "playlist.json";
+                string json = JsonConvert.SerializeObject(listLibrary);
 
-            if (!File.Exists(loc))
-                File.Create(loc).Close();
+                if (!File.Exists(loc))
+                    File.Create(loc).Close();
 
-            File.WriteAllText(loc, json);
+                File.WriteAllText(loc, json);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Error saving playlist.json.  Error: " + e);
+            }
         }
 
         public void loadPlaylist()
         {
-            if (File.Exists("playlist.json"))
+            try
             {
-                string json = File.ReadAllText("playlist.json");
+                if (File.Exists("playlist.json"))
+                {
+                    string json = File.ReadAllText("playlist.json");
 
-                listLibrary = JsonConvert.DeserializeObject<List<ListPlaylist>>(json);
+                    listLibrary = JsonConvert.DeserializeObject<List<ListPlaylist>>(json);
+                }
+                else
+                {
+                    savePlaylist();
+                }
             }
-            else
+            catch (Exception e)
             {
-                savePlaylist();
+                Console.WriteLine("Error reading playlist.json.  Error: " + e);
             }
         }
 
         public void saveBlacklist()
         {
-            string loc = "blacklist.json";
-            string json = JsonConvert.SerializeObject(listBlacklist, Formatting.Indented);
+            try
+            {
+                string loc = "blacklist.json";
+                string json = JsonConvert.SerializeObject(listBlacklist, Formatting.Indented);
 
-            if (!File.Exists(loc))
-                File.Create(loc).Close();
+                if (!File.Exists(loc))
+                    File.Create(loc).Close();
 
-            File.WriteAllText(loc, json);
+                File.WriteAllText(loc, json);
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine("Error saving blacklist.json. Error: " + e);
+            }
+
         }
 
         public void loadBlacklist()
         {
-            if (File.Exists("blacklist.json"))
+            try
             {
-                string json = File.ReadAllText("blacklist.json");
+                if (File.Exists("blacklist.json"))
+                {
+                    string json = File.ReadAllText("blacklist.json");
 
-                listBlacklist = JsonConvert.DeserializeObject<List<ListPlaylist>>(json);
+                    listBlacklist = JsonConvert.DeserializeObject<List<ListPlaylist>>(json);
+                }
+                else
+                {
+                    saveBlacklist();
+                }
             }
-            else
+            catch(Exception e)
             {
-                saveBlacklist();
+                Console.WriteLine("Error reading blacklist.json.  Error: " + e);
             }
-
         }
 
         /// <summary>
@@ -222,6 +250,8 @@ namespace discordMusicBot.src
             //get the 10% of the library
             double threshold = listLibrary.Count * 0.1;
 
+            Console.WriteLine("beenPlayed threshhold" + threshold);
+
             //get the count of items in listBeenPlayed
             if(listBeenPlayed.Count >= threshold)
             {
@@ -269,7 +299,7 @@ namespace discordMusicBot.src
 
         }
 
-        public async Task startAutoPlayList(Channel voiceChannel)
+        public async Task startAutoPlayList(Channel voiceChannel, DiscordClient _client)
         {
             loadPlaylist();
             loadBlacklist();
@@ -288,6 +318,8 @@ namespace discordMusicBot.src
                     //pass off to download the file for cache
                     string[] file = _downloader.download_audio(parsedTrack[2]);
 
+                    _client.SetGame(parsedTrack[0]);
+
                     await _player.SendAudio(file[2], voiceChannel, songActive, _client);
 
                     //if a user submitted the song remove it from the disk
@@ -295,6 +327,9 @@ namespace discordMusicBot.src
                     {
                         File.Delete(file[2]);
                     }
+
+                    addBeenPlayed(parsedTrack[0], parsedTrack[2]);
+
                 }
             }
         } 
@@ -420,9 +455,47 @@ namespace discordMusicBot.src
         /// <summary>
         /// Used to discard the current queue and pick new files.
         /// </summary>
-        public void cmd_shuffle()
+        public bool cmd_shuffle()
         {
+            //Take the listSubmitted and shuffle it
+            Random rng = new Random();
+            List<ListPlaylist> temp = new List<ListPlaylist>();
 
+            try
+            {
+                //loop though all entries of the listSubmitted and shuffle them to a new list
+                for (int i = 0; i < listSubmitted.Count; i++)
+                {
+                    int counter = rng.Next(0, listSubmitted.Count);
+
+                    temp.Add(new ListPlaylist
+                    {
+                        title = listSubmitted[counter].title,
+                        url = listSubmitted[counter].url,
+                        user = listSubmitted[counter].user,
+                        like = listSubmitted[counter].like,
+                        skips = listSubmitted[counter].skips
+                    });
+
+                    //remove the current value we have in memory from listSubmitted
+                    listSubmitted.RemoveAt(counter);
+
+                }
+
+                //Once all finished merge the data back to listSubmitted and delete temp
+                listSubmitted.Clear();
+                listSubmitted.AddRange(temp);
+
+                temp.Clear();
+
+                return true;
+            }
+            catch(Exception e)
+            {
+                //something broke
+                Console.WriteLine("playlist.cmd_shuffle Error: " + e);
+                return false;
+            }
         }
 
         /// <summary>

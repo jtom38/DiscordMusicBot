@@ -29,7 +29,7 @@ namespace discordMusicBot.src.Modules
             {
                 _client.GetService<CommandService>().CreateCommand(_config.Prefix + "rm")
                     .Alias("rm")
-                    .Description("Removes messages from a text channel.\rPermissions: Everyone")
+                    .Description("Removes messages from a text channel.\rExample: !rm 100\rPermissions: Everyone")
                     .Parameter("count", ParameterType.Optional)
                     .Do(async e =>
                     {
@@ -89,7 +89,7 @@ namespace discordMusicBot.src.Modules
 
                 _client.GetService<CommandService>().CreateCommand(_config.Prefix + "defaultRoom")
                     .Alias("defaultRoom")
-                    .Description("Sets the bots default voice room.\rPermission: Owner")
+                    .Description("Sets the bots default voice room.\rExample: !defaultRoom roomID\rPermission: Owner")
                     .Parameter("roomID", ParameterType.Optional)
                     .Do(async e =>
                     {
@@ -107,6 +107,72 @@ namespace discordMusicBot.src.Modules
                         await e.Channel.SendMessage("I have updated the config file for you.");
                         Console.WriteLine("Config.json update: defaultRoomID = " + id);
                         //await e.Channel.SendFile("blacklist.json");
+                    });
+
+                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "vol")
+                    .Alias("vol")
+                    .Description("Adjusts the default volume from the bot.\rExample: !vol +10\rPermission: Everyone")
+                    .Parameter("vol", ParameterType.Optional)
+                    .Do(async e =>
+                    {
+                        
+                        if (e.GetArg("roomID") == null)
+                        {
+                            await e.Channel.SendMessage("Oops, you forgot to give me the room ID to make my home by default.");
+                            return;
+                        }
+
+                        // v is the current value in the config
+                        int oldVolume = _config.volume;
+
+                        //
+                        string argOperator = null;
+                        int argValue = 0;
+                        int newValue = 0;
+
+                        //will capture a + or -
+                        try
+                        {
+                            argOperator = e.GetArg("vol").Substring(0, 1);
+                            if(argOperator != "+" || argOperator != "-")
+                            {
+                                //return error if we dont have a + or -
+                                return;
+                            }
+                        }
+                        catch
+                        {
+                            Console.WriteLine("");
+                        }
+
+                        //parse the int value
+                        try
+                        {                        
+                            //get the number value
+                            string value = e.GetArg("vol").Substring(1);
+                            int.Parse(value);
+                        }
+                        catch
+                        {
+                            //failed to parse the int value from arg
+                            return;
+                        }
+
+                        if (argOperator == "+")
+                        {
+                            newValue = oldVolume + argValue;
+                        }
+
+                        if(argOperator == "-")
+                        {
+                            newValue = oldVolume - argValue;
+                        }
+
+                        _config.volume = newValue;
+                        _config.SaveFile("config.json");
+
+                        await e.Channel.SendMessage($"{e.User.Name} changed default volume from "+ oldVolume + " to " +newValue + ".");
+                        Console.WriteLine("{e.User.Name} changed default volume from " + oldVolume + " to " + newValue + ".");
                     });
 
             });

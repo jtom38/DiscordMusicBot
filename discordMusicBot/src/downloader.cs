@@ -35,6 +35,7 @@ namespace discordMusicBot.src
             if(File.Exists(cacheDir + fileAAC))
             {
                 // do nothing
+                Console.WriteLine("Info: URL " + url + " was already downloaded, ignoring");
             }
             else
             {
@@ -42,6 +43,7 @@ namespace discordMusicBot.src
                 if (audio.Count > 0)
                 {
                     File.WriteAllBytes(cacheDir + fileAAC, audio[0].GetBytes());
+                    Console.WriteLine("Info: Downloaded " + url );
                 }
             }
 
