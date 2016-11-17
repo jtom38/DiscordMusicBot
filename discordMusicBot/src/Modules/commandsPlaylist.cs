@@ -44,20 +44,40 @@ namespace discordMusicBot.src.Modules
                     .Description("Adds a url to the playlist file.\rPermissions: Everyone")
                     .Do(async e =>
                     {
-                        bool result = _playlist.cmd_shuffle();
+                        string result = _playlist.cmd_shuffle();
 
-                        if(result == true)
+                        if(result == "empty")
                         {
-                            await e.Channel.SendMessage($"@{e.User.Name}\rThe curren queuet has been shuffled.");
+                            await e.Channel.SendMessage($"@{e.User.Name}\rNo songs have been submitted to be shuffled.");
                         }
 
-                        if(result == false)
+                        if(result == "true")
+                        {
+                            await e.Channel.SendMessage($"@{e.User.Name}\rThe current queue has been shuffled.");
+                        }
+
+                        if(result == "error")
                         {
                             await e.Channel.SendMessage($"{e.User.Name}\rError please check the console for more information.");
                         }
-
                         
-                        Console.WriteLine($"{e.User.Name} shuffled the queue.");
+                    });
+
+                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "np")
+                    .Alias("np")
+                    .Description("Returns infomation of curren playing track.\rPermissions: Everyone")
+                    .Do(async e =>
+                    {
+                        string[] result = _playlist.cmd_np();
+                        
+                        if(result[0] == null)
+                        {
+                            await e.Channel.SendMessage($"Sorry but a song is not currently playing.");
+                        }
+                        else
+                        {
+                            await e.Channel.SendMessage($"Track currently playing\rTitle: " + result[0] + "\rURL: " + result[1] + "\rUser: " + result[2] + "\rSource: " + result[3]);
+                        }
                     });
 
                 _client.GetService<CommandService>().CreateCommand(_config.Prefix + "plAdd")

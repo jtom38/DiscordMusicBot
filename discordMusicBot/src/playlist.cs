@@ -28,6 +28,10 @@ namespace discordMusicBot.src
         public static List<ListPlaylist> listQueue = new List<ListPlaylist>();
         public static List<ListPlaylist> listSubmitted = new List<ListPlaylist>();
         public static List<ListPlaylist> listBeenPlayed = new List<ListPlaylist>();
+        public static string npTitle { get; set; }
+        public static string npUser { get; set; }
+        public static string npUrl { get; set; }
+        public static string npSource { get; set; }
 
         private DiscordClient _client;
         private ModuleManager _manager;
@@ -320,6 +324,12 @@ namespace discordMusicBot.src
 
                     _client.SetGame(parsedTrack[0]);
 
+                    //update nowPlaying var for !np
+                    npTitle = parsedTrack[0];
+                    npUser = parsedTrack[1];
+                    npUrl = parsedTrack[2];
+                    npSource = parsedTrack[3];
+
                     await _player.SendAudio(file[2], voiceChannel, songActive, _client);
 
                     //if a user submitted the song remove it from the disk
@@ -455,9 +465,15 @@ namespace discordMusicBot.src
         /// <summary>
         /// Used to discard the current queue and pick new files.
         /// </summary>
-        public bool cmd_shuffle()
+        public string cmd_shuffle()
         {
             //Take the listSubmitted and shuffle it
+
+            if(listSubmitted.Count == 0)
+            {
+                return "empty";
+            }
+
             Random rng = new Random();
             List<ListPlaylist> temp = new List<ListPlaylist>();
 
@@ -488,13 +504,13 @@ namespace discordMusicBot.src
 
                 temp.Clear();
 
-                return true;
+                return "true";
             }
             catch(Exception e)
             {
                 //something broke
                 Console.WriteLine("playlist.cmd_shuffle Error: " + e);
-                return false;
+                return "error";
             }
         }
 
@@ -504,9 +520,8 @@ namespace discordMusicBot.src
         /// <returns></returns>
         public string[] cmd_np()
         {
-            string[] result = { listLibrary[0].title, listLibrary[0].url, listLibrary[0].user };
-
-            return result;
+            string[] value = { npTitle, npUrl, npUser, npSource };
+            return value;
         }
 
         /// <summary>

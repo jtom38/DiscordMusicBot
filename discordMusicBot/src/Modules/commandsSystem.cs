@@ -54,8 +54,8 @@ namespace discordMusicBot.src.Modules
                         //await e.Channel.SendMessage($"@{e.User.Name}, I have added {e.GetArg("url")} to autoplaylist.txt.");
                     });
 
-                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "exportpl")
-                    .Alias("exportpl")
+                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "plexport")
+                    .Alias("plexport")
                     .Description("Exports current playlist \rPermission: Mods")
                     .Do(async e =>
                     {
@@ -70,8 +70,8 @@ namespace discordMusicBot.src.Modules
                         }                    
                     });
 
-                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "exportbl")
-                    .Alias("exportpl")
+                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "blexport")
+                    .Alias("blexport")
                     .Description("Exports current blacklist\rPermission: Mods")
                     .Do(async e =>
                     {
