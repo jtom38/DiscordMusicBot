@@ -121,7 +121,7 @@ namespace discordMusicBot.src
         }
 
         /// <summary>
-        /// 
+        /// Core logic to pick a track from the library
         /// </summary>
         /// <returns>
         ///     null = reroll
@@ -344,6 +344,12 @@ namespace discordMusicBot.src
             }
         } 
         
+        /// <summary>
+        /// Deperacted
+        /// used to pull down the autoplaylist.txt from google drive.
+        /// Not needed anymore given all file managment is done in discord.
+        /// </summary>
+        /// <returns></returns>
         public string updatePlaylistFile()
         {
             string returnText = null;
@@ -420,22 +426,103 @@ namespace discordMusicBot.src
             }
         }
 
-        //used to insert lines to the playlist file
+        /// <summary>
+        /// Used to add a track to playlist.json.
+        /// Will not add if dupe url is found.
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="url"></param>
+        /// <returns></returns>
         public string cmd_plAdd(string user, string url)
-        {
-            downloader _downloader = new downloader();
+        {   
+            //check to see if the url is found in listLibrary
+            // -1 means it was not found   
+            int urlResult = listLibrary.FindIndex(x => x.url == url);
 
-            string title = _downloader.returnYoutubeTitle(url);
-
-            listLibrary.Add(new ListPlaylist
+            if(urlResult == -1)
             {
-                title = title,
-                user = user,
-                url = url
-            });
+                downloader _downloader = new downloader();
 
-            savePlaylist();
-            return title;
+                //didnt find it already in the list
+                string title = _downloader.returnYoutubeTitle(url);
+                
+                listLibrary.Add(new ListPlaylist
+                {
+                    title = title,
+                    user = user,
+                    url = url
+                });
+
+                savePlaylist();
+                return title;
+            }
+            else
+            {
+                //match found, dont add a dupe
+                return "dupe";
+            }
+        }
+
+        /// <summary>
+        /// Used to remove a song from the playlist.json
+        /// Will check the url to make sure we dont have it in the file already though.
+        /// </summary>
+        /// <param name="url"></param>
+        /// <returns></returns>
+        public string cmd_plRemove(string url)
+        {
+            try
+            {
+                int urlResult = listLibrary.FindIndex(x => x.url == url);
+                if(urlResult >= 0)
+                {
+                    //found a match
+                    listLibrary.RemoveAt(urlResult);
+                    savePlaylist();
+
+                    return "match";
+                }
+                else
+                {
+                    //this should be -1 means no match found
+                    return "noMatch";
+                }
+            }
+            catch (Exception e)
+            {
+                //something went wrong or we didnt find a value in the list.. chances are no value found.
+                Console.WriteLine("Error: cmd_plRemove genereted a error.\rError message\r" + e);
+                return "error";
+            }
+            
+        }
+
+        /// <summary>
+        /// Makes a readable version of the json file.
+        /// returns true if it work
+        /// returns false if it failed
+        /// </summary>
+        /// <returns></returns>
+        public bool cmd_plexport()
+        {
+            try
+            {
+                string loc = "playlist_export.json";
+                string json = JsonConvert.SerializeObject(listLibrary, Formatting.Indented);
+
+                if (!File.Exists(loc))
+                    File.Create(loc).Close();
+
+                File.WriteAllText(loc, json);
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Error running plExport.  Error dump: " + e);
+                return false;
+            }
+
         }
 
         /// <summary>
@@ -448,17 +535,85 @@ namespace discordMusicBot.src
         {
             downloader _downloader = new downloader();
 
-            string title = _downloader.returnYoutubeTitle(url);
+            int urlResult = listBlacklist.FindIndex(x => x.url == url);
 
-            listBlacklist.Add(new ListPlaylist
+            if(urlResult == -1)
             {
-                title = title,
-                user = user,
-                url = url
-            });
+                string title = _downloader.returnYoutubeTitle(url);
 
-            saveBlacklist();
-            return title;
+                listBlacklist.Add(new ListPlaylist
+                {
+                    title = title,
+                    user = user,
+                    url = url
+                });
+
+                saveBlacklist();
+                return title;
+            }
+            else
+            {
+                return "dupe";
+            }
+        }
+
+        /// <summary>
+        /// Removes url's from the blacklist if found.
+        /// </summary>
+        /// <param name="url"></param>
+        /// <returns></returns>
+        public string cmd_blRemove(string url)
+        {
+            try
+            {
+                int urlResult = listBlacklist.FindIndex(x => x.url == url);
+                if (urlResult >= 0)
+                {
+                    //found a match
+                    listBlacklist.RemoveAt(urlResult);
+                    saveBlacklist();
+
+                    return "match";
+                }
+                else
+                {
+                    //this should be -1 means no match found
+                    return "noMatch";
+                }
+            }
+            catch (Exception e)
+            {
+                //something went wrong or we didnt find a value in the list.. chances are no value found.
+                Console.WriteLine("Error: cmd_blRemove genereted a error.\rError message\r" + e);
+                return "error";
+            }
+        }
+
+        /// <summary>
+        /// Makes a readable version of the json file.
+        /// returns True if it worked
+        /// returns false if failed.
+        /// </summary>
+        /// <returns></returns>
+        public bool cmd_blexport()
+        {
+            try
+            {
+                string loc = "blacklist_export.json";
+                string json = JsonConvert.SerializeObject(listBlacklist, Formatting.Indented);
+
+                if (!File.Exists(loc))
+                    File.Create(loc).Close();
+
+                File.WriteAllText(loc, json);
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Error running blExport.  Error dump: " + e);
+                return false;
+            }
 
         }
 
@@ -524,61 +679,12 @@ namespace discordMusicBot.src
             return value;
         }
 
-        /// <summary>
-        /// Makes a readable version of the json file.
-        /// returns true if it work
-        /// returns false if it failed
-        /// </summary>
-        /// <returns></returns>
-        public bool cmd_plexport()
+        public void cmd_queue()
         {
-            try
-            {
-                string loc = "playlist_export.json";
-                string json = JsonConvert.SerializeObject(listLibrary, Formatting.Indented);
-
-                if (!File.Exists(loc))
-                    File.Create(loc).Close();
-
-                File.WriteAllText(loc, json);
-
-                return true;
-            }
-            catch(Exception e)
-            {
-                Console.WriteLine("Error running plExport.  Error dump: " + e);
-                return false;
-            }
 
         }
 
-        /// <summary>
-        /// Makes a readable version of the json file.
-        /// returns True if it worked
-        /// returns false if failed.
-        /// </summary>
-        /// <returns></returns>
-        public bool cmd_blexport()
-        {
-            try
-            {
-                string loc = "blacklist_export.json";
-                string json = JsonConvert.SerializeObject(listBlacklist, Formatting.Indented);
 
-                if (!File.Exists(loc))
-                    File.Create(loc).Close();
-
-                File.WriteAllText(loc, json);
-
-                return true;
-            }
-            catch(Exception e)
-            {
-                Console.WriteLine("Error running blExport.  Error dump: " + e);
-                return false;
-            }
-
-        }
 
     }
 }

@@ -29,7 +29,7 @@ namespace discordMusicBot.src.Modules
             {
                 _client.GetService<CommandService>().CreateCommand(_config.Prefix + "plupdate")
                     .Alias("plupdate")
-                    .Description("Goes out and fetches our google doc playlist file and updates the local copy.\r Permissions: Mods")
+                    .Description("Goes out and fetches our google doc playlist file and updates the local copy.\rPermissions: Mods")
                     .Do(async e =>
                     {
                         await e.Channel.SendMessage($"Please wait... fetching the file");
@@ -65,7 +65,7 @@ namespace discordMusicBot.src.Modules
 
                 _client.GetService<CommandService>().CreateCommand(_config.Prefix + "np")
                     .Alias("np")
-                    .Description("Returns infomation of curren playing track.\rPermissions: Everyone")
+                    .Description("Returns infomation of current playing track.\rPermissions: Everyone")
                     .Do(async e =>
                     {
                         string[] result = _playlist.cmd_np();
@@ -80,8 +80,25 @@ namespace discordMusicBot.src.Modules
                         }
                     });
 
+                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "queue")
+                    .Alias("queue")
+                    .Description("Returns infomation of currently queued tacks.\rPermissions: Everyone")
+                    .Do(async e =>
+                    {
+                        string[] result = _playlist.cmd_np();
+
+                        if (result[0] == null)
+                        {
+                            await e.Channel.SendMessage($"Sorry but a song is not currently playing.");
+                        }
+                        else
+                        {
+                            await e.Channel.SendMessage($"Track currently playing\rTitle: " + result[0] + "\rURL: " + result[1] + "\rUser: " + result[2] + "\rSource: " + result[3]);
+                        }
+                    });
+
                 _client.GetService<CommandService>().CreateCommand(_config.Prefix + "plAdd")
-                    .Alias("plAdd")
+                    .Alias(new string[] { "plAdd", "pla" })
                     .Description("Adds a url to the playlist file.\rPermissions: Mods")
                     .Parameter("url", ParameterType.Optional)
                     .Do(async e =>
@@ -91,21 +108,57 @@ namespace discordMusicBot.src.Modules
                             await e.Channel.SendMessage($"@{e.User.Name}, Unable to add to the playlist if you dont give me a url.");
                             return;
                         }
-
-                        Message[] mess;
-
-                        mess = await e.Channel.DownloadMessages(1);
-
+                        
+                        Message[] mess = await e.Channel.DownloadMessages(1);
                         await e.Channel.DeleteMessages(mess);
                         
                         string title = _playlist.cmd_plAdd(e.User.Name, e.GetArg("url"));
 
-                        await e.Channel.SendMessage($"@{e.User.Name}\rTitle: " + title + "\rHas been added to the playlist file.");
-                        Console.WriteLine($"{e.User.Name} added " + title + " to the playlist.json file.");
+                        if (title == "dupe")
+                        {
+                            await e.Channel.SendMessage($"{e.User.Name},\rI found this url already in the list. :smile:\rNo change was made.");
+                        }
+                        else
+                        {
+                            await e.Channel.SendMessage($"{e.User.Name},\rTitle: {title}\rHas been added to the playlist file.");
+                            Console.WriteLine($"{e.User.Name} added {title} to the playlist.json file.");
+                        }
+                        
+                    });
+
+                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "plRemove")
+                    .Alias(new string[] { "plRemove", "plr" })
+                    .Description("Removes a url to the playlist file.\rPermissions: Mods")
+                    .Parameter("url", ParameterType.Optional)
+                    .Do(async e =>
+                    {
+                        if (e.GetArg("url") == "")
+                        {
+                            await e.Channel.SendMessage($"@{e.User.Name}, Unable to remove the url from the playlist if you dont give me a url.");
+                            return;
+                        }
+
+                        Message[] mess = await e.Channel.DownloadMessages(1);
+                        await e.Channel.DeleteMessages(mess);
+
+                        string url = _playlist.cmd_plRemove(e.GetArg("url"));
+
+                        if (url == "match")
+                        {
+                            downloader _downloader = new downloader();
+                            string title = _downloader.returnYoutubeTitle(e.GetArg("url"));
+                            await e.Channel.SendMessage($"{e.User.Name},\rTitle: {title}\rWas removed from the playlist.");
+                            Console.WriteLine($"{e.User.Name} removed {title} from the playlist.json file.");
+                        }
+                        else
+                        {
+                            await e.Channel.SendMessage($"{e.User.Name},\rUnable to find the song in the playlist.");
+                        }
+
                     });
 
                 _client.GetService<CommandService>().CreateCommand(_config.Prefix + "blAdd")
-                    .Alias("blAdd")
+                    .Alias(new string[] { "blAdd", "bla"})
                     .Description("Adds a url to the blacklist file.\rPermissions: Mods")
                     .Parameter("url", ParameterType.Optional)
                     .Do(async e =>
@@ -118,16 +171,52 @@ namespace discordMusicBot.src.Modules
 
                         //make the var we will store the messages in from the server
                         Message[] mess = await e.Channel.DownloadMessages(1);
-
                         //send delete command.  THis will delete the message that the user sent with the url
                         await e.Channel.DeleteMessages(mess);
-
                         //parse the url and get the infomation then append to the blacklist.json
                         string title = _playlist.cmd_blAdd(e.User.Name, e.GetArg("url"));
 
-                        //send the infomation back to the user letting them know we added it to the blacklist.
-                        await e.Channel.SendMessage($"{e.User.Name}\rTitle: " + title + "\rHas been added to the blacklist file.");
-                        Console.WriteLine($"{e.User.Name} added " + title + " to the blacklist.json file.");
+                        if(title == "dupe")
+                        {
+                            await e.Channel.SendMessage($"{e.User.Name},\rI found this url already in the list. :smile:\rNo change was made.");
+                        }
+                        else
+                        {
+                            //send the infomation back to the user letting them know we added it to the blacklist.
+                            await e.Channel.SendMessage($"{e.User.Name}\rTitle: " + title + "\rHas been added to the blacklist file.");
+                            Console.WriteLine($"{e.User.Name} added " + title + " to the blacklist.json file.");
+                        }
+                    });
+
+                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "blRemove")
+                    .Alias(new string[] { "blRemove", "blr" })
+                    .Description("Removes a url to the blacklist file.\rPermissions: Mods")
+                    .Parameter("url", ParameterType.Optional)
+                    .Do(async e =>
+                    {
+                        if (e.GetArg("url") == "")
+                        {
+                            await e.Channel.SendMessage($"@{e.User.Name}, Unable to remove the url from the blacklist if you dont give me a url.");
+                            return;
+                        }
+
+                        Message[] mess = await e.Channel.DownloadMessages(1);
+                        await e.Channel.DeleteMessages(mess);
+
+                        string url = _playlist.cmd_blRemove(e.GetArg("url"));
+
+                        if (url == "match")
+                        {
+                            downloader _downloader = new downloader();
+                            string title = _downloader.returnYoutubeTitle(e.GetArg("url"));
+                            await e.Channel.SendMessage($"{e.User.Name},\rTitle: {title}\rWas removed from the blacklist.");
+                            Console.WriteLine($"{e.User.Name} removed {title} from the blacklist.json file.");
+                        }
+                        else
+                        {
+                            await e.Channel.SendMessage($"{e.User.Name},\rUnable to find the song in the blacklist.");
+                        }
+
                     });
 
             });

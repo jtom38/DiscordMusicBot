@@ -33,9 +33,10 @@ namespace discordMusicBot.src.Modules
                     .Parameter("count", ParameterType.Optional)
                     .Do(async e =>
                     {
+
                         if (e.GetArg("count") == "")
                         {
-                            await e.Channel.SendMessage($"@{e.User.Name}, Cant delete if you dont tell me how many to remove..");
+                            await e.Channel.SendMessage($"@ Cant delete if you dont tell me how many to remove..");
                             return;
                         }
 
@@ -55,7 +56,7 @@ namespace discordMusicBot.src.Modules
                     });
 
                 _client.GetService<CommandService>().CreateCommand(_config.Prefix + "plexport")
-                    .Alias("plexport")
+                    .Alias(new string[] { "plexport", "ple" })
                     .Description("Exports current playlist \rPermission: Mods")
                     .Do(async e =>
                     {
@@ -71,7 +72,7 @@ namespace discordMusicBot.src.Modules
                     });
 
                 _client.GetService<CommandService>().CreateCommand(_config.Prefix + "blexport")
-                    .Alias("blexport")
+                    .Alias(new string[] { "blexport", "ble" })
                     .Description("Exports current blacklist\rPermission: Mods")
                     .Do(async e =>
                     {
@@ -109,14 +110,14 @@ namespace discordMusicBot.src.Modules
                         //await e.Channel.SendFile("blacklist.json");
                     });
 
-                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "vol")
+                _client.GetService<CommandService>().CreateCommand("vol")
                     .Alias("vol")
                     .Description("Adjusts the default volume from the bot.\rExample: !vol +10\rPermission: Everyone")
                     .Parameter("vol", ParameterType.Optional)
                     .Do(async e =>
                     {
                         
-                        if (e.GetArg("roomID") == null)
+                        if (e.GetArg("vol") == null)
                         {
                             await e.Channel.SendMessage("Oops, you forgot to give me the room ID to make my home by default.");
                             return;
