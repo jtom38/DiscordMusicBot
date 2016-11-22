@@ -7,6 +7,7 @@ using Discord;
 using Discord.Commands;
 using Discord.Audio;
 using Discord.Modules;
+using System.IO;
 
 namespace discordMusicBot.src.Modules
 {
@@ -23,7 +24,7 @@ namespace discordMusicBot.src.Modules
             _manager = manager;
             _client = manager.Client;
 
-            _config = configuration.LoadFile("config.json");
+            _config = configuration.LoadFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
 
             manager.CreateCommands("", group =>
             {
@@ -63,7 +64,7 @@ namespace discordMusicBot.src.Modules
                         bool result = _playlist.cmd_plexport();
                         if(result == true)
                         {
-                            await e.Channel.SendFile("playlist_export.json");
+                            await e.Channel.SendFile(Directory.GetCurrentDirectory() + "\\configs\\playlist_export.json");
                         }
                         else
                         {
@@ -80,7 +81,7 @@ namespace discordMusicBot.src.Modules
 
                         if(result == true)
                         {
-                            await e.Channel.SendFile("blacklist_export.json");
+                            await e.Channel.SendFile(Directory.GetCurrentDirectory() + "\\configs\\blacklist_export.json");
                         }
                         else
                         {
@@ -103,7 +104,7 @@ namespace discordMusicBot.src.Modules
                         ulong id = Convert.ToUInt64(e.GetArg("roomID"));
 
                         _config.defaultRoomID = id;
-                        _config.SaveFile("config.json");
+                        _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
 
                         await e.Channel.SendMessage("I have updated the config file for you.");
                         Console.WriteLine("Config.json update: defaultRoomID = " + id);
@@ -170,11 +171,25 @@ namespace discordMusicBot.src.Modules
                         }
 
                         _config.volume = newValue;
-                        _config.SaveFile("config.json");
+                        _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
 
                         await e.Channel.SendMessage($"{e.User.Name} changed default volume from "+ oldVolume + " to " +newValue + ".");
                         Console.WriteLine("{e.User.Name} changed default volume from " + oldVolume + " to " + newValue + ".");
                     });
+
+                _client.GetService<CommandService>().CreateCommand("halt")
+                    .Alias("halt")
+                    .Description("Shuts down the bot.\rPermission: Owner")
+                    .Do(async e =>
+                    {
+
+                        await e.Channel.SendMessage($":wave: :zzz:");
+
+                        await e.Server.Client.Disconnect();
+
+                        Environment.Exit(0);
+                    });
+
 
             });
         }

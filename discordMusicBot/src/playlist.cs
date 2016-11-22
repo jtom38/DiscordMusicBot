@@ -32,6 +32,8 @@ namespace discordMusicBot.src
         public static string npUser { get; set; }
         public static string npUrl { get; set; }
         public static string npSource { get; set; }
+        public static string[] npLike { get; set; }
+        public static string[] npSkip { get; set; }
 
         private DiscordClient _client;
         private ModuleManager _manager;
@@ -45,7 +47,7 @@ namespace discordMusicBot.src
         {
             try
             {
-                string loc = "playlist.json";
+                string loc = Directory.GetCurrentDirectory() + "\\configs\\playlist.json";
                 string json = JsonConvert.SerializeObject(listLibrary);
 
                 if (!File.Exists(loc))
@@ -63,9 +65,9 @@ namespace discordMusicBot.src
         {
             try
             {
-                if (File.Exists("playlist.json"))
+                if (File.Exists(Directory.GetCurrentDirectory() + "\\configs\\playlist.json"))
                 {
-                    string json = File.ReadAllText("playlist.json");
+                    string json = File.ReadAllText(Directory.GetCurrentDirectory() + "\\configs\\playlist.json");
 
                     listLibrary = JsonConvert.DeserializeObject<List<ListPlaylist>>(json);
                 }
@@ -84,7 +86,7 @@ namespace discordMusicBot.src
         {
             try
             {
-                string loc = "blacklist.json";
+                string loc = Directory.GetCurrentDirectory() + "\\configs\\blacklist.json";
                 string json = JsonConvert.SerializeObject(listBlacklist, Formatting.Indented);
 
                 if (!File.Exists(loc))
@@ -103,9 +105,9 @@ namespace discordMusicBot.src
         {
             try
             {
-                if (File.Exists("blacklist.json"))
+                if (File.Exists(Directory.GetCurrentDirectory() + "\\configs\\blacklist.json"))
                 {
-                    string json = File.ReadAllText("blacklist.json");
+                    string json = File.ReadAllText(Directory.GetCurrentDirectory() + "\\configs\\blacklist.json");
 
                     listBlacklist = JsonConvert.DeserializeObject<List<ListPlaylist>>(json);
                 }
@@ -171,7 +173,16 @@ namespace discordMusicBot.src
                 return null;
             }
 
-            //5. Return the value back to be submiited to queue
+            //5 Need to check Likes
+
+            //6 Need to check skips
+
+            //7. Return the value back to be submiited to queue
+            npTitle = title;
+            npUser = user;
+            npUrl = url;
+            npSource = source;
+            //npLike = 
             string[] returnValue = { title, user, url, source };
             return returnValue;
         }
@@ -200,7 +211,7 @@ namespace discordMusicBot.src
             // extract the values
             if(listSubmitted.Count >= 1)
             {
-                string[] value = { listLibrary[0].title, listLibrary[0].user, listLibrary[0].url, "Submitted" };
+                string[] value = { listSubmitted[0].title, listSubmitted[0].user, listSubmitted[0].url, "Submitted" };
                 return value;
             }
             else
@@ -208,6 +219,36 @@ namespace discordMusicBot.src
                 return null;
             }
 
+        }
+
+        /// <summary>
+        /// Used to remove the url submitted from the listSubmitted queue.
+        /// </summary>
+        /// <param name="url"></param>
+        /// <returns></returns>
+        public bool removeTrackSubmitted(string url)
+        {
+            try
+            {
+                var urlResult = listSubmitted.FindIndex(x => x.url == url);
+                if(urlResult != -1)
+                {
+                    //remove the track from the list
+                    listSubmitted.RemoveAt(urlResult);
+                    return true;
+                }
+                else
+                {
+                    // shouldnt even hit this but you know do nothing
+                    return false;
+                }
+            }
+            catch
+            {
+                // something broke removing a track
+                return false;
+            }
+            
         }
 
         /// <summary>
@@ -254,7 +295,7 @@ namespace discordMusicBot.src
             //get the 10% of the library
             double threshold = listLibrary.Count * 0.1;
 
-            Console.WriteLine("beenPlayed threshhold" + threshold);
+            Console.WriteLine("Debug: beenPlayed threshhold " + threshold);
 
             //get the count of items in listBeenPlayed
             if(listBeenPlayed.Count >= threshold)
@@ -283,7 +324,7 @@ namespace discordMusicBot.src
         private bool checkBeenPlayed(string title, string url)
         {
             //check to make sure it wasnt in the beenPlayed list
-            var urlResult = listSubmitted.Find(x => x.url == url);
+            var urlResult = listBeenPlayed.Find(x => x.url == url);
 
             //if not null, we found a match on the name or the url
             //using try catch given when it parses a null value it hard errors, this catches it and returns the value
@@ -330,19 +371,50 @@ namespace discordMusicBot.src
                     npUrl = parsedTrack[2];
                     npSource = parsedTrack[3];
 
-                    await _player.SendAudio(file[2], voiceChannel, songActive, _client);
+                    await _player.SendAudio(file[2], voiceChannel, _client);
 
                     //if a user submitted the song remove it from the disk
-                    if(parsedTrack[3] == "Submitted")
+                    if(npSource == "Submitted")
                     {
                         File.Delete(file[2]);
+                        removeTrackSubmitted(npUrl);
                     }
 
-                    addBeenPlayed(parsedTrack[0], parsedTrack[2]);
+                    addBeenPlayed(npTitle, npUrl);
 
                 }
             }
         } 
+
+
+        public string cmd_play(string url, string user)
+        {
+            try
+            {
+                string title = _downloader.returnYoutubeTitle(url);
+
+                listSubmitted.Add(new ListPlaylist
+                {
+                    title = title,
+                    url = url,
+                    user = user
+                });
+
+                int total = listSubmitted.Count;
+
+                int position = listSubmitted.FindIndex(x => x.url == url);
+
+                string value = $"Your request is song number {position + 1}/{total}";
+
+                return value;
+            }
+            catch(Exception e)
+            {
+                //got a erro
+                Console.WriteLine($"Error with playlist.cmd_play.  Dump: {e}");
+                return null;
+            }           
+        }
         
         /// <summary>
         /// Deperacted
@@ -354,7 +426,7 @@ namespace discordMusicBot.src
         {
             string returnText = null;
 
-            _config = configuration.LoadFile("config.json");
+            _config = configuration.LoadFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
 
             //this is slop atm I know.  I need to think of a better way to look for a url compared to a junk text
             if (_config.PlaylistURL.Contains("docs.google.com"))
@@ -507,7 +579,7 @@ namespace discordMusicBot.src
         {
             try
             {
-                string loc = "playlist_export.json";
+                string loc = Directory.GetCurrentDirectory() + "\\configs\\playlist_export.json";
                 string json = JsonConvert.SerializeObject(listLibrary, Formatting.Indented);
 
                 if (!File.Exists(loc))
@@ -599,7 +671,7 @@ namespace discordMusicBot.src
         {
             try
             {
-                string loc = "blacklist_export.json";
+                string loc = Directory.GetCurrentDirectory() + "\\configs\\blacklist_export.json";
                 string json = JsonConvert.SerializeObject(listBlacklist, Formatting.Indented);
 
                 if (!File.Exists(loc))
@@ -679,12 +751,37 @@ namespace discordMusicBot.src
             return value;
         }
 
-        public void cmd_queue()
+        /// <summary>
+        /// Used to display the currently queued up tracks by the users
+        /// </summary>
+        public string cmd_queue()
         {
+            try
+            {
+                if (listSubmitted.Count >= 1)
+                {
+                    string result = null;
+
+                    //we have tracks submitted
+                    for (int i = 0; i < listSubmitted.Count; i++)
+                    {
+                        result = result + $"Title: {listSubmitted[i].title} added by {listSubmitted[i].user}\r";
+                    }
+
+                    return result;
+                }
+                else
+                {
+                    // we have nothing in queue.
+                    return null;
+                }
+            }
+            catch
+            {
+                return null;
+            }
 
         }
-
-
 
     }
 }

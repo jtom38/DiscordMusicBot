@@ -5,6 +5,9 @@ using Discord.Commands.Permissions.Visibility;
 using Discord.Modules;
 using Discord.Audio;
 using System;
+using System.Threading.Tasks;
+using discordMusicBot.src;
+using System.IO;
 
 namespace discordMusicBot.src.Modules
 {
@@ -14,28 +17,29 @@ namespace discordMusicBot.src.Modules
         private DiscordClient _client;
         private configuration _config;
 
-        private bool playingSong = false;
 
         void IModule.Install(ModuleManager manager)
         {
             _manager = manager;
             _client = manager.Client;
+
             playlist _playlist = new playlist();
             downloader _downloader = new downloader();
+            player _player = new player();
             
             manager.CreateCommands("", group =>
             {
                 //group.PublicOnly();
 
                 //get the config file
-                _config = configuration.LoadFile("config.json");
+                _config = configuration.LoadFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
 
                 _client.GetService<CommandService>().CreateCommand(_config.Prefix + "test")
                     .Alias("test")
                     .Description("Placeholder for testing.")                   
                     .Do(async e =>
                     {
-                        string[] result = _playlist.cmd_np();
+                        //string[] result = _playlist.cmd_np();
 
                         await e.Channel.SendMessage("placeholder.");
                     });
@@ -52,43 +56,29 @@ namespace discordMusicBot.src.Modules
                             return;
                         }
 
-                        //check to see if we are playing a song already
-                        if(playingSong == true)
-                        {
-                            return;
-                        }
+                        //add the url to the listSubmitted 
+                        string result = _playlist.cmd_play(e.GetArg("url"), e.User.Name);
 
-                        //0 = default
-                        Channel voiceChan = e.Server.GetChannel(0);
-                        if (_config.defaultRoomID == 0)
+                        await e.Channel.SendMessage(result);
+
+                    });
+
+                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "skip")
+                    .Alias("skip")
+                    .Description("Adds the requested song to the queue.\rPermissions: Everyone")
+                    .Do(async e =>
+                    {
+                        bool result = _player.cmd_skip();
+
+                        if(result == true)
                         {
-                            voiceChan = e.Server.GetChannel(_config.defaultRoomID);
-                            await voiceChan.JoinAudio();
+                            await e.Channel.SendMessage($"Skipping the track.");
                         }
                         else
                         {
-                            voiceChan = e.User.VoiceChannel;
-                            await voiceChan.JoinAudio();
+                            await e.Channel.SendMessage($"Nothing is currently playing, unable to skip.");
                         }
-
-                        /// <summary>
-                        ///     File returns the following values currently 
-                        ///     [0] Title
-                        ///     [1] fileName
-                        ///     [2] Full path to file
-                        ///     [3] Bitrate
-                        /// </summary>
-
-                        string[] responce = _downloader.download_audio(e.GetArg("url"));
-
-                        playingSong = true;
-
-                        _client.SetGame("Playing " + responce[2]);
-                        player _player = new player();
-                        await _player.SendAudio(responce[2], voiceChan, playingSong, _client);
-
-                        playingSong = false;
-                        //await e.Channel.SendMessage($" @{e.User.Name} I have queued up " + responce +" for you. :smile:");
+                        
                     });
 
                 _client.GetService<CommandService>().CreateCommand(_config.Prefix + "summon")

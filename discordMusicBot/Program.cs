@@ -16,6 +16,8 @@ namespace discordMusicBot
     public class Program
     {
 
+        public static bool restartFlag { get; set; }
+
         static void Main(string[] args) => new Program().Start();
 
         private DiscordClient _client;
@@ -23,14 +25,21 @@ namespace discordMusicBot
 
         playlist _playlist = new playlist();
 
-        const string configFile = "config.json";
+        public void loopRestart()
+        {
+            restartFlag = false;
+            while(restartFlag == false)
+            {
+                Start();
+            }
+        }
 
         public void Start()
         {
 
             startupCheck();
 
-            _config = configuration.LoadFile(configFile);
+            _config = configuration.LoadFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
 
             _client = new DiscordClient(x =>
             {
@@ -66,6 +75,8 @@ namespace discordMusicBot
             _playlist.loadPlaylist();
             _playlist.loadBlacklist();
 
+            eventUserMove();
+
             //turns the bot on and connects to discord.
             _client.ExecuteAndWait(async () =>
             {
@@ -88,9 +99,38 @@ namespace discordMusicBot
             });
         }
 
+        private void eventUserMove()
+        {
+            _client.UserUpdated += async (s, e) =>
+            {
+                //gives us more infomation for like what room the bot is in
+                var bot = e.Server.FindUsers(_client.CurrentUser.Name).FirstOrDefault().VoiceChannel;
+
+                try
+                {
+                    List<User> userCount = bot.Users.ToList();
+
+                    if (userCount.Count <= 1)
+                    {
+                        //Console.WriteLine("Bot is alone on a room.  Stop music.");
+                    }
+                    else
+                    {
+                        //Console.WriteLine("At least one person is in the room. Play Music.");
+                    }
+                }
+                catch
+                {
+                    //this will catch if the bot isnt summoned given bot.user.tolist will pull a null
+                }
+
+            };
+        }
+
         private void startupCheck()
         {
             makeCacheFolder();
+            makeConfigFolder();
             checkConfigFile();
             checkToken();
             checkPlaylistURL();
@@ -109,18 +149,40 @@ namespace discordMusicBot
             }        
         }
 
+        private void makeConfigFolder()
+        {
+            if (Directory.Exists("configs"))
+            {
+                return;
+            }
+            else
+            {
+                Directory.CreateDirectory("configs");
+            }
+        }
+
         private void checkConfigFile()
         {
             try
             {
-                _config = configuration.LoadFile(configFile);
+                var t = Directory.GetCurrentDirectory();
+                if(File.Exists(Directory.GetCurrentDirectory() + "\\configs\\config.json"))
+                {
+                    _config = configuration.LoadFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+                }
+                else
+                {
+                    _config = new configuration();
+                    _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+                }
+                
 
             }
             catch
             {
                 //unable to find the file
                 _config = new configuration();
-                _config.SaveFile(configFile);
+                _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
             }
         }
 
@@ -129,7 +191,7 @@ namespace discordMusicBot
             //check for the bot token
             try
             {
-                _config = configuration.LoadFile(configFile);
+                _config = configuration.LoadFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
                 if(_config.Token != "")
                 {
                     Console.WriteLine("Token has been found in config.json");
@@ -140,7 +202,7 @@ namespace discordMusicBot
                     Console.Write("Token: ");
 
                     _config.Token = Console.ReadLine();                     // Read the user's token from the console.
-                    _config.SaveFile(configFile);
+                    _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
                 }          
             }
             catch(Exception e)
@@ -154,7 +216,7 @@ namespace discordMusicBot
         {
             try
             {
-                _config = configuration.LoadFile(configFile);
+                _config = configuration.LoadFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
                 if (_config.PlaylistURL != "")
                 {
                     Console.WriteLine("PlaylistURL has been found in config.json");
@@ -165,7 +227,7 @@ namespace discordMusicBot
                     Console.Write("PlaylistURL: ");
 
                     _config.PlaylistURL = Console.ReadLine();                     // Read the user's token from the console.
-                    _config.SaveFile(configFile);
+                    _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
                 }
             }
             catch (Exception e)

@@ -7,6 +7,7 @@ using Discord;
 using Discord.Commands;
 using Discord.Modules;
 using discordMusicBot.src;
+using System.IO;
 
 namespace discordMusicBot.src.Modules
 {
@@ -23,7 +24,7 @@ namespace discordMusicBot.src.Modules
 
             playlist _playlist = new playlist();
 
-            _config = configuration.LoadFile("config.json");
+            _config = configuration.LoadFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
 
             manager.CreateCommands("", group =>
             {
@@ -85,11 +86,11 @@ namespace discordMusicBot.src.Modules
                     .Description("Returns infomation of currently queued tacks.\rPermissions: Everyone")
                     .Do(async e =>
                     {
-                        string[] result = _playlist.cmd_np();
+                        string result = _playlist.cmd_queue();
 
-                        if (result[0] == null)
+                        if (result == null)
                         {
-                            await e.Channel.SendMessage($"Sorry but a song is not currently playing.");
+                            await e.Channel.SendMessage($"Sorry nothing was submitted to the queue.");
                         }
                         else
                         {

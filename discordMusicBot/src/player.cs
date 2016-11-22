@@ -14,13 +14,15 @@ namespace discordMusicBot.src
     class player
     {
         //private DiscordClient _client; //load discord client info
-        private IAudioClient _nAudio; //load naudio client
+        private IAudioClient _nAudio; //load the discord audio client
         private configuration _config;
+      
+        public static bool playingSong { get; set; }      
 
         private float volume = .3f;
 
         //used to play the music to the room
-        public async Task SendAudio(string filepath, Channel voiceChannel, bool playingSong, DiscordClient _client)
+        public async Task SendAudio(string filepath, Channel voiceChannel, DiscordClient _client)
         {
             // When we use the !play command, it'll start this method
 
@@ -33,6 +35,8 @@ namespace discordMusicBot.src
             //try to find a way to tell if she is already in 1. connect to a voice room and 2 in your voice room
 
             _nAudio = await _client.GetService<AudioService>().Join(voiceChannel);
+
+            playingSong = true;
 
             // Simple try and catch.
             try
@@ -52,25 +56,28 @@ namespace discordMusicBot.src
                             byte[] buffer = new byte[blockSize];
                             int byteCount;
                             // Add in the "&& playingSong" so that it only plays while true. For our cheesy skip command.
-                            // AGAIN
-                            // WARNING
-                            // YOU NEED
-                            // vvvvvvvvvvvvvvv
-                            // opus.dll
-                            // libsodium.dll
-                            // ^^^^^^^^^^^^^^^
-                            // If you do not have these, this will not work.
-                            while ((byteCount = resampler.Read(buffer, 0, blockSize)) > 0 && playingSong) // Read audio into our buffer, and keep a loop open while data is present
+
+                            while ((byteCount = resampler.Read(buffer, 0, blockSize)) > 0 && playingSong == true) // Read audio into our buffer, and keep a loop open while data is present
                             {
-                                if (byteCount < blockSize)
+                                if(playingSong == false)
                                 {
-                                    // Incomplete Frame
-                                    for (int i = byteCount; i < blockSize; i++)
-                                        buffer[i] = 0;
+                                    _nAudio.Clear();
+                                }
+                                else
+                                {
+                                    if (byteCount < blockSize)
+                                    {
+                                        // Incomplete Frame
+                                        for (int i = byteCount; i < blockSize; i++)
+                                            buffer[i] = 0;
+                                    }
+
+                                    _nAudio.Send(buffer, 0, blockSize); // Send the buffer to Discord
                                 }
 
-                                _nAudio.Send(buffer, 0, blockSize); // Send the buffer to Discord
                             }
+                            
+
                         }
                     }
                 }
@@ -87,6 +94,27 @@ namespace discordMusicBot.src
         public float VolumeReturn()
         {
             return _config.volume;
+        }
+
+        /// <summary>
+        /// Sends the flag to skip the current track
+        /// </summary>
+        /// <returns>
+        ///     return True if it worked
+        ///     return false if it failed
+        /// </returns>
+        public bool cmd_skip()
+        {
+            if(playingSong == true)
+            {
+                playingSong = false;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+            
         }
 
     }
