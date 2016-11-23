@@ -35,6 +35,8 @@ namespace discordMusicBot.src
         public static string[] npLike { get; set; }
         public static string[] npSkip { get; set; }
 
+        public static bool libraryLoop { get; set; }
+
         private DiscordClient _client;
         private ModuleManager _manager;
         //private AudioExtensions _audio;
@@ -349,8 +351,8 @@ namespace discordMusicBot.src
             loadPlaylist();
             loadBlacklist();
 
-            bool songActive = true;
-            while(songActive == true)
+            libraryLoop = true;
+            while(libraryLoop == true)
             {
                 string[] parsedTrack = getTrack();
 
@@ -386,7 +388,6 @@ namespace discordMusicBot.src
             }
         } 
 
-
         public string cmd_play(string url, string user)
         {
             try
@@ -416,88 +417,6 @@ namespace discordMusicBot.src
             }           
         }
         
-        /// <summary>
-        /// Deperacted
-        /// used to pull down the autoplaylist.txt from google drive.
-        /// Not needed anymore given all file managment is done in discord.
-        /// </summary>
-        /// <returns></returns>
-        public string updatePlaylistFile()
-        {
-            string returnText = null;
-
-            _config = configuration.LoadFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
-
-            //this is slop atm I know.  I need to think of a better way to look for a url compared to a junk text
-            if (_config.PlaylistURL.Contains("docs.google.com"))
-            {
-                //logic
-                //check to see if we can get the file first
-                //if we have the file good, delete the old one and rename the new file
-                //pass to the function to 
-
-                //we have a url
-                using (WebClient download = new WebClient())
-                {
-                    string t = _config.PlaylistURL;
-                    try
-                    {
-                        download.DownloadFile(_config.PlaylistURL, "autoplaylist_download.txt");
-                    }
-                    catch (Exception e)
-                    {
-                        //failed to download the file
-                        Console.WriteLine("Failed to download autoplaylist.txt");
-                        Console.WriteLine(e);
-
-                        returnText = "Failed to download autoplaylist.txt.  Check the console for more info.";
-                        return returnText;
-                    }
-                }
-
-                //we would make it here if we where able to get the file.
-                //so we have the new file, purge the old one and rename the downloaded file
-
-                if (File.Exists("autoplaylist.txt"))
-                {
-                    try
-                    {
-                        //delete file?
-                        File.Delete("autoplaylist.txt");
-                                               
-                    }
-                    catch(Exception e)
-                    {
-                        Console.WriteLine("Error: Deleting autoplaylist.txt.");
-                        Console.WriteLine("Dump info: " + e);
-
-                        returnText = "Error: Failed to delete autoplaylist.txt";
-                        return returnText;
-                    }
-                }
-
-                try
-                {
-                    File.Move("autoplaylist_download.txt", "autoplaylist.txt");
-                    returnText = "Updated the playlist.";
-                    return returnText;
-                }
-                catch
-                {
-                    //failed to rename the downloaded file.
-                    returnText = "Error: Failed to rename autoplaylist.txt";
-                    return returnText;
-                }
-            }
-            else
-            {
-                //we have something wrong with the url
-                Console.WriteLine("Error: Failed to check the url in config.json.  Please check the string and try again.");
-                returnText = "Error: Failed to check the url in config.json.  Please check the string and try again.";
-                return returnText;
-            }
-        }
-
         /// <summary>
         /// Used to add a track to playlist.json.
         /// Will not add if dupe url is found.

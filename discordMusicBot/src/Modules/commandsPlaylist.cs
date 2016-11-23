@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using Discord.Commands.Permissions.Levels;
 using Discord.Modules;
 using discordMusicBot.src;
 using System.IO;
@@ -28,21 +29,10 @@ namespace discordMusicBot.src.Modules
 
             manager.CreateCommands("", group =>
             {
-                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "plupdate")
-                    .Alias("plupdate")
-                    .Description("Goes out and fetches our google doc playlist file and updates the local copy.\rPermissions: Mods")
-                    .Do(async e =>
-                    {
-                        await e.Channel.SendMessage($"Please wait... fetching the file");
-                        //playlist _playlist = new playlist();
-                        string responce = _playlist.updatePlaylistFile();
-                        
-                        await e.Channel.SendMessage(responce);
-                    });
-
                 _client.GetService<CommandService>().CreateCommand(_config.Prefix + "shuffle")
                     .Alias("shuffle")
                     .Description("Adds a url to the playlist file.\rPermissions: Everyone")
+                    .MinPermissions((int)PermissionLevel.GroupUsers)
                     .Do(async e =>
                     {
                         string result = _playlist.cmd_shuffle();
@@ -67,6 +57,7 @@ namespace discordMusicBot.src.Modules
                 _client.GetService<CommandService>().CreateCommand(_config.Prefix + "np")
                     .Alias("np")
                     .Description("Returns infomation of current playing track.\rPermissions: Everyone")
+                    .MinPermissions((int)PermissionLevel.GroupUsers)
                     .Do(async e =>
                     {
                         string[] result = _playlist.cmd_np();
@@ -84,6 +75,7 @@ namespace discordMusicBot.src.Modules
                 _client.GetService<CommandService>().CreateCommand(_config.Prefix + "queue")
                     .Alias("queue")
                     .Description("Returns infomation of currently queued tacks.\rPermissions: Everyone")
+                    .MinPermissions((int)PermissionLevel.GroupUsers)
                     .Do(async e =>
                     {
                         string result = _playlist.cmd_queue();
@@ -102,6 +94,7 @@ namespace discordMusicBot.src.Modules
                     .Alias(new string[] { "plAdd", "pla" })
                     .Description("Adds a url to the playlist file.\rPermissions: Mods")
                     .Parameter("url", ParameterType.Optional)
+                    .MinPermissions((int)PermissionLevel.GroupMods)
                     .Do(async e =>
                     {
                         if (e.GetArg("url") == "")
@@ -131,6 +124,7 @@ namespace discordMusicBot.src.Modules
                     .Alias(new string[] { "plRemove", "plr" })
                     .Description("Removes a url to the playlist file.\rPermissions: Mods")
                     .Parameter("url", ParameterType.Optional)
+                    .MinPermissions((int)PermissionLevel.GroupMods)
                     .Do(async e =>
                     {
                         if (e.GetArg("url") == "")
@@ -162,6 +156,7 @@ namespace discordMusicBot.src.Modules
                     .Alias(new string[] { "blAdd", "bla"})
                     .Description("Adds a url to the blacklist file.\rPermissions: Mods")
                     .Parameter("url", ParameterType.Optional)
+                    .MinPermissions((int)PermissionLevel.GroupMods)
                     .Do(async e =>
                     {
                         if (e.GetArg("url") == "")
@@ -193,6 +188,7 @@ namespace discordMusicBot.src.Modules
                     .Alias(new string[] { "blRemove", "blr" })
                     .Description("Removes a url to the blacklist file.\rPermissions: Mods")
                     .Parameter("url", ParameterType.Optional)
+                    .MinPermissions((int)PermissionLevel.GroupMods)
                     .Do(async e =>
                     {
                         if (e.GetArg("url") == "")

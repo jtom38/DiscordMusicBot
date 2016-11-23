@@ -97,7 +97,7 @@ namespace discordMusicBot.src
         }
 
         /// <summary>
-        /// Sends the flag to skip the current track
+        ///     Sends the flag to skip the current track
         /// </summary>
         /// <returns>
         ///     return True if it worked
@@ -117,5 +117,63 @@ namespace discordMusicBot.src
             
         }
 
+        /// <summary>
+        ///     Function sends the stop command to the player and autoplay loop.
+        /// </summary>
+        /// <returns>
+        ///     True = Value was changed to stop the loop
+        ///     False = The loop wasnt going already
+        /// </returns>
+        public bool cmd_stop()
+        {
+            if(playlist.libraryLoop == true)
+            {
+                DiscordClient _client = new DiscordClient();
+                _client.SetGame("");
+
+                //breaks the loop
+                playlist.libraryLoop = false;
+
+                //forces the current track playing to send the stop command.
+                playingSong = false;
+
+                return true;
+            }
+            else
+            {
+                //not doing anything for a reason.
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Sends the command to turn the autoplaylist back on.
+        /// </summary>
+        /// <returns>
+        ///     True = turned back on
+        ///     False = Either it was on already or error generated
+        /// </returns>
+        public bool cmd_resume()
+        {
+            //the autoplayer is turned off
+            try
+            {
+                if (playlist.libraryLoop == false)
+                {
+                    //turn it back on.
+                    //playlist _playlist = new playlist();
+                    playlist.libraryLoop = true;
+                    return true;
+                }
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine($"Error: player.cmd_resume generated a error.  Dump: {e}");
+                return false;
+            }
+
+
+            return false;
+        }
     }
 }

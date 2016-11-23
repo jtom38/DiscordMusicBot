@@ -5,30 +5,50 @@ namespace discordMusicBot.src
 {
     public class configuration
     {
-        /// <summary> Your bot's command prefix. Please don't pick `!`. </summary>
+        /// <summary> 
+        /// Your bot's command prefix. Please don't pick `!`. 
+        /// </summary>
         public char Prefix { get; set; }
-        /// <summary> Ids of users who will have owner access to the bot. </summary>
-        public ulong[] Owners { get; set; }
-        /// <summary> Your bot's login token. </summary>
+        /// <summary> 
+        /// Ids of users who will have owner access to the bot. 
+        /// </summary>
+        public ulong Owner { get; set; }
+        /// <summary> 
+        /// Your bot's login token. 
+        /// </summary>
         public string Token { get; set; }
-        /// <summary> The ID of the room the bot should bind to on startup </summary>
+        /// <summary> 
+        /// The ID of the room the bot should bind to on startup
+        /// </summary>
         public ulong[] BindToChannels { get; set; }
-        /// <summary> The URL for the public google doc to download. </summary>
-        public string PlaylistURL { get; set; }
-        /// <summary> Sets the default room by its ID value. </summary>
         public ulong defaultRoomID { get; set; }
+        /// <summary>
+        ///     idDefaultGroup = id for @everyone
+        /// </summary>
+        public ulong idDefaultGroup { get; set; }
+        /// <summary>
+        ///     idModsGroup = id for bot mods,  Custom group
+        /// </summary>
+        public ulong idModsGroup { get; set; }
+        /// <summary>
+        ///     idAdminGroup = id for bot admins/owners, Custom group.
+        /// </summary>
+        public ulong idAdminGroup { get; set; }
 
         public int volume { get; set; }
 
         public configuration()
         {
             Prefix = '$';
-            Owners = new ulong[] { 0 };
+            Owner = new ulong { };
             Token = "";
             BindToChannels = new ulong[] { 0 };
-            PlaylistURL = "";
             defaultRoomID = 0;
             volume = 0;
+            idDefaultGroup = new ulong { };
+            idModsGroup = new ulong { };
+            idAdminGroup = new ulong { };
+
         }
 
         /// <summary> Save the current configuration object to a file. </summary>

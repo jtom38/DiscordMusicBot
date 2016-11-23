@@ -7,12 +7,23 @@ using System.IO;
 using Discord;
 using Discord.Audio;
 using Discord.Commands;
+using Discord.Commands.Permissions.Levels;
+using Discord.Commands.Permissions.Visibility;
 using Discord.Modules;
 using discordMusicBot.src;
 using discordMusicBot.src.Modules;
 
 namespace discordMusicBot
 {
+    public enum PermissionLevel : byte
+    {
+        NoAccess = 0, //everyone
+        GroupUsers,
+        GroupMods, //Bot Mods
+        GroupAdmin, //Bot Admins
+        BotOwner, //Bot Owner (Global)
+    }
+
     public class Program
     {
 
@@ -45,7 +56,10 @@ namespace discordMusicBot
             {
                 x.AppName = "C# Music Bot";
                 x.AppUrl = "https://github.com/luther38/DiscordMusicBot";
-                x.LogLevel = LogSeverity.Info;
+                x.AppVersion = "0.1.0";
+                x.UsePermissionsCache = true;
+                //x.LogLevel = LogSeverity.Info;
+                x.LogHandler = OnLogMessage;
             })
             .UsingCommands(x =>
             {
@@ -62,7 +76,8 @@ namespace discordMusicBot
                 x.EnableEncryption = true;
                 x.Bitrate = AudioServiceConfig.MaxBitrate;
                 x.BufferLength = 10000;
-            });
+            })
+            .UsingPermissionLevels(PermissionResolver);
             
             //this CommandsModule is tied behind discordMusicBot.src
             _client.AddModule<commandsPlayer>("commandsPlayer", ModuleFilter.ServerWhitelist);
@@ -103,6 +118,7 @@ namespace discordMusicBot
         {
             _client.UserUpdated += async (s, e) =>
             {
+                player _player = new player();
                 //gives us more infomation for like what room the bot is in
                 var bot = e.Server.FindUsers(_client.CurrentUser.Name).FirstOrDefault().VoiceChannel;
 
@@ -113,10 +129,12 @@ namespace discordMusicBot
                     if (userCount.Count <= 1)
                     {
                         //Console.WriteLine("Bot is alone on a room.  Stop music.");
+                        _player.cmd_stop();
                     }
                     else
                     {
                         //Console.WriteLine("At least one person is in the room. Play Music.");
+                        //pushing this resume to beta... just need more time and refactoring to get this working the way I want.
                     }
                 }
                 catch
@@ -133,7 +151,7 @@ namespace discordMusicBot
             makeConfigFolder();
             checkConfigFile();
             checkToken();
-            checkPlaylistURL();
+            setOwnerID();
             checkCommandPrefix();
         }
 
@@ -211,28 +229,31 @@ namespace discordMusicBot
             }
         }
 
-        //might be dropped
-        private void checkPlaylistURL()
+        private void setOwnerID()
         {
             try
             {
                 _config = configuration.LoadFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
-                if (_config.PlaylistURL != "")
+                //ulong ownerID = _config.Owner;
+
+                if (Int64.Parse(_config.Owner.ToString()) != 0)
                 {
-                    Console.WriteLine("PlaylistURL has been found in config.json");
+                    Console.WriteLine("Owner ID has been found in config.json");
                 }
                 else
                 {
-                    Console.WriteLine("Please enter a valid url for a txt.  \r If you want to disable this type 'disable'.");
-                    Console.Write("PlaylistURL: ");
+                    Console.WriteLine("Please enter your user ID to take ownership of this bot.");
+                    Console.Write("ID: ");
 
-                    _config.PlaylistURL = Console.ReadLine();                     // Read the user's token from the console.
+                    ulong id = Convert.ToUInt64(Console.ReadLine());
+
+                    _config.Owner = id;
                     _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
                 }
             }
-            catch (Exception e)
+            catch(Exception error)
             {
-                Console.WriteLine("Error: " + e);
+                Console.WriteLine($"Error: {error}");
             }
         }
         
@@ -269,6 +290,7 @@ namespace discordMusicBot
             {
                 //TODO not sure why ReployError came back missing something.
                 //_client.ReplyError(e, msg);
+                e.Channel.SendMessage(msg);
                 _client.Log.Error("Command", msg);
             }
         }
@@ -340,6 +362,31 @@ namespace discordMusicBot
             text = builder.ToString();
             Console.ForegroundColor = color;
             Console.WriteLine(text);
+        }
+
+        private int PermissionResolver(User user, Channel channel)
+        {
+            List<Role> list = user.Roles.ToList();
+
+            if (user.Id == _config.Owner)
+                return (int)PermissionLevel.BotOwner;
+
+            if (user.Server != null)
+            {
+                //figure out Bot Admins
+                if (user.Roles.Any(x => x.Id == _config.idAdminGroup))
+                    return (int)PermissionLevel.GroupAdmin;
+
+                //figure out Bot Mods
+                if (user.Roles.Any(x => x.Id == _config.idModsGroup))
+                    return (int)PermissionLevel.GroupMods;
+
+                //figure out if they have permissions to the bot
+                if (user.Roles.Any(x => x.Id == _config.idDefaultGroup))
+                    return (int)PermissionLevel.GroupUsers;
+
+            }
+            return (int)PermissionLevel.NoAccess;
         }
 
     }
