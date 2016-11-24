@@ -124,12 +124,10 @@ namespace discordMusicBot.src
         ///     True = Value was changed to stop the loop
         ///     False = The loop wasnt going already
         /// </returns>
-        public bool cmd_stop()
+        public async Task<bool> cmd_stop()
         {
             if(playlist.libraryLoop == true)
             {
-                DiscordClient _client = new DiscordClient();
-                _client.SetGame("");
 
                 //breaks the loop
                 playlist.libraryLoop = false;

@@ -11,7 +11,7 @@ namespace discordMusicBot.src
 {
     class downloader
     {
-        public string[] download_audio(string url)
+        public async Task<string[]> download_audio(string url)
         {
             ///<summary>
             /// Documentation on how to use the libVideo
@@ -79,7 +79,7 @@ namespace discordMusicBot.src
         }
 
         //used in _playlist.cmd_plAdd()
-        public string returnYoutubeTitle(string url)
+        public async Task<string> returnYoutubeTitle(string url)
         {
             var youtube = YouTube.Default;
             var video = youtube.GetAllVideos(url);

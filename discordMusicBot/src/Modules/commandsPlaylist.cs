@@ -106,7 +106,7 @@ namespace discordMusicBot.src.Modules
                         Message[] mess = await e.Channel.DownloadMessages(1);
                         await e.Channel.DeleteMessages(mess);
                         
-                        string title = _playlist.cmd_plAdd(e.User.Name, e.GetArg("url"));
+                        string title = await _playlist.cmd_plAdd(e.User.Name, e.GetArg("url"));
 
                         if (title == "dupe")
                         {
@@ -141,7 +141,7 @@ namespace discordMusicBot.src.Modules
                         if (url == "match")
                         {
                             downloader _downloader = new downloader();
-                            string title = _downloader.returnYoutubeTitle(e.GetArg("url"));
+                            string title = await _downloader.returnYoutubeTitle(e.GetArg("url"));
                             await e.Channel.SendMessage($"{e.User.Name},\rTitle: {title}\rWas removed from the playlist.");
                             Console.WriteLine($"{e.User.Name} removed {title} from the playlist.json file.");
                         }
@@ -170,7 +170,7 @@ namespace discordMusicBot.src.Modules
                         //send delete command.  THis will delete the message that the user sent with the url
                         await e.Channel.DeleteMessages(mess);
                         //parse the url and get the infomation then append to the blacklist.json
-                        string title = _playlist.cmd_blAdd(e.User.Name, e.GetArg("url"));
+                        string title = await _playlist.cmd_blAdd(e.User.Name, e.GetArg("url"));
 
                         if(title == "dupe")
                         {
@@ -205,7 +205,7 @@ namespace discordMusicBot.src.Modules
                         if (url == "match")
                         {
                             downloader _downloader = new downloader();
-                            string title = _downloader.returnYoutubeTitle(e.GetArg("url"));
+                            string title = await _downloader.returnYoutubeTitle(e.GetArg("url"));
                             await e.Channel.SendMessage($"{e.User.Name},\rTitle: {title}\rWas removed from the blacklist.");
                             Console.WriteLine($"{e.User.Name} removed {title} from the blacklist.json file.");
                         }

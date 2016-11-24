@@ -45,7 +45,6 @@ namespace discordMusicBot.src.Modules
 
                         await userPM.SendMessage("test");
 
-
                         //await e.Channel.SendMessage("");
                     });
             
@@ -63,7 +62,7 @@ namespace discordMusicBot.src.Modules
                         }
 
                         //add the url to the listSubmitted 
-                        string result = _playlist.cmd_play(e.GetArg("url"), e.User.Name);
+                        string result = await _playlist.cmd_play(e.GetArg("url"), e.User.Name);
 
                         await e.Channel.SendMessage(result);
 
@@ -94,7 +93,7 @@ namespace discordMusicBot.src.Modules
                     .MinPermissions((int)PermissionLevel.GroupUsers)
                     .Do(async e =>
                     {
-                        bool result = _player.cmd_stop();
+                        bool result = await _player.cmd_stop();
 
                         if (result == true)
                         {
@@ -114,10 +113,18 @@ namespace discordMusicBot.src.Modules
                     .MinPermissions((int)PermissionLevel.GroupUsers)
                     .Do(async e =>
                     {
-                        //await _playlist.startAutoPlayList();
+                        try
+                        {
+                            Channel voiceChan = e.User.VoiceChannel;
+                            await voiceChan.JoinAudio();
+                            await _playlist.startAutoPlayList(voiceChan, _client);
 
-                        await e.Channel.SendMessage($"Activating the playlist again.");
+                            await e.Channel.SendMessage($"Activating the playlist again.");
+                        }
+                        catch
+                        {
 
+                        }
                     });
 
                 _client.GetService<CommandService>().CreateCommand(_config.Prefix + "summon")
@@ -125,22 +132,11 @@ namespace discordMusicBot.src.Modules
                     .Description("Summons bot to current voice channel and starts playing from the library.\rPermission: Everyone")
                     .MinPermissions((int)PermissionLevel.GroupUsers)
                     .Do(async e =>
-                    {
-                        //0 = default
-                        Channel voiceChan = e.Server.GetChannel(0);
-                        if (_config.defaultRoomID != 0)
-                        {
-                            voiceChan = e.Server.GetChannel(_config.defaultRoomID);
-                            await voiceChan.JoinAudio();
-                        }
-                        else
-                        {
-                            voiceChan = e.User.VoiceChannel;
-                            await voiceChan.JoinAudio();
-                        }
-
+                    {                       
                         try
                         {
+                            Channel voiceChan = e.User.VoiceChannel;
+                            await voiceChan.JoinAudio();
                             await _playlist.startAutoPlayList(voiceChan, _client);
                         }
                         catch(Exception t)

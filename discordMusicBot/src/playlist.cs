@@ -131,7 +131,7 @@ namespace discordMusicBot.src
         ///     null = reroll
         ///     !null = send to player
         /// </returns>
-        private string[] getTrack()
+        private bool getTrack()
         {
             string title = null;
             string user = null;
@@ -164,7 +164,7 @@ namespace discordMusicBot.src
             if(blacklist == true)
             {
                 //we found a match in the blacklist, need to reroll
-                return null;
+                return false;
             }
 
             //4. Check to see if has been played already
@@ -172,7 +172,7 @@ namespace discordMusicBot.src
             if(beenPlayed == true)
             {
                 //found a match in the beenPlayed list, need to reroll
-                return null;
+                return false;
             }
 
             //5 Need to check Likes
@@ -184,9 +184,7 @@ namespace discordMusicBot.src
             npUser = user;
             npUrl = url;
             npSource = source;
-            //npLike = 
-            string[] returnValue = { title, user, url, source };
-            return returnValue;
+            return true;
         }
 
         /// <summary>
@@ -354,24 +352,18 @@ namespace discordMusicBot.src
             libraryLoop = true;
             while(libraryLoop == true)
             {
-                string[] parsedTrack = getTrack();
+                bool result = getTrack();
 
-                if(parsedTrack == null)
+                if(result == false)
                 {
                     //reroll                   
                 }
                 else
                 {
                     //pass off to download the file for cache
-                    string[] file = _downloader.download_audio(parsedTrack[2]);
+                    string[] file = await _downloader.download_audio(npUrl);
 
-                    _client.SetGame(parsedTrack[0]);
-
-                    //update nowPlaying var for !np
-                    npTitle = parsedTrack[0];
-                    npUser = parsedTrack[1];
-                    npUrl = parsedTrack[2];
-                    npSource = parsedTrack[3];
+                    _client.SetGame(npTitle);
 
                     await _player.SendAudio(file[2], voiceChannel, _client);
 
@@ -388,11 +380,11 @@ namespace discordMusicBot.src
             }
         } 
 
-        public string cmd_play(string url, string user)
+        public async Task<string> cmd_play(string url, string user)
         {
             try
             {
-                string title = _downloader.returnYoutubeTitle(url);
+                string title = await _downloader.returnYoutubeTitle(url);
 
                 listSubmitted.Add(new ListPlaylist
                 {
@@ -424,7 +416,7 @@ namespace discordMusicBot.src
         /// <param name="user"></param>
         /// <param name="url"></param>
         /// <returns></returns>
-        public string cmd_plAdd(string user, string url)
+        public async Task<string> cmd_plAdd(string user, string url)
         {   
             //check to see if the url is found in listLibrary
             // -1 means it was not found   
@@ -435,7 +427,7 @@ namespace discordMusicBot.src
                 downloader _downloader = new downloader();
 
                 //didnt find it already in the list
-                string title = _downloader.returnYoutubeTitle(url);
+                string title = await _downloader.returnYoutubeTitle(url);
                 
                 listLibrary.Add(new ListPlaylist
                 {
@@ -522,7 +514,7 @@ namespace discordMusicBot.src
         /// <param name="user"> username of who sent it</param>
         /// <param name="url"> url of what to blacklist</param>
         /// <returns></returns>
-        public string cmd_blAdd(string user, string url)
+        public async Task<string> cmd_blAdd(string user, string url)
         {
             downloader _downloader = new downloader();
 
@@ -530,7 +522,7 @@ namespace discordMusicBot.src
 
             if(urlResult == -1)
             {
-                string title = _downloader.returnYoutubeTitle(url);
+                string title = await _downloader.returnYoutubeTitle(url);
 
                 listBlacklist.Add(new ListPlaylist
                 {

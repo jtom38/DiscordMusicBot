@@ -34,6 +34,7 @@ namespace discordMusicBot
         private DiscordClient _client;
         private configuration _config;
 
+        player _player = new player();
         playlist _playlist = new playlist();
 
         public void loopRestart()
@@ -90,7 +91,34 @@ namespace discordMusicBot
             _playlist.loadPlaylist();
             _playlist.loadBlacklist();
 
-            eventUserMove();
+            _client.UserUpdated += async (s, e) =>
+            {
+
+                //gives us more infomation for like what room the bot is in
+                var bot = e.Server.FindUsers(_client.CurrentUser.Name).FirstOrDefault().VoiceChannel;
+
+                try
+                {
+                    List<User> userCount = bot.Users.ToList();
+
+                    if (userCount.Count <= 1)
+                    {
+                        //Console.WriteLine("Bot is alone on a room.  Stop music.");
+                        _client.SetGame(null);
+                        await _player.cmd_stop();
+                    }
+                    else
+                    {
+                        //Console.WriteLine("At least one person is in the room. Play Music.");
+                        //pushing this resume to beta... just need more time and refactoring to get this working the way I want.
+                    }
+                }
+                catch
+                {
+                    //this will catch if the bot isnt summoned given bot.user.tolist will pull a null
+                }
+
+            };
 
             //turns the bot on and connects to discord.
             _client.ExecuteAndWait(async () =>
@@ -112,37 +140,6 @@ namespace discordMusicBot
                     }
                 }
             });
-        }
-
-        private void eventUserMove()
-        {
-            _client.UserUpdated += async (s, e) =>
-            {
-                player _player = new player();
-                //gives us more infomation for like what room the bot is in
-                var bot = e.Server.FindUsers(_client.CurrentUser.Name).FirstOrDefault().VoiceChannel;
-
-                try
-                {
-                    List<User> userCount = bot.Users.ToList();
-
-                    if (userCount.Count <= 1)
-                    {
-                        //Console.WriteLine("Bot is alone on a room.  Stop music.");
-                        _player.cmd_stop();
-                    }
-                    else
-                    {
-                        //Console.WriteLine("At least one person is in the room. Play Music.");
-                        //pushing this resume to beta... just need more time and refactoring to get this working the way I want.
-                    }
-                }
-                catch
-                {
-                    //this will catch if the bot isnt summoned given bot.user.tolist will pull a null
-                }
-
-            };
         }
 
         private void startupCheck()
