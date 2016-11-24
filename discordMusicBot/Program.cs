@@ -178,17 +178,18 @@ namespace discordMusicBot
 
         private void checkConfigFile()
         {
+            var configPath = Directory.GetCurrentDirectory() + "\\configs\\config.json";
+
             try
             {
-                var t = Directory.GetCurrentDirectory();
-                if(File.Exists(Directory.GetCurrentDirectory() + "\\configs\\config.json"))
+                if(File.Exists(configPath))
                 {
-                    _config = configuration.LoadFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+                    _config = configuration.LoadFile(configPath);
                 }
                 else
                 {
                     _config = new configuration();
-                    _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+                    _config.SaveFile(configPath);
                 }
                 
 
@@ -197,7 +198,7 @@ namespace discordMusicBot
             {
                 //unable to find the file
                 _config = new configuration();
-                _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+                _config.SaveFile(configPath);
             }
         }
 
