@@ -1,1 +1,0 @@
-E:\Sync\BTSync\Code\CSharp\discordMusicBot\discordMusicBot\bin\Debug\discordMusicBot.exe.config
