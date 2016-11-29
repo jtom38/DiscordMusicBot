@@ -29,98 +29,134 @@ namespace discordMusicBot.src.Modules
 
             manager.CreateCommands("", group =>
             {
-                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "rm")
+                _client.GetService<CommandService>().CreateCommand("rm")
                     .Alias("rm")
                     .Description("Removes messages from a text channel.\rExample: !rm 100\rPermissions: Everyone")
                     .Parameter("count", ParameterType.Optional)
                     .MinPermissions((int)PermissionLevel.GroupUsers)
                     .Do(async e =>
                     {
-
-                        if (e.GetArg("count") == "")
+                        try
                         {
-                            await e.Channel.SendMessage($"@ Cant delete if you dont tell me how many to remove..");
-                            return;
+                            if (e.GetArg("count") == "")
+                            {
+                                await e.Channel.SendMessage($"{e.User.Name}, Please give me the number of lines you want to remove.");
+                                return;
+                            }
+
+                            //convert the arg from string to int
+                            int counter = int.Parse(e.GetArg("count"));
+
+                            if (counter >= 101)
+                            {
+                                counter = 100;
+                            }
+
+                            //make var to store messages from the server
+                            Message[] messagesToDelete;
+
+                            //tell server to download messages to memory
+                            messagesToDelete = await e.Channel.DownloadMessages(counter);
+
+                            //tell bot to delete them from server
+                            await e.Channel.DeleteMessages(messagesToDelete);
+
+                            //await e.Channel.SendMessage($"@{e.User.Name}, I have added {e.GetArg("url")} to autoplaylist.txt.");
+                        }
+                        catch(Exception error)
+                        {
+                            Console.WriteLine($"Error generated with !plExport\rDump: {error}");
                         }
 
-                        //make var to store messages from the server
-                        Message[] messagesToDelete;
-
-                        //convert arg to int
-                        int count = int.Parse(e.GetArg("count"));
-
-                        //tell server to download messages to memory
-                        messagesToDelete = await e.Channel.DownloadMessages(count);
-
-                        //tell bot to delete them from server
-                        await e.Channel.DeleteMessages(messagesToDelete);
-
-                        //await e.Channel.SendMessage($"@{e.User.Name}, I have added {e.GetArg("url")} to autoplaylist.txt.");
                     });
 
-                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "plexport")
+                _client.GetService<CommandService>().CreateCommand("plexport")
                     .Alias(new string[] { "plexport", "ple" })
                     .Description("Exports current playlist \rPermission: Mods")
                     .MinPermissions((int)PermissionLevel.GroupMods)
                     .Do(async e =>
                     {
-                        bool result = _playlist.cmd_plexport();
-                        if(result == true)
+                        try
                         {
-                            Channel userPM = await e.User.CreatePMChannel();
+                            bool result = _playlist.cmd_plexport();
+                            if (result == true)
+                            {
+                                Channel userPM = await e.User.CreatePMChannel();
 
-                            await userPM.SendFile(Directory.GetCurrentDirectory() + "\\configs\\playlist_export.json");
-                            await e.Channel.SendMessage($"{e.User.Name},\rPlease check the PM that I sent you for your file request.");
-                            File.Delete(Directory.GetCurrentDirectory() + "\\configs\\playlist_export.json");
+                                await userPM.SendFile(Directory.GetCurrentDirectory() + "\\configs\\playlist_export.json");
+                                await e.Channel.SendMessage($"{e.User.Name},\rPlease check the PM that I sent you for your file request.");
+                                File.Delete(Directory.GetCurrentDirectory() + "\\configs\\playlist_export.json");
+                            }
+                            else
+                            {
+                                await e.Channel.SendMessage("Error generating file.\rPlease inform the server owner for more infomation.");
+                            }
                         }
-                        else
+                        catch(Exception error)
                         {
-                            await e.Channel.SendMessage("Error generating file.\rPlease inform the server owner for more infomation.");
-                        }                    
+                            Console.WriteLine($"Error generated with !plExport\rDump: {error}");
+                        }
+                   
                     });
 
-                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "blexport")
+                _client.GetService<CommandService>().CreateCommand("blexport")
                     .Alias(new string[] { "blexport", "ble" })
                     .Description("Exports current blacklist\rPermission: Mods")
                     .MinPermissions((int)PermissionLevel.GroupMods)
                     .Do(async e =>
                     {
-                        bool result = _playlist.cmd_blexport();
+                        try
+                        {
+                            bool result = _playlist.cmd_blexport();
 
-                        if(result == true)
-                        {
-                            Channel userPM = await e.User.CreatePMChannel();
-                            await userPM.SendFile(Directory.GetCurrentDirectory() + "\\configs\\blacklist_export.json");
-                            await e.Channel.SendMessage($"{e.User.Name},\rPlease check the PM that I sent you for your file request.");
-                            File.Delete(Directory.GetCurrentDirectory() + "\\configs\\blacklist_export.json");
+                            if (result == true)
+                            {
+                                Channel userPM = await e.User.CreatePMChannel();
+                                await userPM.SendFile(Directory.GetCurrentDirectory() + "\\configs\\blacklist_export.json");
+                                await e.Channel.SendMessage($"{e.User.Name},\rPlease check the PM that I sent you for your file request.");
+                                File.Delete(Directory.GetCurrentDirectory() + "\\configs\\blacklist_export.json");
+                            }
+                            else
+                            {
+                                await e.Channel.SendMessage("Error generating file.\rPlease inform the server owner for more infomation.");
+                            }
                         }
-                        else
+                        catch(Exception error)
                         {
-                            await e.Channel.SendMessage("Error generating file.\rPlease inform the server owner for more infomation.");
+                            Console.WriteLine($"Error generated with !blExport\rDump: {error}");
                         }
+
                     });
 
-                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "defaultRoom")
+                _client.GetService<CommandService>().CreateCommand("defaultRoom")
                     .Alias("defaultRoom")
                     .Description("Sets the bots default voice room.\rExample: !defaultRoom roomID\rPermission: Owner")
                     .Parameter("roomID", ParameterType.Optional)
                     .MinPermissions((int)PermissionLevel.BotOwner)
                     .Do(async e =>
                     {
-                        if(e.GetArg("roomID") == null)
+                        try
                         {
-                            await e.Channel.SendMessage("Oops, you forgot to give me the room ID to make my home by default.");
-                            return;
+                            if (e.GetArg("roomID") == null)
+                            {
+                                await e.Channel.SendMessage("Oops, you forgot to give me the room ID to make my home by default.");
+                                return;
+                            }
+
+                            ulong id = Convert.ToUInt64(e.GetArg("roomID"));
+
+                            _config.defaultRoomID = id;
+                            _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+
+                            await e.Channel.SendMessage("I have updated the config file for you.");
+                            Console.WriteLine("Config.json update: defaultRoomID = " + id);
+                            //await e.Channel.SendFile("blacklist.json");
+                        }
+                        catch(Exception error)
+                        {
+                            Console.WriteLine($"Error generated with !defaultRoom\rDump: {error}");
                         }
 
-                        ulong id = Convert.ToUInt64(e.GetArg("roomID"));
-
-                        _config.defaultRoomID = id;
-                        _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
-
-                        await e.Channel.SendMessage("I have updated the config file for you.");
-                        Console.WriteLine("Config.json update: defaultRoomID = " + id);
-                        //await e.Channel.SendFile("blacklist.json");
                     });
 
                 _client.GetService<CommandService>().CreateCommand("vol")
@@ -130,64 +166,71 @@ namespace discordMusicBot.src.Modules
                     .MinPermissions((int)PermissionLevel.GroupUsers)
                     .Do(async e =>
                     {
-                        
-                        if (e.GetArg("vol") == null)
-                        {
-                            await e.Channel.SendMessage("Oops, you forgot to give me the room ID to make my home by default.");
-                            return;
-                        }
-
-                        // v is the current value in the config
-                        int oldVolume = _config.volume;
-
-                        //
-                        string argOperator = null;
-                        int argValue = 0;
-                        int newValue = 0;
-
-                        //will capture a + or -
                         try
                         {
-                            argOperator = e.GetArg("vol").Substring(0, 1);
-                            if(argOperator != "+" || argOperator != "-")
+                            if (e.GetArg("vol") == null)
                             {
-                                //return error if we dont have a + or -
+                                await e.Channel.SendMessage("Oops, you forgot to give me the room ID to make my home by default.");
                                 return;
                             }
+
+                            // v is the current value in the config
+                            int oldVolume = _config.volume;
+
+                            //
+                            string argOperator = null;
+                            int argValue = 0;
+                            int newValue = 0;
+
+                            //will capture a + or -
+                            try
+                            {
+                                argOperator = e.GetArg("vol").Substring(0, 1);
+                                if (argOperator != "+" || argOperator != "-")
+                                {
+                                    //return error if we dont have a + or -
+                                    return;
+                                }
+                            }
+                            catch
+                            {
+                                Console.WriteLine("");
+                            }
+
+                            //parse the int value
+                            try
+                            {
+                                //get the number value
+                                string value = e.GetArg("vol").Substring(1);
+                                int.Parse(value);
+                            }
+                            catch
+                            {
+                                //failed to parse the int value from arg
+                                return;
+                            }
+
+                            if (argOperator == "+")
+                            {
+                                newValue = oldVolume + argValue;
+                            }
+
+                            if (argOperator == "-")
+                            {
+                                newValue = oldVolume - argValue;
+                            }
+
+                            _config.volume = newValue;
+                            _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+
+                            await e.Channel.SendMessage($"{e.User.Name} changed default volume from " + oldVolume + " to " + newValue + ".");
+                            Console.WriteLine("{e.User.Name} changed default volume from " + oldVolume + " to " + newValue + ".");
                         }
-                        catch
+                        catch(Exception error)
                         {
-                            Console.WriteLine("");
+                            Console.WriteLine($"Error Generated with !vol\rDump: {error}");
                         }
 
-                        //parse the int value
-                        try
-                        {                        
-                            //get the number value
-                            string value = e.GetArg("vol").Substring(1);
-                            int.Parse(value);
-                        }
-                        catch
-                        {
-                            //failed to parse the int value from arg
-                            return;
-                        }
-
-                        if (argOperator == "+")
-                        {
-                            newValue = oldVolume + argValue;
-                        }
-
-                        if(argOperator == "-")
-                        {
-                            newValue = oldVolume - argValue;
-                        }
-
-                        _config.volume = newValue;
-                        _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
-
-                        await e.Channel.SendMessage($"{e.User.Name} changed default volume from "+ oldVolume + " to " +newValue + ".");
-                        Console.WriteLine("{e.User.Name} changed default volume from " + oldVolume + " to " + newValue + ".");
                     });
 
                 _client.GetService<CommandService>().CreateCommand("halt")
@@ -196,12 +239,19 @@ namespace discordMusicBot.src.Modules
                     .MinPermissions((int)PermissionLevel.BotOwner)
                     .Do(async e =>
                     {
+                        try
+                        {
+                            await e.Channel.SendMessage($":wave: :zzz:");
 
-                        await e.Channel.SendMessage($":wave: :zzz:");
+                            await e.Server.Client.Disconnect();
 
-                        await e.Server.Client.Disconnect();
+                            Environment.Exit(0);
+                        }
+                        catch
+                        {
 
-                        Environment.Exit(0);
+                        }
+
                     });
 
                 _client.GetService<CommandService>().CreateCommand("serverIds")
@@ -290,6 +340,53 @@ namespace discordMusicBot.src.Modules
                         catch (Exception error)
                         {
                             Console.WriteLine($"Error: setGroupDefault generated a error: {error}");
+                        }
+                    });
+
+                _client.GetService<CommandService>().CreateCommand("setPrefix")
+                    .Alias("sp")
+                    .Description("Changes the prefix that the bot will listen to.\rPermission: Owner")
+                    .Parameter("id", ParameterType.Optional)
+                    .MinPermissions((int)PermissionLevel.BotOwner)
+                    .Do(async e =>
+                    {
+                        try
+                        {
+                            if(e.GetArg("id") == "#" ||
+                            e.GetArg("id") == "/" ||
+                            e.GetArg("id") == "@")
+                            {
+                                await e.Channel.SendMessage($"Please pick another command character that is not one of the following.\r'#' '/' '@'");
+                                return;
+                            }
+                            else
+                            {
+                                _config.Prefix = e.GetArg("id")[0];
+                                _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+
+                                await e.Channel.SendMessage($"Character prefix has been changed to {e.GetArg("id")} and will be active on next restart.");
+                            }
+                        }
+                        catch (Exception error)
+                        {
+                            Console.WriteLine($"Error generated with !setPrefix\rDump: {error}");
+                        }
+                    });
+
+                _client.GetService<CommandService>().CreateCommand("about")
+                    .Alias("about")
+                    .Description("Returns with github infomation.\rPermission: Everyone")
+                    .Parameter("id", ParameterType.Optional)
+                    .MinPermissions((int)PermissionLevel.GroupUsers)
+                    .Do(async e =>
+                    {
+                        try
+                        {
+                            await e.Channel.SendMessage($"Here is my current documentation.\rGetting Started: soon\rCommands: <https://github.com/luther38/DiscordMusicBot/wiki/Commands>");
+                        }
+                        catch (Exception error)
+                        {
+                            Console.WriteLine($"Error generated with !setPrefix\rDump: {error}");
                         }
                     });
 

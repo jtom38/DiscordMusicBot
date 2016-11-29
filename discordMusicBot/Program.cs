@@ -26,10 +26,9 @@ namespace discordMusicBot
 
     public class Program
     {
-
-        public static bool restartFlag { get; set; }
-
         static void Main(string[] args) => new Program().Start();
+
+        public static bool restartFlag = false;
 
         private DiscordClient _client;
         private configuration _config;
@@ -39,7 +38,6 @@ namespace discordMusicBot
 
         public void loopRestart()
         {
-            restartFlag = false;
             while(restartFlag == false)
             {
                 Start();
@@ -105,12 +103,15 @@ namespace discordMusicBot
                     {
                         //Console.WriteLine("Bot is alone on a room.  Stop music.");
                         _client.SetGame(null);
-                        await _player.cmd_stop();
+                        _player.cmd_stop();
+                        //Console.WriteLine("Bot is left alone.  Music is stopping.");
                     }
                     else
                     {
                         //Console.WriteLine("At least one person is in the room. Play Music.");
                         //pushing this resume to beta... just need more time and refactoring to get this working the way I want.
+                        _player.cmd_resume();
+                        //Console.WriteLine("Someone joined the room.  Starting next track.");
                     }
                 }
                 catch
@@ -128,7 +129,7 @@ namespace discordMusicBot
                     try
                     {
                         await _client.Connect(_config.Token, TokenType.Bot);
-                        _client.SetGame("Discord.Net");
+                        _client.SetGame(null);
                         Console.WriteLine("Connected to Discord.");
                         //await _client.ClientAPI.Send(new Discord.API.Client.Rest.HealthRequest());
                         break;

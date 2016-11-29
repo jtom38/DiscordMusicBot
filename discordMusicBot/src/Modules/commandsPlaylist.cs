@@ -29,191 +29,236 @@ namespace discordMusicBot.src.Modules
 
             manager.CreateCommands("", group =>
             {
-                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "shuffle")
+                _client.GetService<CommandService>().CreateCommand("shuffle")
                     .Alias("shuffle")
                     .Description("Adds a url to the playlist file.\rPermissions: Everyone")
                     .MinPermissions((int)PermissionLevel.GroupUsers)
                     .Do(async e =>
                     {
-                        string result = _playlist.cmd_shuffle();
-
-                        if(result == "empty")
+                        try
                         {
-                            await e.Channel.SendMessage($"@{e.User.Name}\rNo songs have been submitted to be shuffled.");
-                        }
+                            string result = _playlist.cmd_shuffle();
 
-                        if(result == "true")
-                        {
-                            await e.Channel.SendMessage($"@{e.User.Name}\rThe current queue has been shuffled.");
-                        }
+                            if (result == "empty")
+                            {
+                                await e.Channel.SendMessage($"@{e.User.Name}\rNo songs have been submitted to be shuffled.");
+                            }
 
-                        if(result == "error")
-                        {
-                            await e.Channel.SendMessage($"{e.User.Name}\rError please check the console for more information.");
+                            if (result == "true")
+                            {
+                                await e.Channel.SendMessage($"@{e.User.Name}\rThe current queue has been shuffled.");
+                            }
+
+                            if (result == "error")
+                            {
+                                await e.Channel.SendMessage($"{e.User.Name}\rError please check the console for more information.");
+                            }
                         }
-                        
+                        catch (Exception error)
+                        {
+                            Console.WriteLine($"Error: !shuffle generated a error: {error}");
+                        }                     
                     });
 
-                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "np")
+                _client.GetService<CommandService>().CreateCommand("np")
                     .Alias("np")
                     .Description("Returns infomation of current playing track.\rPermissions: Everyone")
                     .MinPermissions((int)PermissionLevel.GroupUsers)
                     .Do(async e =>
                     {
-                        string[] result = _playlist.cmd_np();
-                        
-                        if(result[0] == null)
+                        try
                         {
-                            await e.Channel.SendMessage($"Sorry but a song is not currently playing.");
+                            string[] result = _playlist.cmd_np();
+
+                            if (result[0] == null)
+                            {
+                                await e.Channel.SendMessage($"Sorry but a song is not currently playing.");
+                            }
+                            else
+                            {
+                                await e.Channel.SendMessage($"Track currently playing\rTitle: {result[0]} \rURL: {result[1]}\rUser: {result[2]}\rSource: {result[3]}");
+                            }
                         }
-                        else
+                        catch(Exception error)
                         {
-                            await e.Channel.SendMessage($"Track currently playing\rTitle: " + result[0] + "\rURL: " + result[1] + "\rUser: " + result[2] + "\rSource: " + result[3]);
+                            Console.WriteLine($"Error: !np generated a error: {error}");
                         }
                     });
 
-                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "queue")
+                _client.GetService<CommandService>().CreateCommand("queue")
                     .Alias("queue")
                     .Description("Returns infomation of currently queued tacks.\rPermissions: Everyone")
                     .MinPermissions((int)PermissionLevel.GroupUsers)
                     .Do(async e =>
                     {
-                        string result = _playlist.cmd_queue();
+                        try
+                            {
+                            string result = _playlist.cmd_queue();
 
-                        if (result == null)
-                        {
-                            await e.Channel.SendMessage($"Sorry nothing was submitted to the queue.");
+                            if (result == null)
+                            {
+                                await e.Channel.SendMessage($"Sorry nothing was submitted to the queue.");
+                            }
+                            else
+                            {
+                                await e.Channel.SendMessage($"Track currently playing\rTitle: " + result[0] + "\rURL: " + result[1] + "\rUser: " + result[2] + "\rSource: " + result[3]);
+                            }
                         }
-                        else
+                        catch(Exception error)
                         {
-                            await e.Channel.SendMessage($"Track currently playing\rTitle: " + result[0] + "\rURL: " + result[1] + "\rUser: " + result[2] + "\rSource: " + result[3]);
+                            Console.WriteLine($"Error: !queue generated a error: {error}");
                         }
                     });
 
-                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "plAdd")
+                _client.GetService<CommandService>().CreateCommand("plAdd")
                     .Alias(new string[] { "plAdd", "pla" })
                     .Description("Adds a url to the playlist file.\rPermissions: Mods")
                     .Parameter("url", ParameterType.Optional)
                     .MinPermissions((int)PermissionLevel.GroupMods)
                     .Do(async e =>
                     {
-                        if (e.GetArg("url") == "")
+                        try
                         {
-                            await e.Channel.SendMessage($"@{e.User.Name}, Unable to add to the playlist if you dont give me a url.");
-                            return;
-                        }
+                            if (e.GetArg("url") == "")
+                            {
+                                await e.Channel.SendMessage($"@{e.User.Name}, Unable to add to the playlist if you dont give me a url.");
+                                return;
+                            }
                         
-                        Message[] mess = await e.Channel.DownloadMessages(1);
-                        await e.Channel.DeleteMessages(mess);
+                            Message[] mess = await e.Channel.DownloadMessages(1);
+                            await e.Channel.DeleteMessages(mess);
                         
-                        string title = await _playlist.cmd_plAdd(e.User.Name, e.GetArg("url"));
+                            string title = await _playlist.cmd_plAdd(e.User.Name, e.GetArg("url"));
 
-                        if (title == "dupe")
-                        {
-                            await e.Channel.SendMessage($"{e.User.Name},\rI found this url already in the list. :smile:\rNo change was made.");
+                            if (title == "dupe")
+                            {
+                                await e.Channel.SendMessage($"{e.User.Name},\rI found this url already in the list. :smile:\rNo change was made.");
+                            }
+                            else
+                            {
+                                await e.Channel.SendMessage($"{e.User.Name},\rTitle: {title}\rHas been added to the playlist file.");
+                                Console.WriteLine($"{e.User.Name} added {title} to the playlist.json file.");
+                            }
                         }
-                        else
+                        catch(Exception error)
                         {
-                            await e.Channel.SendMessage($"{e.User.Name},\rTitle: {title}\rHas been added to the playlist file.");
-                            Console.WriteLine($"{e.User.Name} added {title} to the playlist.json file.");
-                        }
-                        
+                            Console.WriteLine($"Error: !plAdd generated a error: {error}");
+                        }                        
                     });
 
-                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "plRemove")
+                _client.GetService<CommandService>().CreateCommand("plRemove")
                     .Alias(new string[] { "plRemove", "plr" })
                     .Description("Removes a url to the playlist file.\rPermissions: Mods")
                     .Parameter("url", ParameterType.Optional)
                     .MinPermissions((int)PermissionLevel.GroupMods)
                     .Do(async e =>
                     {
-                        if (e.GetArg("url") == "")
+                        try
                         {
-                            await e.Channel.SendMessage($"@{e.User.Name}, Unable to remove the url from the playlist if you dont give me a url.");
-                            return;
+                            if (e.GetArg("url") == "")
+                            {
+                                await e.Channel.SendMessage($"@{e.User.Name}, Unable to remove the url from the playlist if you dont give me a url.");
+                                return;
+                            }
+
+                            Message[] mess = await e.Channel.DownloadMessages(1);
+                            await e.Channel.DeleteMessages(mess);
+
+                            string url = _playlist.cmd_plRemove(e.GetArg("url"));
+
+                            if (url == "match")
+                            {
+                                downloader _downloader = new downloader();
+                                string title = await _downloader.returnYoutubeTitle(e.GetArg("url"));
+                                await e.Channel.SendMessage($"{e.User.Name},\rTitle: {title}\rWas removed from the playlist.");
+                                Console.WriteLine($"{e.User.Name} removed {title} from the playlist.json file.");
+                            }
+                            else
+                            {
+                                await e.Channel.SendMessage($"{e.User.Name},\rUnable to find the song in the playlist.");
+                            }
                         }
-
-                        Message[] mess = await e.Channel.DownloadMessages(1);
-                        await e.Channel.DeleteMessages(mess);
-
-                        string url = _playlist.cmd_plRemove(e.GetArg("url"));
-
-                        if (url == "match")
+                        catch(Exception error)
                         {
-                            downloader _downloader = new downloader();
-                            string title = await _downloader.returnYoutubeTitle(e.GetArg("url"));
-                            await e.Channel.SendMessage($"{e.User.Name},\rTitle: {title}\rWas removed from the playlist.");
-                            Console.WriteLine($"{e.User.Name} removed {title} from the playlist.json file.");
+                            Console.WriteLine($"Error: !plRemove generated a error: {error}");
                         }
-                        else
-                        {
-                            await e.Channel.SendMessage($"{e.User.Name},\rUnable to find the song in the playlist.");
-                        }
-
                     });
 
-                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "blAdd")
+                _client.GetService<CommandService>().CreateCommand("blAdd")
                     .Alias(new string[] { "blAdd", "bla"})
                     .Description("Adds a url to the blacklist file.\rPermissions: Mods")
                     .Parameter("url", ParameterType.Optional)
                     .MinPermissions((int)PermissionLevel.GroupMods)
                     .Do(async e =>
                     {
-                        if (e.GetArg("url") == "")
+                        try
                         {
-                            await e.Channel.SendMessage($"@{e.User.Name}, Unable to add to the blacklist if you dont give me a url.");
-                            return;
-                        }
+                            if (e.GetArg("url") == "")
+                            {
+                                await e.Channel.SendMessage($"@{e.User.Name}, Unable to add to the blacklist if you dont give me a url.");
+                                return;
+                            }
 
-                        //make the var we will store the messages in from the server
-                        Message[] mess = await e.Channel.DownloadMessages(1);
-                        //send delete command.  THis will delete the message that the user sent with the url
-                        await e.Channel.DeleteMessages(mess);
-                        //parse the url and get the infomation then append to the blacklist.json
-                        string title = await _playlist.cmd_blAdd(e.User.Name, e.GetArg("url"));
+                            //make the var we will store the messages in from the server
+                            Message[] mess = await e.Channel.DownloadMessages(1);
+                            //send delete command.  THis will delete the message that the user sent with the url
+                            await e.Channel.DeleteMessages(mess);
+                            //parse the url and get the infomation then append to the blacklist.json
+                            string title = await _playlist.cmd_blAdd(e.User.Name, e.GetArg("url"));
 
-                        if(title == "dupe")
-                        {
-                            await e.Channel.SendMessage($"{e.User.Name},\rI found this url already in the list. :smile:\rNo change was made.");
+                            if(title == "dupe")
+                            {
+                                await e.Channel.SendMessage($"{e.User.Name},\rI found this url already in the list. :smile:\rNo change was made.");
+                            }
+                            else
+                            {
+                                //send the infomation back to the user letting them know we added it to the blacklist.
+                                await e.Channel.SendMessage($"{e.User.Name}\rTitle: " + title + "\rHas been added to the blacklist file.");
+                                Console.WriteLine($"{e.User.Name} added " + title + " to the blacklist.json file.");
+                            }
                         }
-                        else
+                        catch(Exception error)
                         {
-                            //send the infomation back to the user letting them know we added it to the blacklist.
-                            await e.Channel.SendMessage($"{e.User.Name}\rTitle: " + title + "\rHas been added to the blacklist file.");
-                            Console.WriteLine($"{e.User.Name} added " + title + " to the blacklist.json file.");
+                            Console.WriteLine($"Error: !blAdd generated a error: {error}");
                         }
                     });
 
-                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "blRemove")
+                _client.GetService<CommandService>().CreateCommand("blRemove")
                     .Alias(new string[] { "blRemove", "blr" })
                     .Description("Removes a url to the blacklist file.\rPermissions: Mods")
                     .Parameter("url", ParameterType.Optional)
                     .MinPermissions((int)PermissionLevel.GroupMods)
                     .Do(async e =>
                     {
-                        if (e.GetArg("url") == "")
+                        try
                         {
-                            await e.Channel.SendMessage($"@{e.User.Name}, Unable to remove the url from the blacklist if you dont give me a url.");
-                            return;
+                            if (e.GetArg("url") == "")
+                            {
+                                await e.Channel.SendMessage($"@{e.User.Name}, Unable to remove the url from the blacklist if you dont give me a url.");
+                                return;
+                            }
+
+                            Message[] mess = await e.Channel.DownloadMessages(1);
+                            await e.Channel.DeleteMessages(mess);
+
+                            string url = _playlist.cmd_blRemove(e.GetArg("url"));
+
+                            if (url == "match")
+                            {
+                                downloader _downloader = new downloader();
+                                string title = await _downloader.returnYoutubeTitle(e.GetArg("url"));
+                                await e.Channel.SendMessage($"{e.User.Name},\rTitle: {title}\rWas removed from the blacklist.");
+                                Console.WriteLine($"{e.User.Name} removed {title} from the blacklist.json file.");
+                            }
+                            else
+                            {
+                                await e.Channel.SendMessage($"{e.User.Name},\rUnable to find the song in the blacklist.");
+                            }
                         }
-
-                        Message[] mess = await e.Channel.DownloadMessages(1);
-                        await e.Channel.DeleteMessages(mess);
-
-                        string url = _playlist.cmd_blRemove(e.GetArg("url"));
-
-                        if (url == "match")
+                        catch(Exception error)
                         {
-                            downloader _downloader = new downloader();
-                            string title = await _downloader.returnYoutubeTitle(e.GetArg("url"));
-                            await e.Channel.SendMessage($"{e.User.Name},\rTitle: {title}\rWas removed from the blacklist.");
-                            Console.WriteLine($"{e.User.Name} removed {title} from the blacklist.json file.");
+                            Console.WriteLine($"Error: !blRemove generated a error: {error}");
                         }
-                        else
-                        {
-                            await e.Channel.SendMessage($"{e.User.Name},\rUnable to find the song in the blacklist.");
-                        }
-
                     });
 
             });

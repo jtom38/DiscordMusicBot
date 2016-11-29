@@ -34,7 +34,7 @@ namespace discordMusicBot.src.Modules
                 //get the config file
                 _config = configuration.LoadFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
 
-                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "test")
+                _client.GetService<CommandService>().CreateCommand("test")
                     .Alias("test")
                     .Description("Placeholder for testing.")                  
                     .Do(async e =>
@@ -48,66 +48,93 @@ namespace discordMusicBot.src.Modules
                         //await e.Channel.SendMessage("");
                     });
             
-                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "play")
+                _client.GetService<CommandService>().CreateCommand("play")
                     .Alias("play")
                     .Description("Adds the requested song to the queue.\rExample: !play url\rPermissions: Mods")
                     .Parameter("url", ParameterType.Optional)
                     .MinPermissions((int)PermissionLevel.GroupUsers)
                     .Do(async e =>
                     {
-                        if(e.GetArg("url") == "")
+                        try
                         {
-                            await e.Channel.SendMessage($"@{e.User.Mention}, Please give me a link so I can play the song for you.");
-                            return;
+                            if (e.GetArg("url") == "")
+                            {
+                                await e.Channel.SendMessage($"@{e.User.Mention}, Please give me a link so I can play the song for you.");
+                                return;
+                            }
+
+                            //add the url to the listSubmitted 
+                            string result = await _playlist.cmd_play(e.GetArg("url"), e.User.Name);
+
+                            if (result == null)
+                            {
+                                await e.Channel.SendMessage($"Sorry I wont add that url to the queue given someone blacklisted it already.");
+                            }
+                            else
+                            {
+                                await e.Channel.SendMessage(result);
+                            }
                         }
-
-                        //add the url to the listSubmitted 
-                        string result = await _playlist.cmd_play(e.GetArg("url"), e.User.Name);
-
-                        await e.Channel.SendMessage(result);
-
+                        catch(Exception error)
+                        {
+                            Console.WriteLine($"Error generated with !play\rDump: {error}");
+                        }                      
                     });
 
-                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "skip")
+                _client.GetService<CommandService>().CreateCommand("skip")
                     .Alias("skip")
                     .Description("Adds the requested song to the queue.\rPermissions: Everyone")
                     .MinPermissions((int)PermissionLevel.GroupUsers)
                     .Do(async e =>
                     {
-                        bool result = _player.cmd_skip();
+                        try
+                        {
+                            bool result = _player.cmd_skip();
 
-                        if(result == true)
-                        {
-                            await e.Channel.SendMessage($"Skipping the track.");
+                            if (result == true)
+                            {
+                                await e.Channel.SendMessage($"Skipping the track.");
+                            }
+                            else
+                            {
+                                await e.Channel.SendMessage($"Nothing is currently playing, unable to skip.");
+                            }
                         }
-                        else
+                        catch(Exception error)
                         {
-                            await e.Channel.SendMessage($"Nothing is currently playing, unable to skip.");
-                        }
-                        
+                            Console.WriteLine($"Error generated with !skip\rDump: {error}");
+                        }                        
                     });
 
-                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "stop")
+                _client.GetService<CommandService>().CreateCommand("stop")
                     .Alias("stop")
                     .Description("Stops the music from playing.\rPermissions: Everyone")
                     .MinPermissions((int)PermissionLevel.GroupUsers)
                     .Do(async e =>
                     {
-                        bool result = await _player.cmd_stop();
+                        try
+                        {
+                            bool result = _player.cmd_stop();
 
-                        if (result == true)
-                        {
-                            _client.SetGame("");
-                            await e.Channel.SendMessage($"Music will be stopping.");
+                            if (result == true)
+                            {
+                                _client.SetGame(null);
+                                await e.Channel.SendMessage($"Music will be stopping.");
+                            }
+                            else
+                            {
+                                await e.Channel.SendMessage($"Nothing is currently playing, can't stop something that isnt moving.");
+                            }
                         }
-                        else
+                        catch(Exception error)
                         {
-                            await e.Channel.SendMessage($"Nothing is currently playing, can't stop something that isnt moving.");
+                            Console.WriteLine($"Error generated with !stop\rDump: {error}");
                         }
+
 
                     });
 
-                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "resume")
+                _client.GetService<CommandService>().CreateCommand("resume")
                     .Alias("resume")
                     .Description("Starts the playlist again.\rPermissions: Everyone")
                     .MinPermissions((int)PermissionLevel.GroupUsers)
@@ -115,19 +142,17 @@ namespace discordMusicBot.src.Modules
                     {
                         try
                         {
-                            Channel voiceChan = e.User.VoiceChannel;
-                            await voiceChan.JoinAudio();
-                            await _playlist.startAutoPlayList(voiceChan, _client);
+                            _player.cmd_resume();
 
                             await e.Channel.SendMessage($"Activating the playlist again.");
                         }
-                        catch
+                        catch(Exception error)
                         {
-
+                            Console.WriteLine($"Error generated with !resume\rDump: {error}");
                         }
                     });
 
-                _client.GetService<CommandService>().CreateCommand(_config.Prefix + "summon")
+                _client.GetService<CommandService>().CreateCommand("summon")
                     .Alias("summon")
                     .Description("Summons bot to current voice channel and starts playing from the library.\rPermission: Everyone")
                     .MinPermissions((int)PermissionLevel.GroupUsers)
@@ -139,9 +164,9 @@ namespace discordMusicBot.src.Modules
                             await voiceChan.JoinAudio();
                             await _playlist.startAutoPlayList(voiceChan, _client);
                         }
-                        catch(Exception t)
+                        catch(Exception error)
                         {
-                            Console.WriteLine(t);
+                            Console.WriteLine($"Error generated with !summon\rDump: {error}");
                         }
                         
                     });

@@ -35,7 +35,8 @@ namespace discordMusicBot.src
         public static string[] npLike { get; set; }
         public static string[] npSkip { get; set; }
 
-        public static bool libraryLoop { get; set; }
+        public static bool libraryLoop = true;
+        public static bool playlistActive = true;
 
         private DiscordClient _client;
         private ModuleManager _manager;
@@ -139,7 +140,7 @@ namespace discordMusicBot.src
             string source = null;
 
             //1. check if something has been submitted by a user
-            string[] trackSubmitted = getTrackSubmitted();
+            string[] trackSubmitted = pickTrackFromSubmitted();
 
             if (trackSubmitted != null)
             {
@@ -152,7 +153,7 @@ namespace discordMusicBot.src
             else
             {
                 //2. Pick from the Library
-                string[] trackLibrary = getTrackLibrary();
+                string[] trackLibrary = pickTrackFromLibrary();
                 title = trackLibrary[0];
                 user = trackLibrary[1];
                 url = trackLibrary[2];
@@ -188,25 +189,11 @@ namespace discordMusicBot.src
         }
 
         /// <summary>
-        /// Picks random tacks from the library and returns the values of the song
-        /// </summary>
-        /// <returns></returns>
-        public string[] getTrackLibrary()
-        {
-            Random rng = new Random();
-            int counter = rng.Next(0, listLibrary.Count);
-
-            string[] value = { listLibrary[counter].title, listLibrary[counter].user, listLibrary[counter].url, "Library" };
-
-            return value;
-        }
-
-        /// <summary>
         /// Used to find values if a user submited a song to be played
         /// takes prority over library tracks
         /// </summary>
         /// <returns></returns>
-        public string[] getTrackSubmitted()
+        public string[] pickTrackFromSubmitted()
         {            
             // extract the values
             if(listSubmitted.Count >= 1)
@@ -219,6 +206,20 @@ namespace discordMusicBot.src
                 return null;
             }
 
+        }
+
+        /// <summary>
+        /// Picks random tacks from the library and returns the values of the song
+        /// </summary>
+        /// <returns></returns>
+        public string[] pickTrackFromLibrary()
+        {
+            Random rng = new Random();
+            int counter = rng.Next(0, listLibrary.Count);
+
+            string[] value = { listLibrary[counter].title, listLibrary[counter].user, listLibrary[counter].url, "Library" };
+
+            return value;
         }
 
         /// <summary>
@@ -344,39 +345,55 @@ namespace discordMusicBot.src
 
         }
 
+        private void checkNumberOfTracksByUserSubmitted(string user)
+        {
+            var Result = listBeenPlayed.Count(x => x.user == user);
+           
+            if(Result >= 5)
+            {
+                //user has subbmitted too many songs
+            }
+
+        }
+
         public async Task startAutoPlayList(Channel voiceChannel, DiscordClient _client)
         {
             loadPlaylist();
             loadBlacklist();
 
-            libraryLoop = true;
+            //library loop is used to keep this loop active
             while(libraryLoop == true)
             {
-                bool result = getTrack();
-
-                if(result == false)
+                //given the loop is always active lets make another loop that we can pause when neede
+                while(playlistActive == true)
                 {
-                    //reroll                   
-                }
-                else
-                {
-                    //pass off to download the file for cache
-                    string[] file = await _downloader.download_audio(npUrl);
+                    bool result = getTrack();
 
-                    _client.SetGame(npTitle);
-
-                    await _player.SendAudio(file[2], voiceChannel, _client);
-
-                    //if a user submitted the song remove it from the disk
-                    if(npSource == "Submitted")
+                    if (result == false)
                     {
-                        File.Delete(file[2]);
-                        removeTrackSubmitted(npUrl);
+                        //reroll                   
                     }
+                    else
+                    {
+                        //pass off to download the file for cache
+                        string[] file = await _downloader.download_audio(npUrl);
 
-                    addBeenPlayed(npTitle, npUrl);
+                        _client.SetGame(npTitle);
 
+                        await _player.SendAudio(file[2], voiceChannel, _client);
+
+                        //if a user submitted the song remove it from the disk
+                        if (npSource == "Submitted")
+                        {
+                            File.Delete(file[2]);
+                            removeTrackSubmitted(npUrl);
+                        }
+
+                        addBeenPlayed(npTitle, npUrl);
+
+                    }
                 }
+
             }
         } 
 
@@ -384,26 +401,39 @@ namespace discordMusicBot.src
         {
             try
             {
+                
                 string title = await _downloader.returnYoutubeTitle(url);
 
-                listSubmitted.Add(new ListPlaylist
+                //test to see if the url was already blacklisted
+                bool blacklistFound = checkBlacklist(title, url);
+
+                //if it wasnt found add it to the queue
+                if(blacklistFound != true)
                 {
-                    title = title,
-                    url = url,
-                    user = user
-                });
+                    listSubmitted.Add(new ListPlaylist
+                    {
+                        title = title,
+                        url = url,
+                        user = user
+                    });
 
-                int total = listSubmitted.Count;
+                    int total = listSubmitted.Count;
 
-                int position = listSubmitted.FindIndex(x => x.url == url);
+                    int position = listSubmitted.FindIndex(x => x.url == url);
 
-                string value = $"Your request is song number {position + 1}/{total}";
+                    string value = $"Your request is song number {position + 1}/{total}";
 
-                return value;
+                    return value;
+                }
+                else
+                {
+                    //match was found
+                    return null;
+                }
             }
             catch(Exception e)
             {
-                //got a erro
+                //got a error
                 Console.WriteLine($"Error with playlist.cmd_play.  Dump: {e}");
                 return null;
             }           
@@ -509,6 +539,34 @@ namespace discordMusicBot.src
         }
 
         /// <summary>
+        /// Makes a readable version of the json file.
+        /// returns True if it worked
+        /// returns false if failed.
+        /// </summary>
+        /// <returns></returns>
+        public bool cmd_blexport()
+        {
+            try
+            {
+                string loc = Directory.GetCurrentDirectory() + "\\configs\\blacklist_export.json";
+                string json = JsonConvert.SerializeObject(listBlacklist, Formatting.Indented);
+
+                if (!File.Exists(loc))
+                    File.Create(loc).Close();
+
+                File.WriteAllText(loc, json);
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Error running blExport.  Error dump: " + e);
+                return false;
+            }
+
+        }
+
+        /// <summary>
         /// Users to add lines to the blacklist file
         /// </summary>
         /// <param name="user"> username of who sent it</param>
@@ -570,34 +628,6 @@ namespace discordMusicBot.src
                 Console.WriteLine("Error: cmd_blRemove genereted a error.\rError message\r" + e);
                 return "error";
             }
-        }
-
-        /// <summary>
-        /// Makes a readable version of the json file.
-        /// returns True if it worked
-        /// returns false if failed.
-        /// </summary>
-        /// <returns></returns>
-        public bool cmd_blexport()
-        {
-            try
-            {
-                string loc = Directory.GetCurrentDirectory() + "\\configs\\blacklist_export.json";
-                string json = JsonConvert.SerializeObject(listBlacklist, Formatting.Indented);
-
-                if (!File.Exists(loc))
-                    File.Create(loc).Close();
-
-                File.WriteAllText(loc, json);
-
-                return true;
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Error running blExport.  Error dump: " + e);
-                return false;
-            }
-
         }
 
         /// <summary>

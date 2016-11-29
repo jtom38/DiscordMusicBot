@@ -27,12 +27,14 @@ namespace discordMusicBot.src
                 .Where(e => e.AudioFormat == AudioFormat.Aac && e.AdaptiveKind == AdaptiveKind.Audio)
                 .ToList();
 
-            string workingDir = Directory.GetCurrentDirectory();
-            string cacheDir = workingDir + "\\cache\\";
+            string workingDir = Directory.GetCurrentDirectory() + "\\cache\\";
 
             string fileAAC = audio[0].FullName + ".aac";
 
-            if(File.Exists(cacheDir + fileAAC))
+            string title = audio[0].Title;
+            title = title.Remove(title.Length - 10);
+
+            if(File.Exists(workingDir + fileAAC))
             {
                 // do nothing
                 Console.WriteLine("Info: URL " + url + " was already downloaded, ignoring");
@@ -42,7 +44,7 @@ namespace discordMusicBot.src
                 //download the file
                 if (audio.Count > 0)
                 {
-                    File.WriteAllBytes(cacheDir + fileAAC, audio[0].GetBytes());
+                    File.WriteAllBytes(workingDir + fileAAC, audio[0].GetBytes());
                     Console.WriteLine("Info: Downloaded " + url );
                 }
             }
@@ -50,7 +52,7 @@ namespace discordMusicBot.src
             string[] returnVar = {
                 audio[0].Title,                     //pass the title back
                 fileAAC,                            //pass the filename, not sure if we need to retain this
-                cacheDir + fileAAC,                 //pass the full path to the file to be played back
+                workingDir + fileAAC,                 //pass the full path to the file to be played back
                 audio[0].AudioBitrate.ToString()    //pass the bitrate so we can return the value
             };
 

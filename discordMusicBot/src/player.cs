@@ -13,11 +13,16 @@ namespace discordMusicBot.src
 {
     class player
     {
+        /// <summary>
+        /// notes from the Discord API group on voice-volume... Still not sure how to use it just yet.
+        /// http://hastebin.com/umapabejis.cs
+        /// </summary>
+
         //private DiscordClient _client; //load discord client info
         private IAudioClient _nAudio; //load the discord audio client
         private configuration _config;
-      
-        public static bool playingSong { get; set; }      
+
+        public static bool playingSong = true; 
 
         private float volume = .3f;
 
@@ -124,13 +129,13 @@ namespace discordMusicBot.src
         ///     True = Value was changed to stop the loop
         ///     False = The loop wasnt going already
         /// </returns>
-        public async Task<bool> cmd_stop()
+        public bool cmd_stop()
         {
-            if(playlist.libraryLoop == true)
+            if(playlist.playlistActive == true)
             {
 
                 //breaks the loop
-                playlist.libraryLoop = false;
+                playlist.playlistActive = false;
 
                 //forces the current track playing to send the stop command.
                 playingSong = false;
@@ -156,11 +161,11 @@ namespace discordMusicBot.src
             //the autoplayer is turned off
             try
             {
-                if (playlist.libraryLoop == false)
+                if (playlist.playlistActive == false)
                 {
                     //turn it back on.
                     //playlist _playlist = new playlist();
-                    playlist.libraryLoop = true;
+                    playlist.playlistActive = true;
                     return true;
                 }
             }
@@ -169,7 +174,6 @@ namespace discordMusicBot.src
                 Console.WriteLine($"Error: player.cmd_resume generated a error.  Dump: {e}");
                 return false;
             }
-
 
             return false;
         }
