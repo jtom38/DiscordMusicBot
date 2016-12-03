@@ -28,6 +28,7 @@ namespace discordMusicBot.src
         public static List<ListPlaylist> listQueue = new List<ListPlaylist>();
         public static List<ListPlaylist> listSubmitted = new List<ListPlaylist>();
         public static List<ListPlaylist> listBeenPlayed = new List<ListPlaylist>();
+        public static List<ListPlaylist> listAllSongsPlayed = new List<ListPlaylist>();
         public static string npTitle { get; set; }
         public static string npUser { get; set; }
         public static string npUrl { get; set; }
@@ -294,7 +295,7 @@ namespace discordMusicBot.src
         private void addBeenPlayed(string title, string url)
         {
             //get the 10% of the library
-            double threshold = listLibrary.Count * 0.1;
+            double threshold = listLibrary.Count * 0.15;
 
             Console.WriteLine("Debug: beenPlayed threshhold " + threshold);
 
@@ -358,43 +359,60 @@ namespace discordMusicBot.src
 
         public async Task startAutoPlayList(Channel voiceChannel, DiscordClient _client)
         {
-            loadPlaylist();
-            loadBlacklist();
-
-            //library loop is used to keep this loop active
-            while(libraryLoop == true)
+            try
             {
-                //given the loop is always active lets make another loop that we can pause when neede
-                while(playlistActive == true)
+                loadPlaylist();
+                loadBlacklist();
+
+                //library loop is used to keep this loop active
+                while (libraryLoop == true)
                 {
-                    bool result = getTrack();
-
-                    if (result == false)
+                    //given the loop is always active lets make another loop that we can pause when neede
+                    while (playlistActive == true)
                     {
-                        //reroll                   
-                    }
-                    else
-                    {
-                        //pass off to download the file for cache
-                        string[] file = await _downloader.download_audio(npUrl);
+                        bool result = getTrack();
 
-                        _client.SetGame(npTitle);
-
-                        await _player.SendAudio(file[2], voiceChannel, _client);
-
-                        //if a user submitted the song remove it from the disk
-                        if (npSource == "Submitted")
+                        if (result == false)
                         {
-                            File.Delete(file[2]);
-                            removeTrackSubmitted(npUrl);
+                            //reroll                   
                         }
+                        else
+                        {
+                            //pass off to download the file for cache
+                            string[] file = await _downloader.download_audio(npUrl);
 
-                        addBeenPlayed(npTitle, npUrl);
+                            _client.SetGame(npTitle);
 
+                            await _player.SendAudio(file[2], voiceChannel, _client);
+
+                            //if a user submitted the song remove it from the disk
+                            if (npSource == "Submitted")
+                            {
+                                File.Delete(file[2]);
+                                removeTrackSubmitted(npUrl);
+                            }
+
+                            addBeenPlayed(npTitle, npUrl);
+
+                            //write to listAllSongsPlayed for debug purpose
+                            listAllSongsPlayed.Add(new ListPlaylist
+                            {
+                                title = npTitle,
+                                url = npUrl,
+                                user = npUser,
+
+                            });
+
+                        }
                     }
-                }
 
+                }
             }
+            catch(Exception error)
+            {
+                Console.WriteLine($"Error Generated in _playlist.startAutoPlayList.\rError: {error}");
+            }
+
         } 
 
         public async Task<string> cmd_play(string url, string user)
@@ -403,6 +421,15 @@ namespace discordMusicBot.src
             {
                 
                 string title = await _downloader.returnYoutubeTitle(url);
+
+                //check to see if the song requested was played already and in the listSubmitted
+                //this is used to deal with a issue discovered when testing a file playback error.
+                //b.0005
+                int beenPlayedPosition = listBeenPlayed.FindIndex(x => x.url == url);
+                if(beenPlayedPosition != -1)
+                {
+                    listSubmitted.RemoveAt(beenPlayedPosition);
+                }
 
                 //test to see if the url was already blacklisted
                 bool blacklistFound = checkBlacklist(title, url);
@@ -438,198 +465,7 @@ namespace discordMusicBot.src
                 return null;
             }           
         }
-        
-        /// <summary>
-        /// Used to add a track to playlist.json.
-        /// Will not add if dupe url is found.
-        /// </summary>
-        /// <param name="user"></param>
-        /// <param name="url"></param>
-        /// <returns></returns>
-        public async Task<string> cmd_plAdd(string user, string url)
-        {   
-            //check to see if the url is found in listLibrary
-            // -1 means it was not found   
-            int urlResult = listLibrary.FindIndex(x => x.url == url);
-
-            if(urlResult == -1)
-            {
-                downloader _downloader = new downloader();
-
-                //didnt find it already in the list
-                string title = await _downloader.returnYoutubeTitle(url);
-                
-                listLibrary.Add(new ListPlaylist
-                {
-                    title = title,
-                    user = user,
-                    url = url
-                });
-
-                savePlaylist();
-                return title;
-            }
-            else
-            {
-                //match found, dont add a dupe
-                return "dupe";
-            }
-        }
-
-        /// <summary>
-        /// Used to remove a song from the playlist.json
-        /// Will check the url to make sure we dont have it in the file already though.
-        /// </summary>
-        /// <param name="url"></param>
-        /// <returns></returns>
-        public string cmd_plRemove(string url)
-        {
-            try
-            {
-                int urlResult = listLibrary.FindIndex(x => x.url == url);
-                if(urlResult >= 0)
-                {
-                    //found a match
-                    listLibrary.RemoveAt(urlResult);
-                    savePlaylist();
-
-                    return "match";
-                }
-                else
-                {
-                    //this should be -1 means no match found
-                    return "noMatch";
-                }
-            }
-            catch (Exception e)
-            {
-                //something went wrong or we didnt find a value in the list.. chances are no value found.
-                Console.WriteLine("Error: cmd_plRemove genereted a error.\rError message\r" + e);
-                return "error";
-            }
             
-        }
-
-        /// <summary>
-        /// Makes a readable version of the json file.
-        /// returns true if it work
-        /// returns false if it failed
-        /// </summary>
-        /// <returns></returns>
-        public bool cmd_plexport()
-        {
-            try
-            {
-                string loc = Directory.GetCurrentDirectory() + "\\configs\\playlist_export.json";
-                string json = JsonConvert.SerializeObject(listLibrary, Formatting.Indented);
-
-                if (!File.Exists(loc))
-                    File.Create(loc).Close();
-
-                File.WriteAllText(loc, json);
-
-                return true;
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Error running plExport.  Error dump: " + e);
-                return false;
-            }
-
-        }
-
-        /// <summary>
-        /// Makes a readable version of the json file.
-        /// returns True if it worked
-        /// returns false if failed.
-        /// </summary>
-        /// <returns></returns>
-        public bool cmd_blexport()
-        {
-            try
-            {
-                string loc = Directory.GetCurrentDirectory() + "\\configs\\blacklist_export.json";
-                string json = JsonConvert.SerializeObject(listBlacklist, Formatting.Indented);
-
-                if (!File.Exists(loc))
-                    File.Create(loc).Close();
-
-                File.WriteAllText(loc, json);
-
-                return true;
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Error running blExport.  Error dump: " + e);
-                return false;
-            }
-
-        }
-
-        /// <summary>
-        /// Users to add lines to the blacklist file
-        /// </summary>
-        /// <param name="user"> username of who sent it</param>
-        /// <param name="url"> url of what to blacklist</param>
-        /// <returns></returns>
-        public async Task<string> cmd_blAdd(string user, string url)
-        {
-            downloader _downloader = new downloader();
-
-            int urlResult = listBlacklist.FindIndex(x => x.url == url);
-
-            if(urlResult == -1)
-            {
-                string title = await _downloader.returnYoutubeTitle(url);
-
-                listBlacklist.Add(new ListPlaylist
-                {
-                    title = title,
-                    user = user,
-                    url = url
-                });
-
-                saveBlacklist();
-                return title;
-            }
-            else
-            {
-                return "dupe";
-            }
-        }
-
-        /// <summary>
-        /// Removes url's from the blacklist if found.
-        /// </summary>
-        /// <param name="url"></param>
-        /// <returns></returns>
-        public string cmd_blRemove(string url)
-        {
-            try
-            {
-                int urlResult = listBlacklist.FindIndex(x => x.url == url);
-                if (urlResult >= 0)
-                {
-                    //found a match
-                    listBlacklist.RemoveAt(urlResult);
-                    saveBlacklist();
-
-                    return "match";
-                }
-                else
-                {
-                    //this should be -1 means no match found
-                    return "noMatch";
-                }
-            }
-            catch (Exception e)
-            {
-                //something went wrong or we didnt find a value in the list.. chances are no value found.
-                Console.WriteLine("Error: cmd_blRemove genereted a error.\rError message\r" + e);
-                return "error";
-            }
-        }
-
         /// <summary>
         /// Used to discard the current queue and pick new files.
         /// </summary>
@@ -699,6 +535,7 @@ namespace discordMusicBot.src
         {
             try
             {
+
                 if (listSubmitted.Count >= 1)
                 {
                     string result = null;

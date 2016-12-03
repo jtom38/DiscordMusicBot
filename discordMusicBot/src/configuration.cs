@@ -35,6 +35,7 @@ namespace discordMusicBot.src
         /// </summary>
         public ulong idAdminGroup { get; set; }
 
+
         public int volume { get; set; }
 
         public configuration()

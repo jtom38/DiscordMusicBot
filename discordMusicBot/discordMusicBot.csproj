@@ -100,6 +100,7 @@
     <Compile Include="src\downloader.cs" />
     <Compile Include="src\player.cs" />
     <Compile Include="src\playlist.cs" />
+    <Compile Include="src\system.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

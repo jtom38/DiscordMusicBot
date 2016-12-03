@@ -19,6 +19,7 @@ namespace discordMusicBot.src.Modules
         private configuration _config;
 
         playlist _playlist = new playlist();
+        system _system = new system();
 
         void IModule.Install(ModuleManager manager)
         {
@@ -46,84 +47,37 @@ namespace discordMusicBot.src.Modules
 
                             //convert the arg from string to int
                             int counter = int.Parse(e.GetArg("count"));
+                            int deleteCounter = 100;
 
-                            if (counter >= 101)
+                            while(counter != 0)
                             {
-                                counter = 100;
+                                if(counter >= 100)
+                                {
+                                    deleteCounter = 100;
+                                }
+                                else
+                                {
+                                    deleteCounter = counter;
+                                }
+                                    
+
+                                //make var to store messages from the server
+                                Message[] messagesToDelete;
+
+                                //tell server to download messages to memory
+                                messagesToDelete = await e.Channel.DownloadMessages(deleteCounter);
+
+                                //tell bot to delete them from server
+                                await e.Channel.DeleteMessages(messagesToDelete);
+
+                                counter = counter - 100;
                             }
-
-                            //make var to store messages from the server
-                            Message[] messagesToDelete;
-
-                            //tell server to download messages to memory
-                            messagesToDelete = await e.Channel.DownloadMessages(counter);
-
-                            //tell bot to delete them from server
-                            await e.Channel.DeleteMessages(messagesToDelete);
 
                             //await e.Channel.SendMessage($"@{e.User.Name}, I have added {e.GetArg("url")} to autoplaylist.txt.");
                         }
                         catch(Exception error)
                         {
                             Console.WriteLine($"Error generated with !plExport\rDump: {error}");
-                        }
-
-                    });
-
-                _client.GetService<CommandService>().CreateCommand("plexport")
-                    .Alias(new string[] { "plexport", "ple" })
-                    .Description("Exports current playlist \rPermission: Mods")
-                    .MinPermissions((int)PermissionLevel.GroupMods)
-                    .Do(async e =>
-                    {
-                        try
-                        {
-                            bool result = _playlist.cmd_plexport();
-                            if (result == true)
-                            {
-                                Channel userPM = await e.User.CreatePMChannel();
-
-                                await userPM.SendFile(Directory.GetCurrentDirectory() + "\\configs\\playlist_export.json");
-                                await e.Channel.SendMessage($"{e.User.Name},\rPlease check the PM that I sent you for your file request.");
-                                File.Delete(Directory.GetCurrentDirectory() + "\\configs\\playlist_export.json");
-                            }
-                            else
-                            {
-                                await e.Channel.SendMessage("Error generating file.\rPlease inform the server owner for more infomation.");
-                            }
-                        }
-                        catch(Exception error)
-                        {
-                            Console.WriteLine($"Error generated with !plExport\rDump: {error}");
-                        }
-                   
-                    });
-
-                _client.GetService<CommandService>().CreateCommand("blexport")
-                    .Alias(new string[] { "blexport", "ble" })
-                    .Description("Exports current blacklist\rPermission: Mods")
-                    .MinPermissions((int)PermissionLevel.GroupMods)
-                    .Do(async e =>
-                    {
-                        try
-                        {
-                            bool result = _playlist.cmd_blexport();
-
-                            if (result == true)
-                            {
-                                Channel userPM = await e.User.CreatePMChannel();
-                                await userPM.SendFile(Directory.GetCurrentDirectory() + "\\configs\\blacklist_export.json");
-                                await e.Channel.SendMessage($"{e.User.Name},\rPlease check the PM that I sent you for your file request.");
-                                File.Delete(Directory.GetCurrentDirectory() + "\\configs\\blacklist_export.json");
-                            }
-                            else
-                            {
-                                await e.Channel.SendMessage("Error generating file.\rPlease inform the server owner for more infomation.");
-                            }
-                        }
-                        catch(Exception error)
-                        {
-                            Console.WriteLine($"Error generated with !blExport\rDump: {error}");
                         }
 
                     });
@@ -280,64 +234,61 @@ namespace discordMusicBot.src.Modules
                         }
                     });
 
-                _client.GetService<CommandService>().CreateCommand("setGroupDefault")
-                    .Alias("sgd")
-                    .Description("Sets the role group needed for basic commands.\rPermission: Owner")
+                _client.GetService<CommandService>().CreateCommand("setGroup")
+                    .Alias("sg")
+                    .Description($"Sets the role group needed for basic commands.\r{_config.Prefix}setGroup default id\r{_config.Prefix}setGroup mods id\r{_config.Prefix}setGroup admins id\rPermission: Owner")
+                    .Parameter("role", ParameterType.Optional)
                     .Parameter("id", ParameterType.Optional)
                     .MinPermissions((int)PermissionLevel.BotOwner)
                     .Do(async e =>
                     {
                         try
                         {
-                            ulong id = Convert.ToUInt64(e.GetArg("id"));
-                            _config.idDefaultGroup = id;
-                            _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+                            ulong id = new ulong { };
+                            try
+                            {
+                                id = Convert.ToUInt64(e.GetArg("id"));
+                            }
+                            catch
+                            {
 
-                            await e.Channel.SendMessage($"Permission Role has been updated.");
+                            }
+                            
+                            if(e.GetArg("id") == null)
+                            {
+                                await e.Channel.SendMessage($"Please submit a role ID.\rExample: {_config.Prefix}setGroup default 139135090637668350");
+                                return;
+                            }
+
+                            switch (e.GetArg("role"))
+                            {
+                                case "default":                                    
+                                    _config.idDefaultGroup = id;
+                                    _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+
+                                    await e.Channel.SendMessage($"Permission Role has been updated.");
+
+                                    break;
+                                case "mods":
+                                    _config.idModsGroup = id;
+                                    _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+
+                                    await e.Channel.SendMessage($"Permission Role has been updated.");
+                                    break;
+                                case "admins":
+                                    _config.idAdminGroup = id;
+                                    _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+
+                                    await e.Channel.SendMessage($"Permission Role has been updated.");
+                                    break;
+                                default:
+
+                                    await e.Channel.SendMessage($"Please submit a group level.\rAvailable args\rdefault\rmods\radmins\rExample: {_config.Prefix}setGroup default 139135090637668350");
+                                    break;
+                            }
+
                         }
                         catch(Exception error)
-                        {
-                            Console.WriteLine($"Error: setGroupDefault generated a error: {error}");
-                        }
-                    });
-
-                _client.GetService<CommandService>().CreateCommand("setGroupMods")
-                    .Alias("sgm")
-                    .Description("Sets the role group needed for mod commands.\rPermission: Owner")
-                    .Parameter("id", ParameterType.Optional)
-                    .MinPermissions((int)PermissionLevel.BotOwner)
-                    .Do(async e =>
-                    {
-                        try
-                        {
-                            ulong id = Convert.ToUInt64(e.GetArg("id"));
-                            _config.idModsGroup = id;
-                            _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
-
-                            await e.Channel.SendMessage($"Permission Role has been updated.");
-                        }
-                        catch (Exception error)
-                        {
-                            Console.WriteLine($"Error: setGroupDefault generated a error: {error}");
-                        }
-                    });
-
-                _client.GetService<CommandService>().CreateCommand("setGroupAdmins")
-                    .Alias("sga")
-                    .Description("Sets the role group needed for admin commands.\rPermission: Owner")
-                    .Parameter("id", ParameterType.Optional)
-                    .MinPermissions((int)PermissionLevel.BotOwner)
-                    .Do(async e =>
-                    {
-                        try
-                        {
-                            ulong id = Convert.ToUInt64(e.GetArg("id"));
-                            _config.idAdminGroup = id;
-                            _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
-
-                            await e.Channel.SendMessage($"Permission Role has been updated.");
-                        }
-                        catch (Exception error)
                         {
                             Console.WriteLine($"Error: setGroupDefault generated a error: {error}");
                         }
@@ -387,6 +338,78 @@ namespace discordMusicBot.src.Modules
                         catch (Exception error)
                         {
                             Console.WriteLine($"Error generated with !setPrefix\rDump: {error}");
+                        }
+                    });
+
+                _client.GetService<CommandService>().CreateCommand("export")
+                    .Alias("export")
+                    .Description($"Exports current files based on given arg.\r{_config.Prefix}export playlist\r{_config.Prefix}export blacklist\r{_config.Prefix}export log = Running log file.\rPermission: Mods")
+                    .Parameter("file")
+                    .MinPermissions((int)PermissionLevel.GroupMods)
+                    .Do(async e =>
+                    {
+                        try
+                        {
+                            string argFile = e.GetArg("file");
+
+                            Channel userPM = await e.User.CreatePMChannel();
+
+                            switch (argFile)
+                            {
+                                case "playlist":
+                                    bool plExport = _system.cmd_plExport();
+
+                                    if (plExport == true)
+                                    {
+                                        await userPM.SendFile(Directory.GetCurrentDirectory() + "\\configs\\playlist_export.json");
+                                        await e.Channel.SendMessage($"{e.User.Name},\rPlease check the PM that I sent you for your file request.");
+                                        File.Delete(Directory.GetCurrentDirectory() + "\\configs\\playlist_export.json");
+                                    }
+                                    else
+                                    {
+                                        await e.Channel.SendMessage("Error generating file.\rPlease inform the server owner for more infomation.");
+                                    }
+
+                                    break;
+                                case "blacklist":
+                                    bool blExport = _system.cmd_blExport();
+
+                                    if (blExport == true)
+                                    {                                        
+                                        await userPM.SendFile(Directory.GetCurrentDirectory() + "\\configs\\blacklist_export.json");
+                                        await e.Channel.SendMessage($"{e.User.Name},\rPlease check the PM that I sent you for your file request.");
+                                        File.Delete(Directory.GetCurrentDirectory() + "\\configs\\blacklist_export.json");
+                                    }
+                                    else
+                                    {
+                                        await e.Channel.SendMessage("Error generating file.\rPlease inform the server owner for more infomation.");
+                                    }
+
+                                    break;
+                                case "log":
+                                    bool logExport = _system.cmd_exportLog();
+
+                                    if (logExport == true)
+                                    {
+                                        //await userPM.SendFile(Directory.GetCurrentDirectory() + "\\configs\\blacklist_export.json");
+                                        //await e.Channel.SendMessage($"{e.User.Name},\rPlease check the PM that I sent you for your file request.");
+                                        //File.Delete(Directory.GetCurrentDirectory() + "\\configs\\blacklist_export.json");
+                                    }
+                                    else
+                                    {
+                                        await e.Channel.SendMessage("Error generating file.\rPlease inform the server owner for more infomation.");
+                                    }
+
+                                    break;
+                                default:
+                                    await e.Channel.SendMessage($"Invalid arguemnt found!\rPlease use one of the following.\r{_config.Prefix}export pl = Playlist\r{_config.Prefix}export bl = Blacklist\r{_config.Prefix}export log = Running log file.");
+                                    break;
+                            }
+
+                        }
+                        catch (Exception error)
+                        {
+                            Console.WriteLine($"Error generated with !exportLog\rDump: {error}");
                         }
                     });
 
