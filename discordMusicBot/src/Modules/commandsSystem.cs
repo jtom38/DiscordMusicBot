@@ -51,7 +51,7 @@ namespace discordMusicBot.src.Modules
                             int counter = int.Parse(e.GetArg("count"));
                             int deleteCounter = 100;
 
-                            while(counter != 0)
+                            while(counter > 0)
                             {
                                 if(counter >= 100)
                                 {
@@ -61,13 +61,9 @@ namespace discordMusicBot.src.Modules
                                 {
                                     deleteCounter = counter;
                                 }
-                                    
-
-                                //make var to store messages from the server
-                                Message[] messagesToDelete;
 
                                 //tell server to download messages to memory
-                                messagesToDelete = await e.Channel.DownloadMessages(deleteCounter);
+                                Message[] messagesToDelete = await e.Channel.DownloadMessages(deleteCounter);
 
                                 //tell bot to delete them from server
                                 await e.Channel.DeleteMessages(messagesToDelete);
@@ -75,11 +71,12 @@ namespace discordMusicBot.src.Modules
                                 counter = counter - 100;
                             }
 
-                            //await e.Channel.SendMessage($"@{e.User.Name}, I have added {e.GetArg("url")} to autoplaylist.txt.");
+                            _logs.logMessage("Info", "commandsSystem.rm", $"User requested {e.GetArg("count")} to be removed from {e.Channel.Name}", e.User.Name);
+
                         }
                         catch(Exception error)
                         {
-                            Console.WriteLine($"Error generated with !plExport\rDump: {error}");
+                            _logs.logMessage("Error", "commandsSystem.rm", error.ToString(), e.User.Name);
                         }
 
                     });
@@ -105,12 +102,12 @@ namespace discordMusicBot.src.Modules
                             _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
 
                             await e.Channel.SendMessage("I have updated the config file for you.");
-                            Console.WriteLine("Config.json update: defaultRoomID = " + id);
-                            //await e.Channel.SendFile("blacklist.json");
+                            _logs.logMessage("Info", "commandsSystem.defaultRoom", $"defaultRoom was updated to {e.GetArg("roomID")}", e.User.Name);
+
                         }
                         catch(Exception error)
                         {
-                            Console.WriteLine($"Error generated with !defaultRoom\rDump: {error}");
+                            _logs.logMessage("Error", "commandsSystem.defaultRoom", error.ToString(), e.User.Name);
                         }
 
                     });
@@ -180,11 +177,11 @@ namespace discordMusicBot.src.Modules
                             _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
 
                             await e.Channel.SendMessage($"{e.User.Name} changed default volume from " + oldVolume + " to " + newValue + ".");
-                            Console.WriteLine("{e.User.Name} changed default volume from " + oldVolume + " to " + newValue + ".");
+                            _logs.logMessage("Info", "commandsSystem.vol", $"Vol was changed from {oldVolume} to {newValue}", e.User.Name);
                         }
                         catch(Exception error)
                         {
-                            Console.WriteLine($"Error Generated with !vol\rDump: {error}");
+                            _logs.logMessage("Error", "commandsSystem.vol", error.ToString(), e.User.Name);
                         }
 
                     });
@@ -199,13 +196,15 @@ namespace discordMusicBot.src.Modules
                         {
                             await e.Channel.SendMessage($":wave: :zzz:");
 
+                            _logs.logMessage("Info", "commandsSystem.halt", $"Server was requested to shutdown.", e.User.Name);
+
                             await e.Server.Client.Disconnect();
 
                             Environment.Exit(0);
                         }
-                        catch
+                        catch(Exception error)
                         {
-
+                            _logs.logMessage("Error", "commandsSystem.halt", error.ToString(), e.User.Name);
                         }
 
                     });
@@ -243,9 +242,7 @@ namespace discordMusicBot.src.Modules
                         }
                         catch (Exception error)
                         {
-                            Console.WriteLine(error);
-
-                            _logs.logMessage("Error", _config.Prefix + "restart", "Dump: " + error, "System");
+                            _logs.logMessage("Error", "commandsSystem.restart", error.ToString(), e.User.Name);
                         }
 
                     });
@@ -269,10 +266,11 @@ namespace discordMusicBot.src.Modules
 
                             Channel userPM = await e.User.CreatePMChannel();
                             await userPM.SendMessage($"```\r{result}\r```");
+                            _logs.logMessage("Info", "commandsSystem.serverIds", "User requested the server role IDs.", e.User.Name);
                         }
                         catch(Exception error)
                         {
-                            Console.WriteLine($"Error with !serverIds: Error dump: {error}");
+                            _logs.logMessage("Error", "commandsSystem.serverIds", error.ToString(), e.User.Name);
                         }
                     });
 
@@ -309,6 +307,7 @@ namespace discordMusicBot.src.Modules
                                     _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
 
                                     await e.Channel.SendMessage($"Permission Role has been updated.");
+                                    _logs.logMessage("Info", "commandsSystem.setGroup default", $"Default role updated to {e.GetArg("id")}", e.User.Name);
 
                                     break;
                                 case "mods":
@@ -316,12 +315,14 @@ namespace discordMusicBot.src.Modules
                                     _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
 
                                     await e.Channel.SendMessage($"Permission Role has been updated.");
+                                    _logs.logMessage("Info", "commandsSystem.setGroup mods", $"Mods role updated to {e.GetArg("id")}", e.User.Name);
                                     break;
                                 case "admins":
                                     _config.idAdminGroup = id;
                                     _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
 
                                     await e.Channel.SendMessage($"Permission Role has been updated.");
+                                    _logs.logMessage("Info", "commandsSystem.setGroup admins", $"Admins role updated to {e.GetArg("id")}", e.User.Name);
                                     break;
                                 default:
 
@@ -332,7 +333,7 @@ namespace discordMusicBot.src.Modules
                         }
                         catch(Exception error)
                         {
-                            Console.WriteLine($"Error: setGroupDefault generated a error: {error}");
+                            _logs.logMessage("Error", "commandsSystem.setGroup", error.ToString(), e.User.Name);
                         }
                     });
 
@@ -358,11 +359,12 @@ namespace discordMusicBot.src.Modules
                                 _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
 
                                 await e.Channel.SendMessage($"Character prefix has been changed to {e.GetArg("id")} and will be active on next restart.");
+                                _logs.logMessage("Info", "commandsSystem.setPrefix", $"Commands prefix was changed to {e.GetArg("id")}.", e.User.Name);
                             }
                         }
                         catch (Exception error)
                         {
-                            Console.WriteLine($"Error generated with !setPrefix\rDump: {error}");
+                            _logs.logMessage("Error", "commandsSystem.setPrefix", error.ToString(), e.User.Name);
                         }
                     });
 
@@ -376,10 +378,11 @@ namespace discordMusicBot.src.Modules
                         try
                         {
                             await e.Channel.SendMessage($"Here is my current documentation.\rGetting Started: soon\rCommands: <https://github.com/luther38/DiscordMusicBot/wiki/Commands>");
+                            _logs.logMessage("Info", "commandsSystem.about", "User requested help docs.", e.User.Name);
                         }
                         catch (Exception error)
                         {
-                            Console.WriteLine($"Error generated with !setPrefix\rDump: {error}");
+                            _logs.logMessage("Error", "commandsSystem.about", error.ToString(), e.User.Name);
                         }
                     });
 
@@ -407,6 +410,8 @@ namespace discordMusicBot.src.Modules
                                         await userPM.SendFile(Directory.GetCurrentDirectory() + "\\configs\\playlist_export.json");
                                         await e.Channel.SendMessage($"{e.User.Name},\rPlease check the PM that I sent you for your file request.");
                                         File.Delete(Directory.GetCurrentDirectory() + "\\configs\\playlist_export.json");
+
+                                        _logs.logMessage("Info", "commandsSystem.Export Playlist", "User requested the playlist file.", e.User.Name);
                                     }
                                     else
                                     {
@@ -423,6 +428,8 @@ namespace discordMusicBot.src.Modules
                                         await userPM.SendFile(Directory.GetCurrentDirectory() + "\\configs\\blacklist_export.json");
                                         await e.Channel.SendMessage($"{e.User.Name},\rPlease check the PM that I sent you for your file request.");
                                         File.Delete(Directory.GetCurrentDirectory() + "\\configs\\blacklist_export.json");
+ 
+                                        _logs.logMessage("Info", "commandsSystem.Export Blacklist", "User requested the blacklist file.", e.User.Name);
                                     }
                                     else
                                     {
@@ -431,18 +438,10 @@ namespace discordMusicBot.src.Modules
 
                                     break;
                                 case "log":
-                                    bool logExport = _system.cmd_exportLog();
 
-                                    if (logExport == true)
-                                    {
-                                        //await userPM.SendFile(Directory.GetCurrentDirectory() + "\\configs\\blacklist_export.json");
-                                        //await e.Channel.SendMessage($"{e.User.Name},\rPlease check the PM that I sent you for your file request.");
-                                        //File.Delete(Directory.GetCurrentDirectory() + "\\configs\\blacklist_export.json");
-                                    }
-                                    else
-                                    {
-                                        await e.Channel.SendMessage("Error generating file.\rPlease inform the server owner for more infomation.");
-                                    }
+                                    await userPM.SendFile(Directory.GetCurrentDirectory() + "\\logs.txt");
+                                    await e.Channel.SendMessage($"{e.User.Name},\rPlease check the PM that I sent you for your file request.");
+                                    _logs.logMessage("Info", "commandsSystem.Export log", "User requested the log file.", e.User.Name);
 
                                     break;
                                 default:
@@ -453,7 +452,7 @@ namespace discordMusicBot.src.Modules
                         }
                         catch (Exception error)
                         {
-                            Console.WriteLine($"Error generated with !exportLog\rDump: {error}");
+                            _logs.logMessage("Error", "commandsSystem.export", error.ToString(), e.User.Name);
                         }
                     });
 

@@ -26,6 +26,7 @@ namespace discordMusicBot.src.Modules
             playlist _playlist = new playlist();
             system _system = new system();
             downloader _downloader = new downloader();
+            logs _logs = new logs();
 
             _config = configuration.LoadFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
 
@@ -58,7 +59,7 @@ namespace discordMusicBot.src.Modules
                         }
                         catch (Exception error)
                         {
-                            Console.WriteLine($"Error: !shuffle generated a error: {error}");
+                            _logs.logMessage("Error", "commandsPlaylist.shuffle", error.ToString(), e.User.Name);
                         }                     
                     });
 
@@ -79,11 +80,12 @@ namespace discordMusicBot.src.Modules
                             else
                             {
                                 await e.Channel.SendMessage($"Track currently playing\rTitle: {result[0]} \rURL: {result[1]}\rUser: {result[2]}\rSource: {result[3]}");
+                                _logs.logMessage("Info", "commandsPlaylist.np", $"Now playing infomation was requested. Title: {result[0]} URL: {result[1]} User: {result[2]} Source: {result[3]} ", e.User.Name);
                             }
                         }
                         catch(Exception error)
                         {
-                            Console.WriteLine($"Error: !np generated a error: {error}");
+                            _logs.logMessage("Error", "commandsPlaylist.np", error.ToString(), e.User.Name);
                         }
                     });
 
@@ -108,7 +110,7 @@ namespace discordMusicBot.src.Modules
                         }
                         catch(Exception error)
                         {
-                            Console.WriteLine($"Error: !queue generated a error: {error}");
+                            _logs.logMessage("Error", "commandsPlaylist.np", error.ToString(), e.User.Name);
                         }
                     });
 
@@ -140,7 +142,7 @@ namespace discordMusicBot.src.Modules
                                     else
                                     {
                                         await e.Channel.SendMessage($"{e.User.Name},\rTitle: {title}\rHas been added to the playlist file.");
-                                        Console.WriteLine($"{e.User.Name} added {title} to the playlist.json file.");
+                                        _logs.logMessage("Info", "commandsPlaylist.playlist add", $"Playlist was updated. Added {title} {e.GetArg("url")}", e.User.Name);
                                     }
                                     break;
                                 case "remove":
@@ -150,7 +152,7 @@ namespace discordMusicBot.src.Modules
                                     {
                                         string urlTitle = await _downloader.returnYoutubeTitle(e.GetArg("url"));
                                         await e.Channel.SendMessage($"{e.User.Name},\rTitle: {urlTitle}\rWas removed from the playlist.");
-                                        Console.WriteLine($"{e.User.Name} removed {urlTitle} from the playlist.json file.");
+                                        _logs.logMessage("Info", "commandsPlaylist.playlist remove", $"Playlist was updated. Removed {urlTitle} {e.GetArg("url")}", e.User.Name);
                                     }
                                     else
                                     {
@@ -166,7 +168,7 @@ namespace discordMusicBot.src.Modules
                         }
                         catch (Exception error)
                         {
-                            Console.WriteLine($"Error: !playlist {e.GetArg("flag")} generated a error: {error}");
+                            _logs.logMessage("Error", "commandsPlaylist.playlist", error.ToString(), e.User.Name);
                         }
                     });
 
@@ -200,7 +202,7 @@ namespace discordMusicBot.src.Modules
                                     {
                                         //send the infomation back to the user letting them know we added it to the blacklist.
                                         await e.Channel.SendMessage($"{e.User.Name}\rTitle: {title}\rHas been added to the blacklist file.");
-                                        Console.WriteLine($"{e.User.Name} added " + title + " to the blacklist.json file.");
+                                        _logs.logMessage("Info", "commandsPlaylist.blacklist add", $"Blacklist was updated. Added {title} {e.GetArg("url")}", e.User.Name);
                                     }
                                     break;
                                 case "remove":
@@ -211,7 +213,7 @@ namespace discordMusicBot.src.Modules
                                     {
                                         string urlTitle = await _downloader.returnYoutubeTitle(e.GetArg("url"));
                                         await e.Channel.SendMessage($"{e.User.Name}\rTitle: {urlTitle}\rWas removed from the blacklist.");
-                                        Console.WriteLine($"{e.User.Name} removed {urlTitle} from the blacklist.json file.");
+                                        _logs.logMessage("Info", "commandsPlaylist.blacklist remove", $"Blacklist was updated. Removed {urlTitle} {e.GetArg("url")}", e.User.Name);
                                     }
                                     else
                                     {
@@ -227,7 +229,7 @@ namespace discordMusicBot.src.Modules
                         }
                         catch (Exception error)
                         {
-                            Console.WriteLine($"Error: !blAdd generated a error: {error}");
+                                _logs.logMessage("Error", "commandsPlaylist.blacklist", error.ToString(), e.User.Name);
                         }
                     });
 

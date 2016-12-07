@@ -67,11 +67,11 @@ namespace discordMusicBot.src
                 //write our event to the logs.txt file
                 using (StreamWriter txtLog = new StreamWriter("logs.txt", true))
                 {
-                    txtLog.WriteLine($"{DateTime.Now} - {source} {level} {user} - {msg}");
+                    txtLog.WriteLine($"{DateTime.Now} - {level} - {source} - {user} - {msg}");
                 }
 
                 //also write to the console so the admin can see it and I can when debugging.
-                Console.WriteLine($"{DateTime.Now} -  {source} {level} {user} - {msg}");
+                Console.WriteLine($"{DateTime.Now} - {level} - {source} - {user} - {msg}");
             }
             catch(Exception error)
             {

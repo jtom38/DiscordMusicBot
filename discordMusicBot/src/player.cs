@@ -18,13 +18,15 @@ namespace discordMusicBot.src
         /// http://hastebin.com/umapabejis.cs
         /// </summary>
 
+        logs _logs = new logs();
+
         //private DiscordClient _client; //load discord client info
         private IAudioClient _nAudio; //load the discord audio client
         private configuration _config;
 
         public static bool playingSong = true; 
 
-        private float volume = .3f;
+        //private float volume = .3f;
 
         //used to play the music to the room
         public async Task SendAudio(string filepath, Channel voiceChannel, DiscordClient _client)
@@ -87,9 +89,9 @@ namespace discordMusicBot.src
                     }
                 }
             }
-            catch(Exception e)
+            catch(Exception error)
             {
-                System.Console.WriteLine("Something went wrong. :(\rDump: " + e);
+                _logs.logMessage("Error", "player.SendAudio", error.ToString(), "system");
             }
             
             _client.Dispose(); //trying this for memory managment. 
@@ -110,16 +112,23 @@ namespace discordMusicBot.src
         /// </returns>
         public bool cmd_skip()
         {
-            if(playingSong == true)
+            try
             {
-                playingSong = false;
-                return true;
+                if (playingSong == true)
+                {
+                    playingSong = false;
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
             }
-            else
+            catch (Exception error)
             {
+                _logs.logMessage("Error", "player.cmd_skip", error.ToString(), "system");
                 return false;
-            }
-            
+            }            
         }
 
         /// <summary>
@@ -131,22 +140,31 @@ namespace discordMusicBot.src
         /// </returns>
         public bool cmd_stop()
         {
-            if(playlist.playlistActive == true)
+            try
             {
+                if (playlist.playlistActive == true)
+                {
 
-                //breaks the loop
-                playlist.playlistActive = false;
+                    //breaks the loop
+                    playlist.playlistActive = false;
 
-                //forces the current track playing to send the stop command.
-                playingSong = false;
+                    //forces the current track playing to send the stop command.
+                    playingSong = false;
 
-                return true;
+                    return true;
+                }
+                else
+                {
+                    //not doing anything for a reason.
+                    return false;
+                }
             }
-            else
+            catch(Exception error)
             {
-                //not doing anything for a reason.
+                _logs.logMessage("Error", "player.cmd_stop", error.ToString(), "system");
                 return false;
             }
+
         }
 
         /// <summary>
@@ -169,9 +187,9 @@ namespace discordMusicBot.src
                     return true;
                 }
             }
-            catch(Exception e)
+            catch(Exception error)
             {
-                Console.WriteLine($"Error: player.cmd_resume generated a error.  Dump: {e}");
+                _logs.logMessage("Error", "player.cmd_stop", error.ToString(), "system");
                 return false;
             }
 

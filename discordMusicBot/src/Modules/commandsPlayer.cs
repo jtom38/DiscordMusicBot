@@ -26,6 +26,7 @@ namespace discordMusicBot.src.Modules
             playlist _playlist = new playlist();
             downloader _downloader = new downloader();
             player _player = new player();
+            logs _logs = new logs();
             
             manager.CreateCommands("", group =>
             {
@@ -45,7 +46,7 @@ namespace discordMusicBot.src.Modules
 
                         //tell server to download messages to memory
                         cacheMessages = await e.Channel.DownloadMessages(10);
-                        string url = null;
+                        //string url = null;
 
                         for(int i =0; i < 10; i++)
                         {
@@ -76,7 +77,7 @@ namespace discordMusicBot.src.Modules
                         {
                             if (e.GetArg("url") == "")
                             {
-                                await e.Channel.SendMessage($"@{e.User.Mention}, Please give me a link so I can play the song for you.");
+                                await e.Channel.SendMessage($"{e.User.Mention}, Please give me a link so I can play the song for you.");
                                 return;
                             }
 
@@ -90,11 +91,12 @@ namespace discordMusicBot.src.Modules
                             else
                             {
                                 await e.Channel.SendMessage(result);
+                                _logs.logMessage("Info", "commandsPlayer.play", $"URL:{e.GetArg("url")} was submitted to the queue.", e.User.Name);
                             }
                         }
                         catch(Exception error)
                         {
-                            Console.WriteLine($"Error generated with !play\rDump: {error}");
+                            _logs.logMessage("Error", "commandsPlayer.play", error.ToString(), e.User.Name);
                         }                      
                     });
 
@@ -111,6 +113,7 @@ namespace discordMusicBot.src.Modules
                             if (result == true)
                             {
                                 await e.Channel.SendMessage($"Skipping the track.");
+                                _logs.logMessage("Info", "commandsPlayer.skip", "Track skip was requested.", e.User.Name);
                             }
                             else
                             {
@@ -119,7 +122,7 @@ namespace discordMusicBot.src.Modules
                         }
                         catch(Exception error)
                         {
-                            Console.WriteLine($"Error generated with !skip\rDump: {error}");
+                            _logs.logMessage("Error", "commandsPlayer.skip", error.ToString(), e.User.Name);
                         }                        
                     });
 
@@ -137,6 +140,8 @@ namespace discordMusicBot.src.Modules
                             {
                                 _client.SetGame(null);
                                 await e.Channel.SendMessage($"Music will be stopping.");
+                                _logs.logMessage("Info", "commandsPlayer.stop", "Player was requested to stop.", e.User.Name);
+
                             }
                             else
                             {
@@ -145,10 +150,8 @@ namespace discordMusicBot.src.Modules
                         }
                         catch(Exception error)
                         {
-                            Console.WriteLine($"Error generated with !stop\rDump: {error}");
+                            _logs.logMessage("Error", "commandsPlayer.stop", error.ToString(), e.User.Name);
                         }
-
-
                     });
 
                 _client.GetService<CommandService>().CreateCommand("resume")
@@ -162,10 +165,11 @@ namespace discordMusicBot.src.Modules
                             _player.cmd_resume();
 
                             await e.Channel.SendMessage($"Activating the playlist again.");
+                            _logs.logMessage("Info", "commandsPlayer.resume", "", e.User.Name);
                         }
                         catch(Exception error)
                         {
-                            Console.WriteLine($"Error generated with !resume\rDump: {error}");
+                            _logs.logMessage("Error", "commandsPlayer.resume", error.ToString(), e.User.Name);
                         }
                     });
 
@@ -180,10 +184,11 @@ namespace discordMusicBot.src.Modules
                             Channel voiceChan = e.User.VoiceChannel;
                             await voiceChan.JoinAudio();
                             await _playlist.startAutoPlayList(voiceChan, _client);
+                            _logs.logMessage("Error", "commandsPlayer.summon", $"User has summoned the bot to room {voiceChan.ToString()}", e.User.Name);
                         }
                         catch(Exception error)
                         {
-                            Console.WriteLine($"Error generated with !summon\rDump: {error}");
+                            _logs.logMessage("Error", "commandsPlayer.summon", error.ToString(), e.User.Name);
                         }
                         
                     });

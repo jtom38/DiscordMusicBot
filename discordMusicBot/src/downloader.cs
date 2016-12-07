@@ -11,6 +11,8 @@ namespace discordMusicBot.src
 {
     class downloader
     {
+        logs _logs = new logs();
+
         public async Task<string[]> download_audio(string url)
         {
             ///<summary>
@@ -37,7 +39,7 @@ namespace discordMusicBot.src
             if(File.Exists(workingDir + fileAAC))
             {
                 // do nothing
-                Console.WriteLine("Info: URL " + url + " was already downloaded, ignoring");
+                _logs.logMessage("Debug", "downloader.download_audio", "URL " + url + " was already downloaded, ignoring", "system");               
             }
             else
             {
@@ -45,7 +47,7 @@ namespace discordMusicBot.src
                 if (audio.Count > 0)
                 {
                     File.WriteAllBytes(workingDir + fileAAC, audio[0].GetBytes());
-                    Console.WriteLine("Info: Downloaded " + url );
+                    _logs.logMessage("Info", "downloader.download_audio", $"Downloaded {url} to cache.", "system");
                 }
             }
 
@@ -61,33 +63,49 @@ namespace discordMusicBot.src
 
         public string ConvertAACToWAV(string songTitle, string cacheDir)
         {
-            // im going to add this in an atempt to have easier playback though naudio
-            // https://stackoverflow.com/questions/13486747/convert-aac-to-wav
-
-            // create media foundation reader to read the AAC encoded file
-            using (MediaFoundationReader reader = new MediaFoundationReader(cacheDir + songTitle + ".aac"))
-            // resample the file to PCM with same sample rate, channels and bits per sample
-            using (ResamplerDmoStream resampledReader = new ResamplerDmoStream(reader,
-                new WaveFormat(reader.WaveFormat.SampleRate, reader.WaveFormat.BitsPerSample, reader.WaveFormat.Channels)))
-            // create WAVe file
-            using (WaveFileWriter waveWriter = new WaveFileWriter(cacheDir + songTitle + ".wav", resampledReader.WaveFormat))
+            try
             {
-                // copy samples
-                resampledReader.CopyTo(waveWriter);
+                // im going to add this in an atempt to have easier playback though naudio
+                // https://stackoverflow.com/questions/13486747/convert-aac-to-wav
+
+                // create media foundation reader to read the AAC encoded file
+                using (MediaFoundationReader reader = new MediaFoundationReader(cacheDir + songTitle + ".aac"))
+                // resample the file to PCM with same sample rate, channels and bits per sample
+                using (ResamplerDmoStream resampledReader = new ResamplerDmoStream(reader,
+                    new WaveFormat(reader.WaveFormat.SampleRate, reader.WaveFormat.BitsPerSample, reader.WaveFormat.Channels)))
+                // create WAVe file
+                using (WaveFileWriter waveWriter = new WaveFileWriter(cacheDir + songTitle + ".wav", resampledReader.WaveFormat))
+                {
+                    // copy samples
+                    resampledReader.CopyTo(waveWriter);
+                }
+
+                return cacheDir + songTitle + ".wav";
             }
-
-            return cacheDir+songTitle+".wav";
-
+            catch(Exception error)
+            {
+                _logs.logMessage("Error", "downloader.ConvertAACToWAV", error.ToString(), "system");
+                return null;
+            }
         }
 
         //used in _playlist.cmd_plAdd()
         public async Task<string> returnYoutubeTitle(string url)
         {
-            var youtube = YouTube.Default;
-            var video = youtube.GetAllVideos(url);
-            var videoList = video.ToList();
+            try
+            {
+                var youtube = YouTube.Default;
+                var video = youtube.GetAllVideos(url);
+                var videoList = video.ToList();
 
-            return videoList[0].Title;
+                return videoList[0].Title;
+            }
+            catch(Exception error)
+            {
+                _logs.logMessage("Error", "downloader.returnYoutubeTitle", error.ToString(), "system");
+                return null;
+            }
+
         }
 
 

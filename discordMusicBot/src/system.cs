@@ -15,6 +15,7 @@ namespace discordMusicBot.src
 
         playlist _playlist = new playlist();
         downloader _downloader = new downloader();
+        logs _logs = new logs();
 
         /// <summary>
         /// Used to add a track to playlist.json.
@@ -168,9 +169,9 @@ namespace discordMusicBot.src
 
                 return true;
             }
-            catch (Exception e)
-            {
-                Console.WriteLine("Error running plExport.  Error dump: " + e);
+            catch (Exception error)
+            {               
+                _logs.logMessage("Error", "system.cmd_plExport", error.ToString(), "system");
                 return false;
             }
 
@@ -196,20 +197,13 @@ namespace discordMusicBot.src
 
                 return true;
             }
-            catch (Exception e)
+            catch (Exception error)
             {
-                Console.WriteLine("Error running blExport.  Error dump: " + e);
+                _logs.logMessage("Error", "system.cmd_blExport", error.ToString(), "system");
                 return false;
             }
 
         }
-       
-        public bool cmd_exportLog()
-        {
-            //playlist.listAllSongsPlayed.   
-
-            return false;
-        }
-
+      
     }
 }
