@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using Discord;
 using Discord.Audio;
 using Discord.Modules;
+using System.Diagnostics;
 
 namespace discordMusicBot.src
 {
@@ -29,6 +30,7 @@ namespace discordMusicBot.src
         public static List<ListPlaylist> listSubmitted = new List<ListPlaylist>();
         public static List<ListPlaylist> listBeenPlayed = new List<ListPlaylist>();
         public static List<ListPlaylist> listAllSongsPlayed = new List<ListPlaylist>();
+        public static List<ListPlaylist> listAutoQueue = new List<ListPlaylist>();
         public static string npTitle { get; set; }
         public static string npUser { get; set; }
         public static string npUrl { get; set; }
@@ -46,6 +48,7 @@ namespace discordMusicBot.src
         configuration _config = new configuration();
         downloader _downloader = new downloader();
         player _player = new player();
+        logs _logs = new logs();
 
         public void savePlaylist()
         {
@@ -125,6 +128,158 @@ namespace discordMusicBot.src
                 Console.WriteLine("Error reading blacklist.json.  Error: " + e);
             }
         }
+
+        public void shuffleLibrary()
+        {
+            Stopwatch stopWatch = new Stopwatch(); //make the stopwatch so we can track how long it takes
+            try
+            {
+                loadPlaylist(); //load the playlist to memory
+                loadBlacklist(); //load the blacklist to memory
+
+                _logs.logMessage("Info", "playlist.shuffleLibrary", $"Starting shuffle of {listLibrary.Count} tracks", "system");
+
+                Random rng = new Random();
+
+                List<ListPlaylist> tempLibrary = new List<ListPlaylist>();
+                tempLibrary.AddRange(listLibrary);
+
+                stopWatch.Start();
+                //generate a temp lis
+                for (int i = 0; i < listLibrary.Count; i++)
+                {
+
+                    int counter = rng.Next(0, tempLibrary.Count);
+
+                    listAutoQueue.Add(new ListPlaylist
+                    {
+                        title = tempLibrary[counter].title,
+                        url = tempLibrary[counter].url,
+                        user = tempLibrary[counter].user,
+                        like = tempLibrary[counter].like,
+                        skips = tempLibrary[counter].skips
+                    });
+
+                    //remove the item we just added to the queue
+                    tempLibrary.RemoveAt(counter);
+
+                }
+                stopWatch.Stop();
+                _logs.logMessage("Info", "playlist.shuffleLibrary", $"Finished shuffle of {listLibrary.Count} tracks in {stopWatch.Elapsed.TotalSeconds}s", "system");
+            }
+            catch (Exception error)
+            {
+                stopWatch.Stop();
+                _logs.logMessage("Error", "playlist.shuffleLibrary", error.ToString(), "system");
+            }
+
+        }
+
+        public async Task playAutoQueue(Channel voiceChannel, DiscordClient _client)
+        {
+            try
+            {
+                //library loop is used to keep this loop active
+                while (libraryLoop == true)
+                {
+                    //given the loop is always active lets make another loop that we can pause when needed
+                    while (playlistActive == true)
+                    {
+
+                        //reset the nowplaying vars given a new song is being picked
+                        npUrl = null;
+                        npTitle = null;
+                        npUser = null;
+                        npSource = null;
+                        npLike = null;
+                        npSkip = null;
+
+                        //check to see if someone has something queued up in submmitted
+                        if (listSubmitted.Count >= 1)
+                        {
+                            pickTrackFromSubmitted();
+                        }
+                        else
+                        {
+                            //if nothing is found go back to the listAutoQueue
+                            getAutoQueueTrackInfo();
+                        }
+
+                        //pass off to download the file for cache
+                        string[] file = await _downloader.download_audio(npUrl);
+
+                        _client.SetGame(npTitle);
+
+                        await _player.SendAudio(file[2], voiceChannel, _client); //send the file and functions over to the audio player to send to the server
+
+                        //if a user submitted the song remove it from the disk
+                        if (npSource == "Submitted")
+                        {
+                            File.Delete(file[2]);
+                            removeTrackSubmitted(npUrl);
+                        }
+                        else
+                        {
+                            moveAutoQueueTrackPlayedToBackOfQueue();
+                        }
+
+                    }
+                }
+            }
+            catch (Exception error)
+            {
+                _logs.logMessage("Error", "playlist.playAutoQueue", error.ToString(), "system");
+            }
+        }
+
+        private void getAutoQueueTrackInfo()
+        {
+            try
+            {
+                //push the current track in line to the nowplaying vars
+                npTitle = listAutoQueue[0].title;
+                npUrl = listAutoQueue[0].url;
+                npUser = listAutoQueue[0].user;
+                npSource = "Library";
+                npSkip = listAutoQueue[0].skips;
+                npLike = listAutoQueue[0].like;
+            }
+            catch (Exception error)
+            {
+                _logs.logMessage("Error", "playlist.getAutoQueueTrackInfo", error.ToString(), "system");
+            }
+        }
+
+        private void moveAutoQueueTrackPlayedToBackOfQueue()
+        {
+            try
+            {
+                //get infomation for line 0 in memory
+                string title = listAutoQueue[0].title;
+                string url = listAutoQueue[0].url;
+                string user = listAutoQueue[0].user;
+                string[] skip = listAutoQueue[0].skips;
+                string[] like = listAutoQueue[0].like;
+
+                //remove from line 0
+                listAutoQueue.RemoveAt(0);
+
+                //push to back of queue
+                listAutoQueue.Add(new ListPlaylist
+                {
+                    title = title,
+                    url = url,
+                    user = user,
+                    skips = skip,
+                    like = like
+                });
+            }
+            catch (Exception error)
+            {
+                _logs.logMessage("Error", "playlist.moveAutoQueueTrackPlayedToBackOfQueue", error.ToString(), "system");
+            }
+        }
+
 
         /// <summary>
         /// Core logic to pick a track from the library

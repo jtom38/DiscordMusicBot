@@ -9,6 +9,7 @@ using Discord.Commands.Permissions.Levels;
 using Discord.Audio;
 using Discord.Modules;
 using System.IO;
+using System.Reflection;
 
 namespace discordMusicBot.src.Modules
 {
@@ -20,6 +21,7 @@ namespace discordMusicBot.src.Modules
 
         playlist _playlist = new playlist();
         system _system = new system();
+        logs _logs = new logs();
 
         void IModule.Install(ModuleManager manager)
         {
@@ -208,6 +210,46 @@ namespace discordMusicBot.src.Modules
 
                     });
 
+                _client.GetService<CommandService>().CreateCommand("restart")
+                    .Alias("reboot")
+                    .Description("Shuts down the bot.\rPermission: Mods")
+                    .MinPermissions((int)PermissionLevel.GroupMods)
+                    .Do(async e =>
+                    {
+                        try
+                        {
+                            //dump the current game playing
+                            _client.SetGame(null);
+
+                            //send a message out on the restart
+                            await e.Channel.SendMessage($":wave: :zzz:");
+
+                            //check to see if she is in a voice room, if so disconnect 
+                            var bot = e.Server.FindUsers(_client.CurrentUser.Name).FirstOrDefault().VoiceChannel;
+
+                            //check to see if the bot is in a room.
+                            if (bot != null)
+                            {
+                                //if she is, disconnect from the room.
+                                await bot.LeaveAudio();
+                            }
+
+                            _logs.logMessage("Info", _config.Prefix + "restart", "Process was restarted by user", e.User.Name);
+
+                            var fileName = Assembly.GetExecutingAssembly().Location;
+                            System.Diagnostics.Process.Start(fileName);
+                            Environment.Exit(0);
+
+                        }
+                        catch (Exception error)
+                        {
+                            Console.WriteLine(error);
+
+                            _logs.logMessage("Error", _config.Prefix + "restart", "Dump: " + error, "System");
+                        }
+
+                    });
+
                 _client.GetService<CommandService>().CreateCommand("serverIds")
                     .Alias("serverIds")
                     .Description("Exports roles IDs.\rPermission: Owner")
@@ -357,6 +399,7 @@ namespace discordMusicBot.src.Modules
                             switch (argFile)
                             {
                                 case "playlist":
+                                case "pl":
                                     bool plExport = _system.cmd_plExport();
 
                                     if (plExport == true)
@@ -372,6 +415,7 @@ namespace discordMusicBot.src.Modules
 
                                     break;
                                 case "blacklist":
+                                case "bl":
                                     bool blExport = _system.cmd_blExport();
 
                                     if (blExport == true)

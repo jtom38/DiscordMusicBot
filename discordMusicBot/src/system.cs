@@ -203,8 +203,7 @@ namespace discordMusicBot.src
             }
 
         }
-
-        
+       
         public bool cmd_exportLog()
         {
             //playlist.listAllSongsPlayed.   

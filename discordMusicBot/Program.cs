@@ -36,6 +36,7 @@ namespace discordMusicBot
 
         player _player = new player();
         playlist _playlist = new playlist();
+        logs _logs = new logs();
 
         public void loopRestart()
         {
@@ -87,8 +88,10 @@ namespace discordMusicBot
 
             //check the playlist file
             //_playlist.getPlaylistFile();
-            _playlist.loadPlaylist();
-            _playlist.loadBlacklist();
+            //_playlist.loadPlaylist();
+            //_playlist.loadBlacklist();
+
+            _playlist.shuffleLibrary();
 
             _client.UserUpdated += async (s, e) =>
             {
@@ -134,7 +137,8 @@ namespace discordMusicBot
                     {
                         await _client.Connect(_config.Token, TokenType.Bot);
                         _client.SetGame(null);
-                        Console.WriteLine("Connected to Discord.");
+                        _logs.logMessage("Info", "program.Start", "Connected to Discord", "system");
+                        //Console.WriteLine("Connected to Discord.");
                         //await _client.ClientAPI.Send(new Discord.API.Client.Rest.HealthRequest());
 
                         break;
@@ -142,6 +146,7 @@ namespace discordMusicBot
                     catch (Exception ex)
                     {
                         _client.Log.Error($"Login Failed", ex);
+                        _logs.logMessage("Error", "program.Start", ex.ToString(), "system");
                         await Task.Delay(_client.Config.FailedReconnectDelay);
                     }
                 }
@@ -155,6 +160,7 @@ namespace discordMusicBot
             checkConfigFile();
             checkToken();
             setOwnerID();
+            setLogLevel();
             checkCommandPrefix();
         }
 
@@ -264,6 +270,55 @@ namespace discordMusicBot
         private void checkCommandPrefix()
         {
             Console.WriteLine("Current commandPrefix = " + _config.Prefix);
+        }
+
+        private void setLogLevel()
+        {
+            try
+            {
+                _config = configuration.LoadFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+
+                int t = _config.logLevel;
+                if (_config.logLevel >= 0)
+                {
+                    switch (_config.logLevel)
+                    {
+                        case 0: //off
+                            Console.WriteLine($"Logging: Off");
+                            break;
+                        case 1: //debug
+                            Console.WriteLine($"Logging: Debug");
+                            break;
+                        case 2: //info
+                            Console.WriteLine($"Logging: Infomation");
+                            break;
+                        case 3: //error
+                            Console.WriteLine($"LOgging: Errors");
+                            break;
+                    }
+                    
+                }
+                else
+                {
+                    Console.WriteLine("Please enter what level of logging you would like.");
+                    Console.WriteLine("0: Off");
+                    Console.WriteLine("1: Debug");
+                    Console.WriteLine("2: Infomation");
+                    Console.WriteLine("3: Errors");
+                    Console.Write("LogLevel: ");
+
+                    int logLevel = 0;
+
+                    int.TryParse(Console.ReadLine(), out logLevel);
+
+                    _config.logLevel = logLevel;
+                    _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+                }
+            }
+            catch (Exception error)
+            {
+                Console.WriteLine($"Error: {error}");
+            }
         }
 
         private void OnCommandError(object sender, CommandErrorEventArgs e)

@@ -34,7 +34,10 @@ namespace discordMusicBot.src
         ///     idAdminGroup = id for bot admins/owners, Custom group.
         /// </summary>
         public ulong idAdminGroup { get; set; }
-
+        /// <summary>
+        /// Used to set the level and write logs according to what the user wants.
+        /// </summary>
+        public int logLevel { get; set; }
 
         public int volume { get; set; }
 
@@ -49,7 +52,7 @@ namespace discordMusicBot.src
             idDefaultGroup = new ulong { };
             idModsGroup = new ulong { };
             idAdminGroup = new ulong { };
-
+            logLevel = -1;
         }
 
         /// <summary> Save the current configuration object to a file. </summary>
