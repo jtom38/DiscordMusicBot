@@ -684,6 +684,44 @@ namespace discordMusicBot.src
         }
 
         /// <summary>
+        /// Used to remove the currently playing track from the library based off whats in the NowPlaying variables
+        /// </summary>
+        public bool cmd_npRemove()
+        {
+            try
+            {
+                //get the info from the vars
+                if (npUrl != null)
+                {
+                    var urlResult = listLibrary.FindIndex(x => x.url == npUrl);
+
+                    if (urlResult != -1)
+                    {
+                        listLibrary.RemoveAt(urlResult); //remove the value from the list
+                        savePlaylist(); //save the change
+                        return true;
+                    }
+                    else
+                    {
+                        _logs.logMessage("Debug", "playlist.npRemove", "User requested a value to be removed but the nowPlaying track was not found in the library.", "system");
+                        return false; // value was not found
+                    }
+                }
+                else
+                {
+                    _logs.logMessage("Debug", "playlist.npRemove", "User requested a value to be removed but the nowPlaying var had no data.", "system");
+                    return false; //npUrl had no value
+
+                }
+            }
+            catch(Exception error)
+            {
+                _logs.logMessage("Error", "playlist.cmd_npRemove", error.ToString(), "system");
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Used to display the currently queued up tracks by the users
         /// </summary>
         public string cmd_queue()

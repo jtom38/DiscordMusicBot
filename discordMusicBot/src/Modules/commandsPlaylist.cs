@@ -67,21 +67,39 @@ namespace discordMusicBot.src.Modules
                     .Alias("np")
                     .Description("Returns infomation of current playing track.\rPermissions: Everyone")
                     .MinPermissions((int)PermissionLevel.GroupUsers)
+                    .Parameter("flag",ParameterType.Optional)
                     .Do(async e =>
                     {
                         try
                         {
-                            string[] result = _playlist.cmd_np();
-
-                            if (result[0] == null)
+                            if(e.GetArg("flag") == null)
                             {
-                                await e.Channel.SendMessage($"Sorry but a song is not currently playing.");
+                                string[] result = _playlist.cmd_np();
+
+                                if (result[0] == null)
+                                {
+                                    await e.Channel.SendMessage($"Sorry but a song is not currently playing.");
+                                }
+                                else
+                                {
+                                    await e.Channel.SendMessage($"Track currently playing\rTitle: {result[0]} \rURL: {result[1]}\rUser: {result[2]}\rSource: {result[3]}");
+                                    _logs.logMessage("Info", "commandsPlaylist.np", $"Now playing infomation was requested. Title: {result[0]} URL: {result[1]} User: {result[2]} Source: {result[3]} ", e.User.Name);
+                                }
                             }
                             else
                             {
-                                await e.Channel.SendMessage($"Track currently playing\rTitle: {result[0]} \rURL: {result[1]}\rUser: {result[2]}\rSource: {result[3]}");
-                                _logs.logMessage("Info", "commandsPlaylist.np", $"Now playing infomation was requested. Title: {result[0]} URL: {result[1]} User: {result[2]} Source: {result[3]} ", e.User.Name);
+                                //going to remove a track from the playlist with what is currently playing.
+                                bool npRemoveResult = _playlist.cmd_npRemove();
+                                if(npRemoveResult == true)
+                                {
+                                    await e.Channel.SendMessage($"{e.User.Name}, the current playing track has been removed from the Library as requested.");
+                                }
+                                else
+                                {
+                                    await e.Channel.SendMessage($"{e.User.Name}, I ran into a problem with your request.  Please see the log for more details.");
+                                }
                             }
+                            
                         }
                         catch(Exception error)
                         {
@@ -133,6 +151,7 @@ namespace discordMusicBot.src.Modules
                             switch (e.GetArg("flag"))
                             {
                                 case "add":
+                                case "a":
                                     string title = await _system.cmd_plAdd(e.User.Name, e.GetArg("url"));
 
                                     if (title == "dupe")
@@ -146,6 +165,7 @@ namespace discordMusicBot.src.Modules
                                     }
                                     break;
                                 case "remove":
+                                case "r":
                                     string url = _system.cmd_plRemove(e.GetArg("url"));
 
                                     if (url == "match")
