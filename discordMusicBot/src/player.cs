@@ -24,7 +24,7 @@ namespace discordMusicBot.src
         private IAudioClient _nAudio; //load the discord audio client
         private configuration _config;
 
-        public static bool playingSong = true; 
+        public static bool playingSong = true;
 
         //private float volume = .3f;
 

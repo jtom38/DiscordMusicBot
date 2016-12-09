@@ -73,37 +73,38 @@ namespace discordMusicBot.src.Modules
                     {
                         try
                         {
-                            if(e.GetArg("flag") == null)
+                            switch (e.GetArg("flag"))
                             {
-                                string[] result = _playlist.cmd_np();
+                                case "remove":
+                                case "r":
+                                    //going to remove a track from the playlist with what is currently playing.
+                                    bool npRemoveResult = _playlist.cmd_npRemove();
+                                    if (npRemoveResult == true)
+                                    {
+                                        _player.cmd_skip();
+                                        await e.Channel.SendMessage($"{e.User.Name}, the current playing track has been removed from the Library as requested.");
+                                        _logs.logMessage("Info", "commandsPlaylist.np remove", $"URL: {playlist.npUrl} was removed from the Library", e.User.Name);
 
-                                if (result[0] == null)
-                                {
-                                    await e.Channel.SendMessage($"Sorry but a song is not currently playing.");
-                                }
-                                else
-                                {
-                                    await e.Channel.SendMessage($"Track currently playing\rTitle: {result[0]} \rURL: {result[1]}\rUser: {result[2]}\rSource: {result[3]}");
-                                    _logs.logMessage("Info", "commandsPlaylist.np", $"Now playing infomation was requested. Title: {result[0]} URL: {result[1]} User: {result[2]} Source: {result[3]} ", e.User.Name);
-                                }
+                                    }
+                                    else
+                                    {
+                                        await e.Channel.SendMessage($"{e.User.Name}, I ran into a problem with your request.  Please see the log for more details.");
+                                      
+                                    }
+                                    break;
+                                default:
+                                    string[] result = _playlist.cmd_np();
+                                    if (result[0] == null)
+                                    {
+                                        await e.Channel.SendMessage($"Sorry but a song is not currently playing.");
+                                    }
+                                    else
+                                    {
+                                        await e.Channel.SendMessage($"Track currently playing\rTitle: {result[0]} \rURL: {result[1]}\rUser: {result[2]}\rSource: {result[3]}");
+                                        _logs.logMessage("Info", "commandsPlaylist.np", $"Now playing infomation was requested. Title: {result[0]} URL: {result[1]} User: {result[2]} Source: {result[3]} ", e.User.Name);
+                                    }
+                                    break;
                             }
-                            else
-                            {
-                                //going to remove a track from the playlist with what is currently playing.
-                                bool npRemoveResult = _playlist.cmd_npRemove();
-                                if(npRemoveResult == true)
-                                {
-                                    _player.cmd_skip();
-                                    await e.Channel.SendMessage($"{e.User.Name}, the current playing track has been removed from the Library as requested.");
-                                    _logs.logMessage("Info", "commandsPlaylist.np remove", $"URL: {playlist.npUrl} was removed from the Library", e.User.Name);
-                                    
-                                }
-                                else
-                                {
-                                    await e.Channel.SendMessage($"{e.User.Name}, I ran into a problem with your request.  Please see the log for more details.");
-                                }
-                            }
-                            
                         }
                         catch(Exception error)
                         {
