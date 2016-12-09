@@ -57,7 +57,7 @@ namespace discordMusicBot
             {
                 x.AppName = "C# Music Bot";
                 x.AppUrl = "https://github.com/luther38/DiscordMusicBot";
-                x.AppVersion = "0.1.0";
+                x.AppVersion = "0.1.4";
                 x.UsePermissionsCache = true;
                 //x.LogLevel = LogSeverity.Info;
                 x.LogHandler = OnLogMessage;
@@ -93,6 +93,7 @@ namespace discordMusicBot
 
             _playlist.shuffleLibrary();
 
+            //this is used to force the bot the dc from the room if she is left alone.
             _client.UserUpdated += async (s, e) =>
             {
 
@@ -107,18 +108,15 @@ namespace discordMusicBot
                     {
                         _client.SetGame(null);
                         _player.cmd_stop();
-                        //Channel voiceChan = e.User.VoiceChannel;
-                        
-                        await bot.LeaveAudio();
 
-                        //await _voice.Disconnect();
+                        //double checking to make sure she isnt in a room.  
+                        //Event shouldnt have flagged but reguardless double checking
+                        if (bot.ToString() != null) 
+                        {
+                            await bot.LeaveAudio();
+                        }
+
                         //Console.WriteLine("Bot is left alone.  Music is stopping.");
-                    }
-                    else
-                    {
-                        //pushing this resume to beta... just need more time and refactoring to get this working the way I want.
-                        _player.cmd_resume();
-                        //Console.WriteLine("Someone joined the room.  Starting next track.");
                     }
                 }
                 catch

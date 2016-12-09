@@ -24,6 +24,7 @@ namespace discordMusicBot.src.Modules
             _client = manager.Client;
 
             playlist _playlist = new playlist();
+            player _player = new player();
             system _system = new system();
             downloader _downloader = new downloader();
             logs _logs = new logs();
@@ -92,7 +93,10 @@ namespace discordMusicBot.src.Modules
                                 bool npRemoveResult = _playlist.cmd_npRemove();
                                 if(npRemoveResult == true)
                                 {
+                                    _player.cmd_skip();
                                     await e.Channel.SendMessage($"{e.User.Name}, the current playing track has been removed from the Library as requested.");
+                                    _logs.logMessage("Info", "commandsPlaylist.np remove", $"URL: {playlist.npUrl} was removed from the Library", e.User.Name);
+                                    
                                 }
                                 else
                                 {
@@ -170,9 +174,9 @@ namespace discordMusicBot.src.Modules
 
                                     if (url == "match")
                                     {
-                                        string urlTitle = await _downloader.returnYoutubeTitle(e.GetArg("url"));
-                                        await e.Channel.SendMessage($"{e.User.Name},\rTitle: {urlTitle}\rWas removed from the playlist.");
-                                        _logs.logMessage("Info", "commandsPlaylist.playlist remove", $"Playlist was updated. Removed {urlTitle} {e.GetArg("url")}", e.User.Name);
+                                        string[] urlTitle = await _downloader.returnYoutubeTitle(e.GetArg("url"));
+                                        await e.Channel.SendMessage($"{e.User.Name},\rTitle: {urlTitle[0]}\rWas removed from the playlist.");
+                                        _logs.logMessage("Info", "commandsPlaylist.playlist remove", $"Playlist was updated. Removed {urlTitle[0]} {e.GetArg("url")}", e.User.Name);
                                     }
                                     else
                                     {
@@ -231,9 +235,9 @@ namespace discordMusicBot.src.Modules
 
                                     if (url == "match")
                                     {
-                                        string urlTitle = await _downloader.returnYoutubeTitle(e.GetArg("url"));
-                                        await e.Channel.SendMessage($"{e.User.Name}\rTitle: {urlTitle}\rWas removed from the blacklist.");
-                                        _logs.logMessage("Info", "commandsPlaylist.blacklist remove", $"Blacklist was updated. Removed {urlTitle} {e.GetArg("url")}", e.User.Name);
+                                        string[] urlTitle = await _downloader.returnYoutubeTitle(e.GetArg("url"));
+                                        await e.Channel.SendMessage($"{e.User.Name}\rTitle: {urlTitle[0]}\rWas removed from the blacklist.");
+                                        _logs.logMessage("Info", "commandsPlaylist.blacklist remove", $"Blacklist was updated. Removed {urlTitle[0]} {e.GetArg("url")}", e.User.Name);
                                     }
                                     else
                                     {

@@ -58,9 +58,13 @@ namespace discordMusicBot.src
         {
             try
             {
+                checkLogSize();
+
                 //if we dont find the logs.txt make it
                 if (!File.Exists("logs.txt"))
                 {
+                    
+
                     File.Create("logs.txt");
                 }
 
@@ -78,6 +82,30 @@ namespace discordMusicBot.src
                 Console.WriteLine($"Error in logs.logFile. Dump: {error}");
             }
 
+        }
+
+        private void checkLogSize()
+        {
+            try
+            {
+                string filePath = Directory.GetCurrentDirectory() + "\\logs.txt";
+
+                long length = new System.IO.FileInfo(filePath).Length;
+
+                if(length >= 5242880)
+                {
+                    //the file is now 5MB, archive it and make a fresh file.
+
+                    File.Move("logs.txt", $"logs_archive{DateTime.Now.ToString()}");
+
+                    logMessage("Info", "logs.checkLogSize", "The log file was 5mb, archiving it and making a fresh file.", "system");
+                }
+
+            }
+            catch
+            {
+
+            }
         }
     }
 }

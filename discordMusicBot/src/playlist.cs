@@ -20,6 +20,7 @@ namespace discordMusicBot.src
         public string url { get; set; }       
         public string[] like { get; set; }
         public string[] skips { get; set; }
+        public string filename { get; set; }
     }
 
     class playlist
@@ -210,6 +211,8 @@ namespace discordMusicBot.src
 
                         _client.SetGame(npTitle);
 
+                        _logs.logMessage("Info", "playlist.playAutoQueue", $"Track {npTitle} was sent to the audio player.", "system");
+
                         await _player.SendAudio(file[2], voiceChannel, _client); //send the file and functions over to the audio player to send to the server
 
                         //if a user submitted the song remove it from the disk
@@ -236,13 +239,18 @@ namespace discordMusicBot.src
         {
             try
             {
-                //push the current track in line to the nowplaying vars
-                npTitle = listAutoQueue[0].title;
-                npUrl = listAutoQueue[0].url;
-                npUser = listAutoQueue[0].user;
-                npSource = "Library";
-                npSkip = listAutoQueue[0].skips;
-                npLike = listAutoQueue[0].like;
+                if(listAutoQueue.Count >= 1)
+                {
+                    //push the current track in line to the nowplaying vars
+                    npTitle = listAutoQueue[0].title;
+                    npUrl = listAutoQueue[0].url;
+                    npUser = listAutoQueue[0].user;
+                    npSource = "Library";
+                    npSkip = listAutoQueue[0].skips;
+                    npLike = listAutoQueue[0].like;
+                    _logs.logMessage("Debug", "playlist.getAutoQueueTrackInfo", $"URL: {npUrl} was picked to be played.", "system");
+                }
+
             }
             catch (Exception error)
             {
@@ -273,10 +281,34 @@ namespace discordMusicBot.src
                     skips = skip,
                     like = like
                 });
+
+                _logs.logMessage("Debug", "playlist.moveAutoQueueTrackPlayedToBackOfQueue", $"URL: {url} was moved to the back of the queue.", "system");
             }
             catch (Exception error)
             {
                 _logs.logMessage("Error", "playlist.moveAutoQueueTrackPlayedToBackOfQueue", error.ToString(), "system");
+            }
+        }
+
+        public void getTrackFromSubmittedQueue()
+        {
+            try
+            {
+                if(listSubmitted.Count >= 1)
+                {
+                    npTitle = listSubmitted[0].title;
+                    npUrl = listSubmitted[0].url;
+                    npUser = listSubmitted[0].user;
+                    npSource = "Submitted";
+                    npSkip = listSubmitted[0].skips;
+                    npLike = listSubmitted[0].like;
+
+                    _logs.logMessage("Debug", "playlist.getTrackFromSubmittedQueue", $"Url: {npUrl} was picked from the submitted queue.", "system");
+                }               
+            }
+            catch (Exception error)
+            {
+                _logs.logMessage("Error", "playlist.getTrackFromSubmittedQueue", error.ToString(), "system");
             }
         }
 
@@ -354,6 +386,15 @@ namespace discordMusicBot.src
             // extract the values
             if(listSubmitted.Count >= 1)
             {
+                //used in the new playlist
+                npTitle = listSubmitted[0].title;
+                npUrl = listSubmitted[0].url;
+                npUser = listSubmitted[0].user;
+                npSource = "Submitted";
+                npLike = listSubmitted[0].like;
+                npSkip = listSubmitted[0].skips;
+
+                //will be removed when the new one moves out of testing
                 string[] value = { listSubmitted[0].title, listSubmitted[0].user, listSubmitted[0].url, "Submitted" };
                 return value;
             }
@@ -575,7 +616,7 @@ namespace discordMusicBot.src
             try
             {
                 
-                string title = await _downloader.returnYoutubeTitle(url);
+                string[] title = await _downloader.returnYoutubeTitle(url);
 
                 //check to see if the song requested was played already and in the listSubmitted
                 //this is used to deal with a issue discovered when testing a file playback error.
@@ -587,14 +628,14 @@ namespace discordMusicBot.src
                 }
 
                 //test to see if the url was already blacklisted
-                bool blacklistFound = checkBlacklist(title, url);
+                bool blacklistFound = checkBlacklist(title[0], url);
 
                 //if it wasnt found add it to the queue
                 if(blacklistFound != true)
                 {
                     listSubmitted.Add(new ListPlaylist
                     {
-                        title = title,
+                        title = title[0],
                         url = url,
                         user = user
                     });
@@ -699,6 +740,8 @@ namespace discordMusicBot.src
                     {
                         listLibrary.RemoveAt(urlResult); //remove the value from the list
                         savePlaylist(); //save the change
+                        
+
                         return true;
                     }
                     else

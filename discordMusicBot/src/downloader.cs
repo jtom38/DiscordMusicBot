@@ -31,10 +31,10 @@ namespace discordMusicBot.src
 
             string workingDir = Directory.GetCurrentDirectory() + "\\cache\\";
 
-            string fileAAC = audio[0].FullName + ".aac";
+            string fileAAC = audio[0].FullName.Remove(audio[0].FullName.Length - 4 ) + ".aac"; // should remove the .mp4 from the filename and adds aac to the filename
+            //string fileAAC = fileName + ".aac"; // 
 
-            string title = audio[0].Title;
-            title = title.Remove(title.Length - 10);
+            string title = audio[0].Title.Remove(audio[0].Title.Length - 10); // removes the " - youtube" part of the string
 
             if(File.Exists(workingDir + fileAAC))
             {
@@ -54,7 +54,7 @@ namespace discordMusicBot.src
             string[] returnVar = {
                 audio[0].Title,                     //pass the title back
                 fileAAC,                            //pass the filename, not sure if we need to retain this
-                workingDir + fileAAC,                 //pass the full path to the file to be played back
+                workingDir + fileAAC,               //pass the full path to the file to be played back
                 audio[0].AudioBitrate.ToString()    //pass the bitrate so we can return the value
             };
 
@@ -90,7 +90,7 @@ namespace discordMusicBot.src
         }
 
         //used in _playlist.cmd_plAdd()
-        public async Task<string> returnYoutubeTitle(string url)
+        public async Task<string[]> returnYoutubeTitle(string url)
         {
             try
             {
@@ -98,7 +98,12 @@ namespace discordMusicBot.src
                 var video = youtube.GetAllVideos(url);
                 var videoList = video.ToList();
 
-                return videoList[0].Title;
+                string[] returnValue = {
+                    videoList[0].Title,
+                    videoList[0].FullName
+                }; 
+
+                return returnValue;
             }
             catch(Exception error)
             {

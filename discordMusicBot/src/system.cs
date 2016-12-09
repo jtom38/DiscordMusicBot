@@ -33,17 +33,28 @@ namespace discordMusicBot.src
             if (urlResult == -1)
             {                
                 //didnt find it already in the list
-                string title = await _downloader.returnYoutubeTitle(url);
+                string[] title = await _downloader.returnYoutubeTitle(url);
 
+                //adds to the library
                 playlist.listLibrary.Add(new ListPlaylist
                 {
-                    title = title,
+                    title = title[0],
                     user = user,
-                    url = url
+                    url = url,
+                    filename = title[1]
                 });
 
                 _playlist.savePlaylist();
-                return title;
+
+                //add to the current playing queue.
+                playlist.listAutoQueue.Add(new ListPlaylist
+                {
+                    title = title[0],
+                    user = user,
+                    url = url,
+                    filename = title[1]
+                });
+                return title[0];
             }
             else
             {
@@ -99,17 +110,17 @@ namespace discordMusicBot.src
 
             if (urlResult == -1)
             {
-                string title = await _downloader.returnYoutubeTitle(url);
+                string[] title = await _downloader.returnYoutubeTitle(url);
 
                 playlist.listBlacklist.Add(new ListPlaylist
                 {
-                    title = title,
+                    title = title[0],
                     user = user,
                     url = url
                 });
 
                 _playlist.saveBlacklist();
-                return title;
+                return title[0];
             }
             else
             {

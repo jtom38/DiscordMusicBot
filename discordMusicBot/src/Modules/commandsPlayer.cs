@@ -82,17 +82,25 @@ namespace discordMusicBot.src.Modules
                             }
 
                             //add the url to the listSubmitted 
-                            string result = await _playlist.cmd_play(e.GetArg("url"), e.User.Name);
-
-                            if (result == null)
+                            if (e.GetArg("url").Contains("https://www.youtube.com/"))
                             {
-                                await e.Channel.SendMessage($"Sorry I wont add that url to the queue given someone blacklisted it already.");
+                                string result = await _playlist.cmd_play(e.GetArg("url"), e.User.Name);
+
+                                if (result == null)
+                                {
+                                    await e.Channel.SendMessage($"Sorry I wont add that url to the queue given someone blacklisted it already.");
+                                }
+                                else
+                                {
+                                    await e.Channel.SendMessage(result);
+                                    _logs.logMessage("Info", "commandsPlayer.play", $"URL:{e.GetArg("url")} was submitted to the queue.", e.User.Name);
+                                }
                             }
                             else
                             {
-                                await e.Channel.SendMessage(result);
-                                _logs.logMessage("Info", "commandsPlayer.play", $"URL:{e.GetArg("url")} was submitted to the queue.", e.User.Name);
+                                await e.Channel.SendMessage($"Sorry the url you gave me was not a valid Youtube link.");
                             }
+
                         }
                         catch(Exception error)
                         {
@@ -183,7 +191,8 @@ namespace discordMusicBot.src.Modules
                         {
                             Channel voiceChan = e.User.VoiceChannel;
                             await voiceChan.JoinAudio();
-                            await _playlist.startAutoPlayList(voiceChan, _client);
+                            //await _playlist.startAutoPlayList(voiceChan, _client);
+                            await _playlist.playAutoQueue(voiceChan, _client);
                             _logs.logMessage("Error", "commandsPlayer.summon", $"User has summoned the bot to room {voiceChan.ToString()}", e.User.Name);
                         }
                         catch(Exception error)
