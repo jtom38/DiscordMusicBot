@@ -27,6 +27,7 @@ namespace discordMusicBot.src.Modules
             downloader _downloader = new downloader();
             player _player = new player();
             logs _logs = new logs();
+            system _system = new system();
             
             manager.CreateCommands("", group =>
             {
@@ -41,29 +42,9 @@ namespace discordMusicBot.src.Modules
                     .Do(async e =>
                     {
 
-                        //make var to store messages from the server
-                        Message[] cacheMessages;
 
-                        //tell server to download messages to memory
-                        cacheMessages = await e.Channel.DownloadMessages(10);
-                        //string url = null;
-
-                        for(int i =0; i < 10; i++)
-                        {
-                            try
-                            {
-                                if (cacheMessages[i].Attachments[0].Url != null)
-                                {
-                                    var t = cacheMessages[i].Attachments;
-                                }
-                            }
-                            catch
-                            {
-                                //discard error given I am aware this message has no attachment.
-                            }                          
-                        }
-
-                        await e.Channel.SendMessage("test");
+                        
+                        //await e.Channel.SendMessage("test");
                     });
             
                 _client.GetService<CommandService>().CreateCommand("play")

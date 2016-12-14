@@ -21,6 +21,7 @@ namespace discordMusicBot.src.Modules
 
         playlist _playlist = new playlist();
         system _system = new system();
+        network _network = new network();
         logs _logs = new logs();
 
         void IModule.Install(ModuleManager manager)
@@ -71,7 +72,7 @@ namespace discordMusicBot.src.Modules
                                 counter = counter - 100;
                             }
 
-                            _logs.logMessage("Info", "commandsSystem.rm", $"User requested {e.GetArg("count")} to be removed from {e.Channel.Name}", e.User.Name);
+                            _logs.logMessage("Info", "commandsSystem.rm", $"User requested {e.GetArg("count")} lines to be removed from {e.Channel.Name}", e.User.Name);
 
                         }
                         catch(Exception error)
@@ -453,6 +454,33 @@ namespace discordMusicBot.src.Modules
                         catch (Exception error)
                         {
                             _logs.logMessage("Error", "commandsSystem.export", error.ToString(), e.User.Name);
+                        }
+                    });
+
+                _client.GetService<CommandService>().CreateCommand("ping")
+                    .Alias("ping")
+                    .Description($"Exports current files based on given arg.\r{_config.Prefix}export playlist\r{_config.Prefix}export blacklist\r{_config.Prefix}export log = Running log file.\rPermission: Mods")
+                    .MinPermissions((int)PermissionLevel.GroupUsers)
+                    .Do(async e =>
+                    {
+                        try
+                        {
+                            var t = e.Server.Region;
+
+                            long ping = _network.cmd_ping(t.Hostname);
+                            if (ping != -1)
+                            {
+                                await e.Channel.SendMessage($"{e.User.Name},\rDatacenter: {t.Name}\rPing: {ping}ms");
+                                _logs.logMessage("Info", "commandSystem.ping", $"Datacenter: {t.Name} - Host IP: {t.Id} - Ping: {ping}ms", e.User.Name);
+                            }
+                            else
+                            {
+                                await e.Channel.SendMessage($"{e.User.Name}, Something happened and I was unable to ping the server. Please check the log for the dump info.");
+                            }
+                        }
+                        catch (Exception error)
+                        {
+                            _logs.logMessage("Error", "commandsSystem.ping", error.ToString(), e.User.Name);
                         }
                     });
 

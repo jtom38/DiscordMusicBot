@@ -99,6 +99,7 @@
     <Compile Include="src\Modules\commandsSystem.cs" />
     <Compile Include="src\configuration.cs" />
     <Compile Include="src\downloader.cs" />
+    <Compile Include="src\network.cs" />
     <Compile Include="src\player.cs" />
     <Compile Include="src\playlist.cs" />
     <Compile Include="src\system.cs" />
