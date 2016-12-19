@@ -114,22 +114,42 @@ namespace discordMusicBot.src.Modules
 
                 _client.GetService<CommandService>().CreateCommand("queue")
                     .Alias("queue")
+                    .Parameter("limit", ParameterType.Optional)
                     .Description("Returns infomation of currently queued tacks.\rPermissions: Everyone")
                     .MinPermissions((int)PermissionLevel.GroupUsers)
                     .Do(async e =>
                     {
                         try
-                            {
-                            string result = _playlist.cmd_queue();
+                        {
+                            int limit = 0;
+                            string result = null;
 
-                            if (result == null)
+                            if (e.GetArg("limit") == "")
                             {
-                                await e.Channel.SendMessage($"Sorry nothing was submitted to the queue.");
+                                limit = 5;
+                                result = _playlist.cmd_queue(limit);
+                                await e.Channel.SendMessage($"```\r{result}\r```");
                             }
                             else
                             {
-                                await e.Channel.SendMessage($"Track currently playing\rTitle: " + result[0] + "\rURL: " + result[1] + "\rUser: " + result[2] + "\rSource: " + result[3]);
+                                if(int.TryParse(e.GetArg("limit"), out limit))
+                                {
+                                    //true
+                                    if(limit >= 20)
+                                    {
+                                        limit = 20;
+                                    }
+                                    result = _playlist.cmd_queue(limit);
+                                    await e.Channel.SendMessage($"```{result}\r```");
+                                }
+                                else
+                                {
+                                    //false
+                                    await e.Channel.SendMessage($"Sorry the arg you passed was not a number.");
+                                }
+                                                           
                             }
+                                
                         }
                         catch(Exception error)
                         {

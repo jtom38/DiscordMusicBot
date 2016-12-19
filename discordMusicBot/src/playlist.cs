@@ -816,28 +816,42 @@ namespace discordMusicBot.src
         /// <summary>
         /// Used to display the currently queued up tracks by the users
         /// </summary>
-        public string cmd_queue()
+        public string cmd_queue(int limit)
         {
             try
             {
+                //check to see if we have anything queued up by the users
+                string result = null;
+                int counter = 0;
 
                 if (listSubmitted.Count >= 1)
                 {
-                    string result = null;
-
                     //we have tracks submitted
                     for (int i = 0; i < listSubmitted.Count; i++)
                     {
-                        result = result + $"Title: {listSubmitted[i].title} added by {listSubmitted[i].user}\r";
+                        if(counter == limit)
+                        {
+                            return result;
+                        }
+                        result = result + $"Title: {listSubmitted[i].title} - User: {listSubmitted[i].user} - Source: Submitted\r";
+                        counter++;
                     }
 
-                    return result;
                 }
-                else
+
+                for(int i = 0; i < listAutoQueue.Count; i++)
                 {
-                    // we have nothing in queue.
-                    return null;
+                    if (counter != limit)
+                    {
+                        result = result + $"Title: {listAutoQueue[i].title} - User: {listAutoQueue[i].user} - Source: Library\r";
+                        counter++;
+                    }
+                    else
+                    {
+                        return result;
+                    }
                 }
+                return result;
             }
             catch
             {

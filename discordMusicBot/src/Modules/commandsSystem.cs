@@ -391,7 +391,7 @@ namespace discordMusicBot.src.Modules
                     .Alias("export")
                     .Description($"Exports current files based on given arg.\r{_config.Prefix}export playlist\r{_config.Prefix}export blacklist\r{_config.Prefix}export log = Running log file.\rPermission: Mods")
                     .Parameter("file")
-                    .MinPermissions((int)PermissionLevel.GroupMods)
+                    .MinPermissions((int)PermissionLevel.GroupAdmin)
                     .Do(async e =>
                     {
                         try
@@ -446,12 +446,10 @@ namespace discordMusicBot.src.Modules
 
                                     break;
                                 case "config":
-                                    //need to check to make sure admin group
-
-
                                     await userPM.SendFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
                                     await e.Channel.SendMessage($"{e.User.Name},\rPlease check the PM that I sent you for your file request.");
                                     _logs.logMessage("Info", "commandsSystem.Export config", "User requested the config file.", e.User.Name);
+
                                     break;
                                 default:
                                     await e.Channel.SendMessage($"Invalid arguemnt found!\rPlease use one of the following.\r{_config.Prefix}export pl = Playlist\r{_config.Prefix}export bl = Blacklist\r{_config.Prefix}export log = Running log file.");
