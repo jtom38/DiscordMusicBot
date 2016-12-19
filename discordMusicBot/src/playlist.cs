@@ -38,6 +38,7 @@ namespace discordMusicBot.src
         public static string npSource { get; set; }
         public static string[] npLike { get; set; }
         public static string[] npSkip { get; set; }
+        public static string npFileName { get; set; }
 
         public static bool libraryLoop = true;
         public static bool playlistActive = true;
@@ -158,7 +159,8 @@ namespace discordMusicBot.src
                         url = tempLibrary[counter].url,
                         user = tempLibrary[counter].user,
                         like = tempLibrary[counter].like,
-                        skips = tempLibrary[counter].skips
+                        skips = tempLibrary[counter].skips,
+                        filename = tempLibrary[counter].filename                        
                     });
 
                     //remove the item we just added to the queue
@@ -194,6 +196,7 @@ namespace discordMusicBot.src
                         npSource = null;
                         npLike = null;
                         npSkip = null;
+                        npFileName = null;
 
                         //check to see if someone has something queued up in submmitted
                         if (listSubmitted.Count >= 1)
@@ -207,18 +210,31 @@ namespace discordMusicBot.src
                         }
 
                         //pass off to download the file for cache
-                        string[] file = await _downloader.download_audio(npUrl);
+                        string filePath = null;
+                        if(npFileName == null)
+                        {
+                            string[] file = await _downloader.download_audio(npUrl);
+                            filePath = Directory.GetCurrentDirectory() + "\\cache\\" + file[1];
+                            npFileName = file[1];
 
+                            //need to write the data to the listLibrary with the new fileName so we avoid downloading again 
+                            updateFileNameInTheLibrary();
+                        }
+                        else
+                        {
+                            filePath = Directory.GetCurrentDirectory() + "\\cache\\" + npFileName;
+                        }                      
+                        
                         _client.SetGame(npTitle);
 
                         _logs.logMessage("Info", "playlist.playAutoQueue", $"Track {npTitle} was sent to the audio player.", "system");
 
-                        await _player.SendAudio(file[2], voiceChannel, _client); //send the file and functions over to the audio player to send to the server
+                        await _player.SendAudio(filePath, voiceChannel, _client); //send the file and functions over to the audio player to send to the server
 
                         //if a user submitted the song remove it from the disk
                         if (npSource == "Submitted")
                         {
-                            File.Delete(file[2]);
+                            File.Delete(filePath);
                             removeTrackSubmitted(npUrl);
                         }
                         else
@@ -248,6 +264,8 @@ namespace discordMusicBot.src
                     npSource = "Library";
                     npSkip = listAutoQueue[0].skips;
                     npLike = listAutoQueue[0].like;
+                    npFileName = listAutoQueue[0].filename;
+
                     _logs.logMessage("Debug", "playlist.getAutoQueueTrackInfo", $"URL: {npUrl} was picked to be played.", "system");
                 }
 
@@ -268,6 +286,7 @@ namespace discordMusicBot.src
                 string user = listAutoQueue[0].user;
                 string[] skip = listAutoQueue[0].skips;
                 string[] like = listAutoQueue[0].like;
+                string fileName = listAutoQueue[0].filename;
 
                 //remove from line 0
                 listAutoQueue.RemoveAt(0);
@@ -279,7 +298,8 @@ namespace discordMusicBot.src
                     url = url,
                     user = user,
                     skips = skip,
-                    like = like
+                    like = like,
+                    filename = fileName
                 });
 
                 _logs.logMessage("Debug", "playlist.moveAutoQueueTrackPlayedToBackOfQueue", $"URL: {url} was moved to the back of the queue.", "system");
@@ -312,6 +332,34 @@ namespace discordMusicBot.src
             }
         }
 
+        private void updateFileNameInTheLibrary()
+        {
+            try
+            {
+                // take the title stored in memory and find the record in
+                var Result = listLibrary.FindIndex(x => x.title == npTitle);
+
+                if(Result != -1)
+                {
+                    if(listLibrary[Result].filename == null)
+                    {
+                        listLibrary[Result].filename = npFileName;
+                        savePlaylist();
+                    }
+                    
+                }
+                else
+                {
+                    _logs.logMessage("Error", "playlist.updateFileNameInTheLibrary", $"Unable to update {npTitle}.  Unable to find the index number for the requested title.", "system");
+                    return;
+                }
+                
+            }
+            catch(Exception error)
+            {
+                _logs.logMessage("Error", "playlist.updateFileNameInTheLibrary", error.ToString(), "system");
+            }
+        }
 
         /// <summary>
         /// Core logic to pick a track from the library
@@ -393,6 +441,7 @@ namespace discordMusicBot.src
                 npSource = "Submitted";
                 npLike = listSubmitted[0].like;
                 npSkip = listSubmitted[0].skips;
+                npFileName = null;
 
                 //will be removed when the new one moves out of testing
                 string[] value = { listSubmitted[0].title, listSubmitted[0].user, listSubmitted[0].url, "Submitted" };

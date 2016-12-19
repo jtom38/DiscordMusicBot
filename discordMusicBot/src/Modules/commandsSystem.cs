@@ -445,15 +445,16 @@ namespace discordMusicBot.src.Modules
                                     _logs.logMessage("Info", "commandsSystem.Export log", "User requested the log file.", e.User.Name);
 
                                     break;
-                                default:
-                                    await e.Channel.SendMessage($"Invalid arguemnt found!\rPlease use one of the following.\r{_config.Prefix}export pl = Playlist\r{_config.Prefix}export bl = Blacklist\r{_config.Prefix}export log = Running log file.");
-                                    break;
-
                                 case "config":
+                                    //need to check to make sure admin group
+
 
                                     await userPM.SendFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
                                     await e.Channel.SendMessage($"{e.User.Name},\rPlease check the PM that I sent you for your file request.");
                                     _logs.logMessage("Info", "commandsSystem.Export config", "User requested the config file.", e.User.Name);
+                                    break;
+                                default:
+                                    await e.Channel.SendMessage($"Invalid arguemnt found!\rPlease use one of the following.\r{_config.Prefix}export pl = Playlist\r{_config.Prefix}export bl = Blacklist\r{_config.Prefix}export log = Running log file.");
                                     break;
                             }
 
