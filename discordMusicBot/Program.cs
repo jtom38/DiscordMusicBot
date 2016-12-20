@@ -85,6 +85,7 @@ namespace discordMusicBot
             _client.AddModule<commandsPlayer>("commandsPlayer", ModuleFilter.ServerWhitelist);
             _client.AddModule<commandsSystem>("commandsSystem", ModuleFilter.ServerWhitelist);
             _client.AddModule<commandsPlaylist>("commandsPlaylist", ModuleFilter.ServerWhitelist);
+            _client.AddModule<commandsWeb>("commandsWeb", ModuleFilter.ServerWhitelist);
             _client.GetService<AudioService>();
 
             //check the playlist file
