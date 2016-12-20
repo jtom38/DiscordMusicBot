@@ -236,6 +236,7 @@ namespace discordMusicBot.src.Modules
                             switch (e.GetArg("flag"))
                             {
                                 case "add":
+                                case "a":
                                     //parse the url and get the infomation then append to the blacklist.json
                                     string title = await _system.cmd_blAdd(e.User.Name, e.GetArg("url"));
 
@@ -251,6 +252,7 @@ namespace discordMusicBot.src.Modules
                                     }
                                     break;
                                 case "remove":
+                                case "r":
                                     //parse the url and get the infomation then append to the blacklist.json
                                     string url = _system.cmd_blRemove(e.GetArg("url"));
 
@@ -275,6 +277,70 @@ namespace discordMusicBot.src.Modules
                         catch (Exception error)
                         {
                                 _logs.logMessage("Error", "commandsPlaylist.blacklist", error.ToString(), e.User.Name);
+                        }
+                    });
+
+                _client.GetService<CommandService>().CreateCommand("vote")
+                    .Alias("v")
+                    .Description("Adds a url to the blacklist file.\rPermissions: Mods")
+                    .Parameter("flag", ParameterType.Optional)
+                    .MinPermissions((int)PermissionLevel.GroupMods)
+                    .Do(async e =>
+                    {
+                        try
+                        {
+
+                            bool result = false;
+                            switch (e.GetArg("flag"))
+                            {
+                                case "up":
+                                case "+":
+                                //parse the url and get the infomation then append to the blacklist.json
+                                    result = _playlist.cmd_voteUp(e.User.Id.ToString());
+
+                                    if(result == true)
+                                    {
+                                        await e.Channel.SendMessage($"{e.User.Name},\rI have updated the record for the current track to note it was voted for.");
+                                        _logs.logMessage("Info", "commandsPlaylist.vote up", $"User voted up for URL: {playlist.npUrl}", e.User.Name);
+                                    }
+                                    else
+                                    {
+                                        await e.Channel.SendMessage($"{e.User.Name},\rRan into a error... please check the log file for more infomation.");
+                                    }
+
+                                    break;
+                                case "down":
+                                case "-":
+                                    //parse the url and get the infomation then append to the blacklist.json
+                                    int intResult = _playlist.cmd_voteDown(e.User.Id.ToString());
+
+                                    switch (intResult)
+                                    {
+                                        case -1:
+                                            await e.Channel.SendMessage($"{e.User.Name},\r The track was been skipped enough that it ws removed from the library.");
+                                            _logs.logMessage("Info", "commandsPlaylist.vote down", $"URL: {playlist.npUrl} hit the treshhold and was removed from the library.", "System");
+                                            break;
+                                        case 0:
+                                            await e.Channel.SendMessage($"{e.User.Name},\rRan into a error... please check the log file for more infomation.");
+                                            break;
+                                        case 1:
+                                            await e.Channel.SendMessage($"{e.User.Name},\rI have updated the record for the current track to note it was down voted for.");
+                                            _logs.logMessage("Info", "commandsPlaylist.vote down", $"User voted down for URL: {playlist.npUrl}", e.User.Name);
+                                            break;
+                                        default:
+                                            break;
+                                    }
+
+                                    break;
+                                default:
+                                    await e.Channel.SendMessage($"Invalid Argument\r{_config.Prefix}vote up/+ \r{_config.Prefix}vote down/-");
+                                    break;
+                            }
+
+                        }
+                        catch (Exception error)
+                        {
+                            _logs.logMessage("Error", "commandsPlaylist.vote", error.ToString(), e.User.Name);
                         }
                     });
 

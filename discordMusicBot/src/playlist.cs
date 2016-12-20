@@ -223,6 +223,17 @@ namespace discordMusicBot.src
                         else
                         {
                             filePath = Directory.GetCurrentDirectory() + "\\cache\\" + npFileName;
+                            if (!File.Exists(filePath)) //check to make sure the file is still on the disk.
+                            {
+                                //if we cant find the file for some reason, go download it again.
+                                string[] file = await _downloader.download_audio(npUrl);
+                                filePath = Directory.GetCurrentDirectory() + "\\cache\\" + file[1];
+                                npFileName = file[1];
+
+                                //need to write the data to the listLibrary with the new fileName so we avoid downloading again 
+                                updateFileNameInTheLibrary();
+                            }
+
                         }                      
                         
                         _client.SetGame(npTitle);
@@ -769,8 +780,18 @@ namespace discordMusicBot.src
         /// <returns></returns>
         public string[] cmd_np()
         {
-            string[] value = { npTitle, npUrl, npUser, npSource };
-            return value;
+            try
+            {
+                string[] value = { npTitle, npUrl, npUser, npSource };
+                return value;
+
+            }
+            catch(Exception error)
+            {
+                _logs.logMessage("Error", "playlist.cmd_np", error.ToString(), "system");
+                return null;
+            }
+;
         }
 
         /// <summary>
@@ -853,11 +874,144 @@ namespace discordMusicBot.src
                 }
                 return result;
             }
-            catch
+            catch(Exception error)
             {
+                _logs.logMessage("Error", "playlist.cmd_queue", error.ToString(), "system");
                 return null;
             }
 
+        }
+
+        public bool cmd_voteUp(string userID)
+        {
+            try
+            {
+                //figure out where the track is currently in the queue so we can update the record
+                var result = listLibrary.FindIndex(x => x.url == npUrl);
+
+                //get the infomation on likes in memory
+                string[] likes = listLibrary[result].like;
+                
+                //figure out how many records we have already
+                if (likes == null)
+                {
+                    likes = new string[] { userID };
+                    listLibrary[result].like = likes;
+                    savePlaylist();
+                }
+                else
+                {
+                    bool MatchFound = false;
+
+                    //checking the current records to see if user is trying to vote twice
+                    for (int i = 0; i < likes.Count(); i++)
+                    {
+                        if (likes[i] == userID)
+                        {
+                            //user already voted for the track
+                            //breaking the loop
+                            MatchFound = true;
+                            i = likes.Count();
+                        }
+                    }
+
+                    if (MatchFound == false) //if true, skips
+                    {
+                        //going to take the old records and append the new value 
+                        List<string> temp = new List<string>();
+
+                        // add the old values to the list
+                        for (int i = 0; i < likes.Count(); i++)
+                        {
+                            temp.Add(likes[i]);
+                        }
+
+                        //add the new value
+                        temp.Add(userID);
+
+                        //take the new array and update the library
+                        listLibrary[result].like = temp.ToArray();
+
+                        //save the library
+                        savePlaylist();
+                    }
+                }
+                
+                return true;
+            }
+            catch(Exception error)
+            {
+                _logs.logMessage("Error", "playlist.cmd_voteUp", error.ToString(), "system");
+                return false;
+            }
+        }
+
+        public int cmd_voteDown(string userID)
+        {
+            try
+            {
+                //figure out where the track is currently in the queue so we can update the record
+                var result = listLibrary.FindIndex(x => x.url == npUrl);
+
+                //get the infomation on likes in memory
+                string[] skips = listLibrary[result].skips;
+
+                //figure out how many records we have already
+                if (skips == null)
+                {
+                    skips = new string[] { userID };
+                    listLibrary[result].skips = skips;
+                    savePlaylist();
+                }
+                else
+                {
+                    bool MatchFound = false;
+
+                    if(skips.Count() == 2)
+                    {
+                        removeTrackSubmitted(npUrl);
+                        return -1;
+                    }
+
+                    //checking the current records to see if user is trying to vote twice
+                    for (int i = 0; i < skips.Count(); i++)
+                    {
+                        if (skips[i] == userID)
+                        {
+                            //user already voted for the track
+                            //breaking the loop
+                            MatchFound = true;
+                            i = skips.Count();
+                        }
+                    }
+
+                    if (MatchFound == false) //if true, skips
+                    {
+                        List<string> temp = new List<string>();
+
+                        // add the old values to the list
+                        for (int i = 0; i < skips.Count(); i++)
+                        {
+                            temp.Add(skips[i]);
+                        }
+
+                        //add the new value
+                        temp.Add(userID);
+
+                        //take the new array and update the library
+                        listLibrary[result].skips = temp.ToArray();
+
+                        //save the library
+                        savePlaylist();
+                    }
+                }                
+                return 1;
+            }
+            catch(Exception error)
+            {
+
+                return 0;
+            }
         }
 
     }
