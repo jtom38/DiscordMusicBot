@@ -1014,5 +1014,25 @@ namespace discordMusicBot.src
             }
         }
 
+        public void cmd_searchLibrary(string query)
+        {
+            try
+            {
+                //take what was given and try to find a track for it
+
+                var t = listLibrary.FindAll(x => x.title.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0);
+                
+                if(t.Count == 1)
+                {
+                    
+                }
+
+            }
+            catch(Exception error)
+            {
+
+            }
+        }
+
     }
 }

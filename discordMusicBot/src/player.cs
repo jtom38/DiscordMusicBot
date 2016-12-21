@@ -48,53 +48,39 @@ namespace discordMusicBot.src
             // Simple try and catch.
             try
             {
-                using (_client.GetService<AudioService>().Join(voiceChannel))
+
+                var channelCount = _client.GetService<AudioService>().Config.Channels; // Get the number of AudioChannels our AudioService has been configured to use.
+                var OutFormat = new WaveFormat(48000, 16, channelCount); // Create a new Output Format, using the spec that Discord will accept, and with the number of channels that our client supports.
+
+                using (var MP3Reader = new Mp3FileReader(filepath)) // Create a new Disposable MP3FileReader, to read audio from the filePath parameter
+                using (var resampler = new MediaFoundationResampler(MP3Reader, OutFormat)) // Create a Disposable Resampler, which will convert the read MP3 data to PCM, using our Output Format
                 {
-                    var channelCount = _client.GetService<AudioService>().Config.Channels; // Get the number of AudioChannels our AudioService has been configured to use.
-                    var OutFormat = new WaveFormat(48000, 16, channelCount); // Create a new Output Format, using the spec that Discord will accept, and with the number of channels that our client supports.
-
-                    //this was moved to test memory leaking
-                    using (var MP3Reader = new MediaFoundationReader(filepath)) // Create a new Disposable MP3FileReader, to read audio from the filePath parameter
+                    resampler.ResamplerQuality = 60; // Set the quality of the resampler to 60, the highest quality
+                    int blockSize = OutFormat.AverageBytesPerSecond / 50; // Establish the size of our AudioBuffer
+                    byte[] buffer = new byte[blockSize];
+                    int byteCount;
+                    // Add in the "&& playingSong" so that it only plays while true. For our cheesy skip command.
+                    // AGAIN WARNING YOU NEED opus.dll libsodium.dll
+                    // If you do not have these, this will not work.
+                    while ((byteCount = resampler.Read(buffer, 0, blockSize)) > 0 && playingSong) // Read audio into our buffer, and keep a loop open while data is present
                     {
-                        using (var resampler = new MediaFoundationResampler(MP3Reader, OutFormat)) // Create a Disposable Resampler, which will convert the read MP3 data to PCM, using our Output Format
+                        if (byteCount < blockSize)
                         {
-                            resampler.ResamplerQuality = 60; // Set the quality of the resampler to 60, the highest quality
-                            int blockSize = OutFormat.AverageBytesPerSecond / 50; // Establish the size of our AudioBuffer
-                            byte[] buffer = new byte[blockSize];
-                            int byteCount;
-                            // Add in the "&& playingSong" so that it only plays while true. For our cheesy skip command.
-
-                            while ((byteCount = resampler.Read(buffer, 0, blockSize)) > 0 && playingSong == true) // Read audio into our buffer, and keep a loop open while data is present
-                            {
-                                if(playingSong == false)
-                                {
-                                    _nAudio.Clear();
-                                }
-                                else
-                                {
-                                    if (byteCount < blockSize)
-                                    {
-                                        // Incomplete Frame
-                                        for (int i = byteCount; i < blockSize; i++)
-                                            buffer[i] = 0;
-                                    }
-
-                                    _nAudio.Send(buffer, 0, blockSize); // Send the buffer to Discord
-                                }
-
-                            }
-                            
+                            // Incomplete Frame
+                            for (int i = byteCount; i < blockSize; i++)
+                                buffer[i] = 0;
                         }
+
+                        _nAudio.Send(buffer, 0, blockSize); // Send the buffer to Discord
                     }
+                    await _nAudio.Disconnect();
                 }
             }
-            catch(Exception error)
+            catch
             {
-                _logs.logMessage("Error", "player.SendAudio", error.ToString(), "system");
+                System.Console.WriteLine("Something went wrong. :(");
             }
-            
-            _client.Dispose(); //trying this for memory managment. 
-            //_nAudio.Clear(); 
+            await _nAudio.Disconnect();
         }
 
         public float VolumeReturn()

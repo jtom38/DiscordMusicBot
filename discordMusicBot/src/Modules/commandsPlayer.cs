@@ -79,7 +79,9 @@ namespace discordMusicBot.src.Modules
                             }
                             else
                             {
-                                await e.Channel.SendMessage($"Sorry the url you gave me was not a valid Youtube link.");
+                                //await e.Channel.SendMessage($"Sorry the url you gave me was not a valid Youtube link.");
+
+                                _playlist.cmd_searchLibrary(e.GetArg("url"));
                             }
 
                         }

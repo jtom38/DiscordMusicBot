@@ -105,6 +105,7 @@
     <Compile Include="src\playlist.cs" />
     <Compile Include="src\startup.cs" />
     <Compile Include="src\system.cs" />
+    <Compile Include="src\Web\rule34.cs" />
     <Compile Include="src\Web\urban.cs" />
   </ItemGroup>
   <ItemGroup>
