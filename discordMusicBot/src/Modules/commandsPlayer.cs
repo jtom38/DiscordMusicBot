@@ -51,6 +51,7 @@ namespace discordMusicBot.src.Modules
                     .Alias("play")
                     .Description("Adds the requested song to the queue.\rExample: !play url\rPermissions: Mods")
                     .Parameter("url", ParameterType.Optional)
+                    .Parameter("title", ParameterType.Optional)
                     .MinPermissions((int)PermissionLevel.GroupUsers)
                     .Do(async e =>
                     {
@@ -79,9 +80,31 @@ namespace discordMusicBot.src.Modules
                             }
                             else
                             {
-                                //await e.Channel.SendMessage($"Sorry the url you gave me was not a valid Youtube link.");
+                                switch (e.GetArg("url").ToLower())
+                                {
+                                    case "title":
+                                        string searchResult = _playlist.cmd_searchLibrary(e.GetArg("url"), e.GetArg("title"), e.User.Name);
 
-                                _playlist.cmd_searchLibrary(e.GetArg("url"));
+
+                                        if (searchResult == null)
+                                        {
+                                            await e.Channel.SendMessage($"Sorry I ran into a error.  Please check the log for more information.");
+                                        }
+                                        else if (searchResult.Contains("https://www.youtube.com/"))
+                                        {
+                                            string searchResultMessage = await _playlist.cmd_play(searchResult, e.User.Name);
+                                            await e.Channel.SendMessage(searchResultMessage);
+                                        }
+                                        else
+                                        {
+                                            await e.Channel.SendMessage(searchResult);
+                                        }
+                                        break;
+                                    default:
+                                        await e.Channel.SendMessage($"{e.User.Name},\r Please enter a valid search mode.");
+                                        break;
+                                }
+                                
                             }
 
                         }

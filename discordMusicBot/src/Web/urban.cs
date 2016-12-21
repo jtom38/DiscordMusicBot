@@ -139,21 +139,31 @@ namespace discordMusicBot.src.Web
 
                         var t = JsonConvert.DeserializeObject<listUrbanDictionary>(json);
 
-                        //going to pick a random definition for the tag that was given
-                        Random rng = new Random();
-                        int counter = rng.Next(0, t.list.Count);
-
-                        string tags = null;
-                        for (int i = 0; i < t.list.Count; i++)
+                        if(t.list.Count == 0)
                         {
-                            tags += $"{t.tags[i]}, ";
-                        }                      
+                            string[] noResult = { "No Value" };
+                            return noResult;
+                        }
+                        else
+                        {
+                            //going to pick a random definition for the tag that was given
+                            Random rng = new Random();
+                            int counter = rng.Next(0, t.list.Count);
 
-                        string[] result = { t.list[counter].definition, t.list[counter].example , term, tags};
+                            string tags = null;
+                            for (int i = 0; i < t.list.Count; i++)
+                            {
+                                tags += $"{t.tags[i]}, ";
+                            }
 
-                        urbanUpdateTags(t.tags, term);
+                            string[] result = { t.list[counter].definition, t.list[counter].example, term, tags };
 
-                        return result;
+                            urbanUpdateTags(t.tags, term);
+
+                            return result;
+                        }
+
+
                     }
                 }
             }

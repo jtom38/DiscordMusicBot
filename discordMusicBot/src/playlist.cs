@@ -371,112 +371,56 @@ namespace discordMusicBot.src
                 _logs.logMessage("Error", "playlist.updateFileNameInTheLibrary", error.ToString(), "system");
             }
         }
-
-        /// <summary>
-        /// Core logic to pick a track from the library
-        /// </summary>
-        /// <returns>
-        ///     null = reroll
-        ///     !null = send to player
-        /// </returns>
-        private bool getTrack()
-        {
-            string title = null;
-            string user = null;
-            string url = null;
-            string source = null;
-
-            //1. check if something has been submitted by a user
-            string[] trackSubmitted = pickTrackFromSubmitted();
-
-            if (trackSubmitted != null)
-            {
-                //we have a user file to play
-                title = trackSubmitted[0];
-                user = trackSubmitted[1];
-                url = trackSubmitted[2];
-                source = trackSubmitted[3];
-            }
-            else
-            {
-                //2. Pick from the Library
-                string[] trackLibrary = pickTrackFromLibrary();
-                title = trackLibrary[0];
-                user = trackLibrary[1];
-                url = trackLibrary[2];
-                source = trackLibrary[3];
-            }
-
-            //3. Check to see if it was blacklisted
-            bool blacklist = checkBlacklist(title, url);
-            if(blacklist == true)
-            {
-                //we found a match in the blacklist, need to reroll
-                return false;
-            }
-
-            //4. Check to see if has been played already
-            bool beenPlayed = checkBeenPlayed(title, url);
-            if(beenPlayed == true)
-            {
-                //found a match in the beenPlayed list, need to reroll
-                return false;
-            }
-
-            //5 Need to check Likes
-
-            //6 Need to check skips
-
-            //7. Return the value back to be submiited to queue
-            npTitle = title;
-            npUser = user;
-            npUrl = url;
-            npSource = source;
-            return true;
-        }
-
+        
         /// <summary>
         /// Used to find values if a user submited a song to be played
         /// takes prority over library tracks
         /// </summary>
         /// <returns></returns>
-        public string[] pickTrackFromSubmitted()
-        {            
-            // extract the values
-            if(listSubmitted.Count >= 1)
-            {
-                //used in the new playlist
-                npTitle = listSubmitted[0].title;
-                npUrl = listSubmitted[0].url;
-                npUser = listSubmitted[0].user;
-                npSource = "Submitted";
-                npLike = listSubmitted[0].like;
-                npSkip = listSubmitted[0].skips;
-                npFileName = null;
-
-                //will be removed when the new one moves out of testing
-                string[] value = { listSubmitted[0].title, listSubmitted[0].user, listSubmitted[0].url, "Submitted" };
-                return value;
-            }
-            else
-            {
-                return null;
-            }
-
-        }
-
-        /// <summary>
-        /// Picks random tacks from the library and returns the values of the song
-        /// </summary>
-        /// <returns></returns>
-        public string[] pickTrackFromLibrary()
+        public void pickTrackFromSubmitted()
         {
-            Random rng = new Random();
-            int counter = rng.Next(0, listLibrary.Count);
+            try
+            {
+                // extract the values
+                if (listSubmitted.Count >= 1)
+                {
+                    int t = listLibrary.FindIndex(x => x.url == listSubmitted[0].url);
+                    if(t != -1)
+                    {
+                        //used in the new playlist
+                        npTitle = listSubmitted[0].title;
+                        npUrl = listSubmitted[0].url;
+                        npUser = listSubmitted[0].user;
+                        npSource = "Library";
+                        npLike = listSubmitted[0].like;
+                        npSkip = listSubmitted[0].skips;
+                        npFileName = listSubmitted[0].filename;
+                    }
+                    else
+                    {
+                        //used in the new playlist
+                        npTitle = listSubmitted[0].title;
+                        npUrl = listSubmitted[0].url;
+                        npUser = listSubmitted[0].user;
+                        npSource = "Submitted";
+                        npLike = listSubmitted[0].like;
+                        npSkip = listSubmitted[0].skips;
+                        npFileName = null;
+                    }
+                    _logs.logMessage("Debug", "playlist.pickTrackFromSubmitted", $"Title: {npTitle} was picked from listSubmitted.", "System");
+                }
+                else
+                {
+                    //shouldnt hit this ever
+                    _logs.logMessage("Debug", "playlist.pickTrackFromSubmitted", "Function was hit even though nothing was in queue", "System");
+                }
+            }
+            catch(Exception error)
+            {
+                _logs.logMessage("Error", "playlist.pickTrackFromSubmitted", error.ToString(), "System");
+            }     
 
-            string[] value = { listLibrary[counter].title, listLibrary[counter].user, listLibrary[counter].url, "Library" };
 
-            return value;
         }
 
         /// <summary>
@@ -570,38 +514,6 @@ namespace discordMusicBot.src
 
         }
         
-        /// <summary>
-        /// Checks to see if the track was already played.
-        /// 
-        /// returns true if match found
-        /// reutnr false if not found
-        /// </summary>
-        /// <param name="title"></param>
-        /// <param name="url"></param>
-        /// <returns></returns>
-        private bool checkBeenPlayed(string title, string url)
-        {
-            //check to make sure it wasnt in the beenPlayed list
-            var urlResult = listBeenPlayed.Find(x => x.url == url);
-
-            //if not null, we found a match on the name or the url
-            //using try catch given when it parses a null value it hard errors, this catches it and returns the value
-            try
-            {
-                if (urlResult.url != null)
-                {
-                    return true;
-                }
-
-                return false;
-            }
-            catch
-            {
-                return false;
-            }
-
-        }
-
         private void checkNumberOfTracksByUserSubmitted(string user)
         {
             var Result = listBeenPlayed.Count(x => x.user == user);
@@ -611,108 +523,64 @@ namespace discordMusicBot.src
                 //user has subbmitted too many songs
             }
 
-        }
-
-        public async Task startAutoPlayList(Channel voiceChannel, DiscordClient _client)
-        {
-            try
-            {
-                loadPlaylist();
-                loadBlacklist();
-
-                //library loop is used to keep this loop active
-                while (libraryLoop == true)
-                {
-                    //given the loop is always active lets make another loop that we can pause when neede
-                    while (playlistActive == true)
-                    {
-                        bool result = getTrack();
-
-                        if (result == false)
-                        {
-                            //reroll                   
-                        }
-                        else
-                        {
-                            //pass off to download the file for cache
-                            string[] file = await _downloader.download_audio(npUrl);
-
-                            _client.SetGame(npTitle);
-
-                            await _player.SendAudio(file[2], voiceChannel, _client);
-
-                            //if a user submitted the song remove it from the disk
-                            if (npSource == "Submitted")
-                            {
-                                File.Delete(file[2]);
-                                removeTrackSubmitted(npUrl);
-                            }
-
-                            addBeenPlayed(npTitle, npUrl);
-
-                            //write to listAllSongsPlayed for debug purpose
-                            listAllSongsPlayed.Add(new ListPlaylist
-                            {
-                                title = npTitle,
-                                url = npUrl,
-                                user = npUser,
-
-                            });
-
-                        }
-                    }
-
-                }
-            }
-            catch(Exception error)
-            {
-                Console.WriteLine($"Error Generated in _playlist.startAutoPlayList.\rError: {error}");
-            }
-
         } 
 
         public async Task<string> cmd_play(string url, string user)
         {
             try
             {
-                
-                string[] title = await _downloader.returnYoutubeTitle(url);
-
-                //check to see if the song requested was played already and in the listSubmitted
-                //this is used to deal with a issue discovered when testing a file playback error.
-                //b.0005
-                int beenPlayedPosition = listBeenPlayed.FindIndex(x => x.url == url);
-                if(beenPlayedPosition != -1)
-                {
-                    listSubmitted.RemoveAt(beenPlayedPosition);
-                }
-
-                //test to see if the url was already blacklisted
-                bool blacklistFound = checkBlacklist(title[0], url);
-
-                //if it wasnt found add it to the queue
-                if(blacklistFound != true)
+                //check to see if the track might be in the library already
+                var urlResult = listLibrary.FindIndex(x => x.url == url);
+                if(urlResult != -1)
                 {
                     listSubmitted.Add(new ListPlaylist
                     {
-                        title = title[0],
-                        url = url,
-                        user = user
+                        title = listLibrary[urlResult].title,
+                        url = listLibrary[urlResult].url,
+                        user = user,
+
                     });
 
-                    int total = listSubmitted.Count;
-
-                    int position = listSubmitted.FindIndex(x => x.url == url);
-
-                    string value = $"Your request is song number {position + 1}/{total}";
-
+                    string value = $"{user},\rYour track request of {listLibrary[urlResult].title} has been submitted.\rTracks in queue: {listSubmitted.Count}";
                     return value;
                 }
                 else
                 {
-                    //match was found
-                    return null;
+                    string[] title = await _downloader.returnYoutubeTitle(url);
+
+                    //check to see if the song requested was played already and in the listSubmitted
+                    //this is used to deal with a issue discovered when testing a file playback error.
+                    //b.0005
+                    int beenPlayedPosition = listBeenPlayed.FindIndex(x => x.url == url);
+                    if (beenPlayedPosition != -1)
+                    {
+                        listSubmitted.RemoveAt(beenPlayedPosition);
+                    }
+
+                    //test to see if the url was already blacklisted
+                    bool blacklistFound = checkBlacklist(title[0], url);
+
+                    //if it wasnt found add it to the queue
+                    if (blacklistFound != true)
+                    {
+                        listSubmitted.Add(new ListPlaylist
+                        {
+                            title = title[0],
+                            url = url,
+                            user = user
+                        });
+
+                        string value = $"{user},\rYour track request of {title[0]} has been submitted.\rTracks in queue: {listSubmitted.Count}";
+
+                        return value;
+                    }
+                    else
+                    {
+                        //match was found
+                        return null;
+                    }
                 }
+                
             }
             catch(Exception e)
             {
@@ -1014,23 +882,55 @@ namespace discordMusicBot.src
             }
         }
 
-        public void cmd_searchLibrary(string query)
+        public string cmd_searchLibrary(string mode, string query,string userName)
         {
             try
             {
-                //take what was given and try to find a track for it
+                //read the start of the query and figure out what type of query they want
+                string modeLower = mode.ToLower();
+                string queryLower = query.ToLower(); //convert the query to lowercase to easy search
 
-                var t = listLibrary.FindAll(x => x.title.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0);
-                
-                if(t.Count == 1)
+
+                List<ListPlaylist> tempList = new List<ListPlaylist>();
+                switch (modeLower)
                 {
-                    
+                    case "title":
+                        //take what was given and try to find a track for it
+                        tempList = listLibrary.FindAll(x => x.title.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0);
+                        break;
+                    default:
+                       
+                        break;
                 }
+
+                if(tempList.Count == 1)
+                {
+                    //queue up a track
+                    return tempList[0].url;
+                }
+                else if(tempList.Count >= 2)
+                {
+                    //Display the results in chat to let the user refine the result
+                    string returnResult = null;
+                    for(int i = 0; i < tempList.Count; i++)
+                    {
+                        returnResult = returnResult + $"{i+1} Title: {tempList[i].title}\r";
+                    }
+                    
+                    return returnResult;
+                }
+                else if(tempList.Count == 0)
+                {
+                    return $"Unable to find anything with the term {query}.";
+                }
+
+                return null;
 
             }
             catch(Exception error)
             {
 
+                return null;
             }
         }
 

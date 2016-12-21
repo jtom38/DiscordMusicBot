@@ -49,9 +49,15 @@ namespace discordMusicBot.src.Modules
                                 result = _urban.cmd_urbanFlow(e.GetArg("tag"));
                             }
 
+
+
                             if(result == null)
                             {
                                 await e.Channel.SendMessage($"Ran into a error trying to process your request.  The error has been saved to the log file.");
+                            }
+                            else if(result[0] == "No Value")
+                            {
+                                await e.Channel.SendMessage($"{e.User.Name},\rI searched for '{e.GetArg("tag")}' but nothing was found.");
                             }
                             else
                             {
