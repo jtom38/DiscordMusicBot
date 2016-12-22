@@ -19,6 +19,8 @@ namespace discordMusicBot.src.Modules
         private configuration _config;
 
         urban _urban = new urban();
+        rule34 _rule34 = new rule34();
+        danbooru _danbooru = new danbooru();
         logs _logs = new logs();
 
         void IModule.Install(ModuleManager manager)
@@ -80,6 +82,72 @@ namespace discordMusicBot.src.Modules
 
                         }
                         catch(Exception error)
+                        {
+                            _logs.logMessage("Error", "commandsWeb.urbanDictionary", error.ToString(), e.User.Name);
+                        }
+
+
+                    });
+
+                _client.GetService<CommandService>().CreateCommand("smut")
+                    .Alias("smut")
+                    .Description("Requests a picture from r34.xxx.\rExample: !smut 'overwatch'\rPermissions: Everyone")
+                    .Parameter("site", ParameterType.Optional)
+                    .Parameter("tag", ParameterType.Optional)
+                    .MinPermissions((int)PermissionLevel.GroupUsers)
+                    .Do(async e =>
+                    {
+                        try
+                        {
+                            string[] result = null;
+
+                            switch (e.GetArg("site"))
+                            {
+                                case "dabooru":
+                                case "dan":
+                                    result = _danbooru.danSearchTag(e.GetArg("tag"));
+
+                                    if(result != null)
+                                    {
+                                        await e.Channel.SendMessage($"Result from {result[1]}\rURL: {result[0]}\rTags: {result[2]}");
+                                    }
+                                    else
+                                    {
+                                        await e.Channel.SendMessage($"Unable to find anything with the tag: {e.GetArg("tag")}");
+                                    }
+                                    break;
+                                case "rule34":
+                                case "r34":
+                                    result = _rule34.rule34QuerrySite(e.GetArg("tag"));
+
+                                    if( result != null)
+                                    {
+
+                                    }
+                                    else
+                                    {
+
+                                    }
+                                    break;
+                                default:
+
+
+                                    result = _danbooru.danSearchTag(e.GetArg("site"));
+
+                                    if (result != null)
+                                    {
+                                        await e.Channel.SendMessage($"Result from {result[1]}\rURL: {result[0]}\rTags: {result[2]}");
+                                    }
+                                    else
+                                    {
+                                        await e.Channel.SendMessage($"Unable to find anything with the tag: {e.GetArg("site")}");
+                                    }
+                                    break;
+                            }
+
+                            //await e.Channel.SendMessage("placeholder");
+                        }
+                        catch (Exception error)
                         {
                             _logs.logMessage("Error", "commandsWeb.urbanDictionary", error.ToString(), e.User.Name);
                         }

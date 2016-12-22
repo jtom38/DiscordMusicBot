@@ -39,6 +39,8 @@ namespace discordMusicBot.src
         /// </summary>
         public int logLevel { get; set; }
 
+        public int maxTrackSubmitted { get; set; }
+
         public int volume { get; set; }
 
         public configuration()
@@ -53,6 +55,7 @@ namespace discordMusicBot.src
             idModsGroup = new ulong { };
             idAdminGroup = new ulong { };
             logLevel = -1;
+            maxTrackSubmitted = 5;
         }
 
         /// <summary> Save the current configuration object to a file. </summary>

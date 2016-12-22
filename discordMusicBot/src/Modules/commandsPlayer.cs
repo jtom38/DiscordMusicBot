@@ -63,48 +63,57 @@ namespace discordMusicBot.src.Modules
                                 return;
                             }
 
-                            //add the url to the listSubmitted 
-                            if (e.GetArg("url").Contains("https://www.youtube.com/"))
+                            //if return in 0 the user can add a track
+                            int UserSubmit = _playlist.checkNumberOfTracksByUserSubmitted(e.User.Name);
+                            if(UserSubmit == 0)
                             {
-                                string result = await _playlist.cmd_play(e.GetArg("url"), e.User.Name);
-
-                                if (result == null)
+                                //add the url to the listSubmitted 
+                                if (e.GetArg("url").Contains("https://www.youtube.com/"))
                                 {
-                                    await e.Channel.SendMessage($"Sorry I wont add that url to the queue given someone blacklisted it already.");
+                                    string result = await _playlist.cmd_play(e.GetArg("url"), e.User.Name);
+
+                                    if (result == null)
+                                    {
+                                        await e.Channel.SendMessage($"Sorry I wont add that url to the queue given someone blacklisted it already.");
+                                    }
+                                    else
+                                    {
+                                        await e.Channel.SendMessage(result);
+                                        _logs.logMessage("Info", "commandsPlayer.play", $"URL:{e.GetArg("url")} was submitted to the queue.", e.User.Name);
+                                    }
                                 }
                                 else
                                 {
-                                    await e.Channel.SendMessage(result);
-                                    _logs.logMessage("Info", "commandsPlayer.play", $"URL:{e.GetArg("url")} was submitted to the queue.", e.User.Name);
+                                    switch (e.GetArg("url").ToLower())
+                                    {
+                                        case "title":
+                                            string searchResult = _playlist.cmd_searchLibrary(e.GetArg("url"), e.GetArg("title"), e.User.Name);
+
+
+                                            if (searchResult == null)
+                                            {
+                                                await e.Channel.SendMessage($"Sorry I ran into a error.  Please check the log for more information.");
+                                            }
+                                            else if (searchResult.Contains("https://www.youtube.com/"))
+                                            {
+                                                string searchResultMessage = await _playlist.cmd_play(searchResult, e.User.Name);
+                                                await e.Channel.SendMessage(searchResultMessage);
+                                            }
+                                            else
+                                            {
+                                                await e.Channel.SendMessage(searchResult);
+                                            }
+                                            break;
+                                        default:
+                                            await e.Channel.SendMessage($"{e.User.Name},\r Please enter a valid search mode.");
+                                            break;
+                                    }
+
                                 }
                             }
-                            else
+                            else if(UserSubmit == 1)
                             {
-                                switch (e.GetArg("url").ToLower())
-                                {
-                                    case "title":
-                                        string searchResult = _playlist.cmd_searchLibrary(e.GetArg("url"), e.GetArg("title"), e.User.Name);
-
-
-                                        if (searchResult == null)
-                                        {
-                                            await e.Channel.SendMessage($"Sorry I ran into a error.  Please check the log for more information.");
-                                        }
-                                        else if (searchResult.Contains("https://www.youtube.com/"))
-                                        {
-                                            string searchResultMessage = await _playlist.cmd_play(searchResult, e.User.Name);
-                                            await e.Channel.SendMessage(searchResultMessage);
-                                        }
-                                        else
-                                        {
-                                            await e.Channel.SendMessage(searchResult);
-                                        }
-                                        break;
-                                    default:
-                                        await e.Channel.SendMessage($"{e.User.Name},\r Please enter a valid search mode.");
-                                        break;
-                                }
-                                
+                                await e.Channel.SendMessage($"{e.User.Name},\rYou have submitted too many tracks to the queue.  Please wait before you submit anymore.");
                             }
 
                         }

@@ -390,7 +390,7 @@ namespace discordMusicBot.src.Modules
                 _client.GetService<CommandService>().CreateCommand("export")
                     .Alias("export")
                     .Description($"Exports current files based on given arg.\r{_config.Prefix}export playlist\r{_config.Prefix}export blacklist\r{_config.Prefix}export log = Running log file.\rPermission: Mods")
-                    .Parameter("file")
+                    .Parameter("file",ParameterType.Optional)
                     .MinPermissions((int)PermissionLevel.GroupAdmin)
                     .Do(async e =>
                     {
@@ -487,6 +487,45 @@ namespace discordMusicBot.src.Modules
                         catch (Exception error)
                         {
                             _logs.logMessage("Error", "commandsSystem.ping", error.ToString(), e.User.Name);
+                        }
+                    });
+                _client.GetService<CommandService>().CreateCommand("maxSubmitted")
+                    .Alias("maxSub")
+                    .Description($"Changes the max number of tracks a user can submit to the queue.\r{_config.Prefix}maxSubmitted 10\rPermission: Admins")
+                    .Parameter("value", ParameterType.Optional)
+                    .MinPermissions((int)PermissionLevel.GroupAdmin)
+                    .Do(async e =>
+                    {
+                        try
+                        {
+                            if(e.GetArg("value") == "")
+                            {
+                                await e.Channel.SendMessage($"{e.User.Name},\rMax Submitted: {_config.maxTrackSubmitted}");
+                            }
+                            else
+                            {
+                                int value = -1;
+                                bool parseResult = int.TryParse(e.GetArg("value"), out value);
+
+                                if (parseResult == true)
+                                {
+                                    if (value != -1)
+                                    {
+                                        _config.maxTrackSubmitted = value;
+                                        _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+                                        await e.Channel.SendMessage($"{e.User.Name},\rI have adjusted the max number of submitted tracks to {e.GetArg("value")}.");
+                                    }
+                                }
+                                else
+                                {
+                                    await e.Channel.SendMessage($"{e.User.Name},\rPlease enter a number value to adjust the max number of tracks a user can submit.");
+                                }
+                            }
+                            
+                        }
+                        catch (Exception error)
+                        {
+                            _logs.logMessage("Error", "commandsSystem.maxSubmitted", error.ToString(), e.User.Name);
                         }
                     });
 

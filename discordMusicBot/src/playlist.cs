@@ -514,24 +514,45 @@ namespace discordMusicBot.src
 
         }
         
-        private void checkNumberOfTracksByUserSubmitted(string user)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns>
+        ///    -1 = Error generated
+        ///     0 = Too many tracks submitted
+        ///     1 = Okay to add another track to queue
+        /// </returns>
+        public int checkNumberOfTracksByUserSubmitted(string user)
         {
-            var Result = listBeenPlayed.Count(x => x.user == user);
-           
-            if(Result >= 5)
+            try
             {
-                //user has subbmitted too many songs
-            }
+                var Result = listSubmitted.Count(x => x.user == user);
 
+                if (Result >= _config.maxTrackSubmitted)
+                {
+                    //user has subbmitted too many songs
+                    return 1;
+                }
+                else
+                {
+                    return 0;
+                }
+            }
+            catch (Exception error)
+            {
+                return -1;
+            }
         } 
 
         public async Task<string> cmd_play(string url, string user)
         {
             try
             {
+
                 //check to see if the track might be in the library already
                 var urlResult = listLibrary.FindIndex(x => x.url == url);
-                if(urlResult != -1)
+                if (urlResult != -1)
                 {
                     listSubmitted.Add(new ListPlaylist
                     {
@@ -580,7 +601,7 @@ namespace discordMusicBot.src
                         return null;
                     }
                 }
-                
+
             }
             catch(Exception e)
             {
