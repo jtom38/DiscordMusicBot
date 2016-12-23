@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using discordMusicBot.src.sys;
 using Discord;
 using Discord.Audio;
 using NAudio;
 using NAudio.Wave;
 using System.IO;
 
-namespace discordMusicBot.src
+namespace discordMusicBot.src.audio
 {
     class player
     {

@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System.IO;
 
-namespace discordMusicBot.src
+namespace discordMusicBot.src.sys
 {
     public class configuration
     {

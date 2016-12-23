@@ -93,18 +93,18 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="src\logs.cs" />
+    <Compile Include="src\sys\logs.cs" />
     <Compile Include="src\Modules\commandsPlayer.cs" />
     <Compile Include="src\Modules\commandsPlaylist.cs" />
     <Compile Include="src\Modules\commandsSystem.cs" />
-    <Compile Include="src\configuration.cs" />
-    <Compile Include="src\downloader.cs" />
+    <Compile Include="src\sys\configuration.cs" />
+    <Compile Include="src\audio\youtube.cs" />
     <Compile Include="src\Modules\commandsWeb.cs" />
-    <Compile Include="src\network.cs" />
-    <Compile Include="src\player.cs" />
-    <Compile Include="src\playlist.cs" />
-    <Compile Include="src\startup.cs" />
-    <Compile Include="src\system.cs" />
+    <Compile Include="src\sys\network.cs" />
+    <Compile Include="src\audio\player.cs" />
+    <Compile Include="src\audio\playlist.cs" />
+    <Compile Include="src\sys\startup.cs" />
+    <Compile Include="src\sys\system.cs" />
     <Compile Include="src\Web\danbooru.cs" />
     <Compile Include="src\Web\rule34.cs" />
     <Compile Include="src\Web\urban.cs" />

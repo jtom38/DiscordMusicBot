@@ -7,7 +7,8 @@ using Discord;
 using Discord.Commands;
 using Discord.Commands.Permissions.Levels;
 using Discord.Modules;
-using discordMusicBot.src;
+using discordMusicBot.src.sys;
+using discordMusicBot.src.audio;
 using System.IO;
 
 namespace discordMusicBot.src.Modules
@@ -26,7 +27,7 @@ namespace discordMusicBot.src.Modules
             playlist _playlist = new playlist();
             player _player = new player();
             system _system = new system();
-            downloader _downloader = new downloader();
+            youtube _downloader = new youtube();
             logs _logs = new logs();
 
             _config = configuration.LoadFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");

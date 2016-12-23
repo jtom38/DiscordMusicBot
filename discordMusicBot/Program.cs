@@ -11,6 +11,8 @@ using Discord.Commands.Permissions.Levels;
 using Discord.Commands.Permissions.Visibility;
 using Discord.Modules;
 using discordMusicBot.src;
+using discordMusicBot.src.sys;
+using discordMusicBot.src.audio;
 using discordMusicBot.src.Modules;
 
 namespace discordMusicBot

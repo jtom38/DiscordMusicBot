@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using discordMusicBot.src.Web;
+using discordMusicBot.src.sys;
 using Discord;
 using Discord.Commands;
 using Discord.Commands.Permissions.Levels;

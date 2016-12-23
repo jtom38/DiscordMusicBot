@@ -6,16 +6,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Net.NetworkInformation;
-using Discord.Commands;
-using Discord;
+using discordMusicBot.src.audio;
 
-namespace discordMusicBot.src
+namespace discordMusicBot.src.sys
 {
     class system
     {
 
         playlist _playlist = new playlist();
-        downloader _downloader = new downloader();
+        youtube _downloader = new youtube();
         logs _logs = new logs();
 
         /// <summary>

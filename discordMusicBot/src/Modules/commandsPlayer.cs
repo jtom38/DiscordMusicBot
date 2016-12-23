@@ -5,7 +5,8 @@ using Discord.Modules;
 using Discord.Audio;
 using System;
 using System.Threading.Tasks;
-using discordMusicBot.src;
+using discordMusicBot.src.sys;
+using discordMusicBot.src.audio;
 using System.IO;
 using System.Collections.Generic;
 
@@ -24,7 +25,7 @@ namespace discordMusicBot.src.Modules
             _client = manager.Client;
 
             playlist _playlist = new playlist();
-            downloader _downloader = new downloader();
+            youtube _downloader = new youtube();
             player _player = new player();
             logs _logs = new logs();
             system _system = new system();

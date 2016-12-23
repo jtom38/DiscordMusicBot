@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Net;
 using Newtonsoft.Json;
+using discordMusicBot.src.sys;
 using Discord;
-using Discord.Audio;
 using Discord.Modules;
 using System.Diagnostics;
 
-namespace discordMusicBot.src
+namespace discordMusicBot.src.audio
 {
     public class ListPlaylist
     {
@@ -48,7 +48,7 @@ namespace discordMusicBot.src
         //private AudioExtensions _audio;
 
         configuration _config = new configuration();
-        downloader _downloader = new downloader();
+        youtube _downloader = new youtube();
         player _player = new player();
         logs _logs = new logs();
 
@@ -483,34 +483,6 @@ namespace discordMusicBot.src
             {
                 return false;
             }
-
-        }
-
-        /// <summary>
-        /// Adds values to the listBeenPlayed so we know what has been done
-        /// </summary>
-        /// <param name="title"></param>
-        /// <param name="user"></param>
-        /// <param name="url"></param>
-        private void addBeenPlayed(string title, string url)
-        {
-            //get the 10% of the library
-            double threshold = listLibrary.Count * 0.15;
-
-            Console.WriteLine("Debug: beenPlayed threshhold " + threshold);
-
-            //get the count of items in listBeenPlayed
-            if(listBeenPlayed.Count >= threshold)
-            {
-                //delete the first object
-                listBeenPlayed.RemoveAt(0);
-            }
-
-            listBeenPlayed.Add(new ListPlaylist
-            {
-                title = title,
-                url = url
-            });
 
         }
         

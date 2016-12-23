@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using discordMusicBot.src.sys;
 using VideoLibrary;
 using System.IO;
 using NAudio.Wave;
 
-namespace discordMusicBot.src
+namespace discordMusicBot.src.audio
 {
-    class downloader
+    class youtube
     {
         logs _logs = new logs();
 
