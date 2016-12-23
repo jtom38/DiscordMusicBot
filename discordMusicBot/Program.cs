@@ -54,7 +54,7 @@ namespace discordMusicBot
 
             _startup.startupCheck();
 
-            _config = configuration.LoadFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+            _config = configuration.LoadFile();
 
             _client = new DiscordClient(x =>
             {
@@ -145,7 +145,8 @@ namespace discordMusicBot
                     {
                         _client.Log.Error($"Login Failed", ex);
                         _logs.logMessage("Error", "program.Start", ex.ToString(), "system");
-                        await Task.Delay(_client.Config.FailedReconnectDelay);
+                        //await Task.Delay(_client.Config.FailedReconnectDelay);
+                        await Task.Delay(3000);
                     }
                 }
             });

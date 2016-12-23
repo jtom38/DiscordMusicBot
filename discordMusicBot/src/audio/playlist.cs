@@ -40,6 +40,9 @@ namespace discordMusicBot.src.audio
         public static string[] npSkip { get; set; }
         public static string npFileName { get; set; }
 
+        static string playlistFile = Directory.GetCurrentDirectory() + "\\configs\\playlist.json";
+        static string blacklistFile = Directory.GetCurrentDirectory() + "\\configs\\blacklist.json";
+
         public static bool libraryLoop = true;
         public static bool playlistActive = true;
 
@@ -56,13 +59,13 @@ namespace discordMusicBot.src.audio
         {
             try
             {
-                string loc = Directory.GetCurrentDirectory() + "\\configs\\playlist.json";
+                //string loc = Directory.GetCurrentDirectory() + "\\configs\\playlist.json";
                 string json = JsonConvert.SerializeObject(listLibrary);
 
-                if (!File.Exists(loc))
-                    File.Create(loc).Close();
+                if (!File.Exists(playlistFile))
+                    File.Create(playlistFile).Close();
 
-                File.WriteAllText(loc, json);
+                File.WriteAllText(playlistFile, json);
             }
             catch (Exception e)
             {
@@ -74,9 +77,9 @@ namespace discordMusicBot.src.audio
         {
             try
             {
-                if (File.Exists(Directory.GetCurrentDirectory() + "\\configs\\playlist.json"))
+                if (File.Exists(playlistFile))
                 {
-                    string json = File.ReadAllText(Directory.GetCurrentDirectory() + "\\configs\\playlist.json");
+                    string json = File.ReadAllText(playlistFile);
 
                     listLibrary = JsonConvert.DeserializeObject<List<ListPlaylist>>(json);
                 }
@@ -95,13 +98,13 @@ namespace discordMusicBot.src.audio
         {
             try
             {
-                string loc = Directory.GetCurrentDirectory() + "\\configs\\blacklist.json";
+                //string loc = Directory.GetCurrentDirectory() + "\\configs\\blacklist.json";
                 string json = JsonConvert.SerializeObject(listBlacklist, Formatting.Indented);
 
-                if (!File.Exists(loc))
-                    File.Create(loc).Close();
+                if (!File.Exists(blacklistFile))
+                    File.Create(blacklistFile).Close();
 
-                File.WriteAllText(loc, json);
+                File.WriteAllText(blacklistFile, json);
             }
             catch(Exception e)
             {
@@ -114,9 +117,9 @@ namespace discordMusicBot.src.audio
         {
             try
             {
-                if (File.Exists(Directory.GetCurrentDirectory() + "\\configs\\blacklist.json"))
+                if (File.Exists(blacklistFile))
                 {
-                    string json = File.ReadAllText(Directory.GetCurrentDirectory() + "\\configs\\blacklist.json");
+                    string json = File.ReadAllText(blacklistFile);
 
                     listBlacklist = JsonConvert.DeserializeObject<List<ListPlaylist>>(json);
                 }

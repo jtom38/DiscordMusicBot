@@ -35,7 +35,7 @@ namespace discordMusicBot.src.Modules
                 //group.PublicOnly();
 
                 //get the config file
-                _config = configuration.LoadFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+                _config = configuration.LoadFile();
 
                 _client.GetService<CommandService>().CreateCommand("test")
                     .Alias("test")

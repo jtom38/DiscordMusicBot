@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using discordMusicBot.src.audio;
 
 
 namespace discordMusicBot.src.sys
@@ -94,27 +95,23 @@ namespace discordMusicBot.src.sys
 
         private void checkConfigFile()
         {
-            var configPath = Directory.GetCurrentDirectory() + "\\configs\\config.json";
-
             try
             {
-                if (File.Exists(configPath))
+                if (File.Exists(configuration.configFile))
                 {
-                    _config = configuration.LoadFile(configPath);
+                    _config = configuration.LoadFile();
                 }
                 else
                 {
                     _config = new configuration();
-                    _config.SaveFile(configPath);
+                    _config.SaveFile();
                 }
-
-
             }
             catch
             {
                 //unable to find the file
                 _config = new configuration();
-                _config.SaveFile(configPath);
+                _config.SaveFile();
             }
         }
 
@@ -123,7 +120,7 @@ namespace discordMusicBot.src.sys
             //check for the bot token
             try
             {
-                _config = configuration.LoadFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+                _config = configuration.LoadFile();
                 if (_config.Token != "")
                 {
                     Console.WriteLine("Token has been found in config.json");
@@ -134,7 +131,7 @@ namespace discordMusicBot.src.sys
                     Console.Write("Token: ");
 
                     _config.Token = Console.ReadLine();                     // Read the user's token from the console.
-                    _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+                    _config.SaveFile();
                 }
             }
             catch (Exception e)
@@ -147,7 +144,7 @@ namespace discordMusicBot.src.sys
         {
             try
             {
-                _config = configuration.LoadFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+                _config = configuration.LoadFile();
                 //ulong ownerID = _config.Owner;
 
                 if (Int64.Parse(_config.Owner.ToString()) != 0)
@@ -162,7 +159,7 @@ namespace discordMusicBot.src.sys
                     ulong id = Convert.ToUInt64(Console.ReadLine());
 
                     _config.Owner = id;
-                    _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+                    _config.SaveFile();
                 }
             }
             catch (Exception error)
@@ -180,7 +177,7 @@ namespace discordMusicBot.src.sys
         {
             try
             {
-                _config = configuration.LoadFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+                _config = configuration.LoadFile();
 
                 int t = _config.logLevel;
                 if (_config.logLevel >= 0)
@@ -216,12 +213,27 @@ namespace discordMusicBot.src.sys
                     int.TryParse(Console.ReadLine(), out logLevel);
 
                     _config.logLevel = logLevel;
-                    _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+                    _config.SaveFile();
                 }
             }
             catch (Exception error)
             {
                 Console.WriteLine($"Error: {error}");
+            }
+        }
+
+        private void setVolumeLevel()
+        {
+            try
+            {
+                _config = configuration.LoadFile();
+
+                player.volume = _config.volume;
+
+            }
+            catch
+            {
+
             }
         }
     }

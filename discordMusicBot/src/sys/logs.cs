@@ -13,7 +13,7 @@ namespace discordMusicBot.src.sys
 
         private bool returnConfigLogLevel(string level)
         {
-            _config = configuration.LoadFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+            _config = configuration.LoadFile();
 
             switch (_config.logLevel)
             {

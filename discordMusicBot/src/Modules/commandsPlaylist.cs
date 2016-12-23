@@ -30,7 +30,7 @@ namespace discordMusicBot.src.Modules
             youtube _downloader = new youtube();
             logs _logs = new logs();
 
-            _config = configuration.LoadFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+            _config = configuration.LoadFile();
 
             manager.CreateCommands("", group =>
             {

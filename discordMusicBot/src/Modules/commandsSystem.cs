@@ -31,7 +31,7 @@ namespace discordMusicBot.src.Modules
             _manager = manager;
             _client = manager.Client;
 
-            _config = configuration.LoadFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+            _config = configuration.LoadFile();
 
             manager.CreateCommands("", group =>
             {
@@ -102,7 +102,7 @@ namespace discordMusicBot.src.Modules
                             ulong id = Convert.ToUInt64(e.GetArg("roomID"));
 
                             _config.defaultRoomID = id;
-                            _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+                            _config.SaveFile();
 
                             await e.Channel.SendMessage("I have updated the config file for you.");
                             _logs.logMessage("Info", "commandsSystem.defaultRoom", $"defaultRoom was updated to {e.GetArg("roomID")}", e.User.Name);
@@ -115,7 +115,7 @@ namespace discordMusicBot.src.Modules
 
                     });
 
-                _client.GetService<CommandService>().CreateCommand("vol")
+                _client.GetService<CommandService>().CreateCommand("volume")
                     .Alias("vol")
                     .Description("Adjusts the default volume from the bot.\rExample: !vol +10\rPermission: Everyone")
                     .Parameter("vol", ParameterType.Optional)
@@ -126,61 +126,53 @@ namespace discordMusicBot.src.Modules
                         {
                             if (e.GetArg("vol") == null)
                             {
-                                await e.Channel.SendMessage("Oops, you forgot to give me the room ID to make my home by default.");
+                                await e.Channel.SendMessage($"{e.User.Name},\rPlease give me the percent value you want me to change to.\rExample: {_config.Prefix}vol 50");
                                 return;
                             }
 
-                            // v is the current value in the config
-                            int oldVolume = _config.volume;
+                            //make sure we got a number value
+                            int intVol = 0;
+                            int.TryParse(e.GetArg("vol"), out intVol);
 
-                            //
-                            string argOperator = null;
-                            int argValue = 0;
-                            int newValue = 0;
-
-                            //will capture a + or -
-                            try
+                            if(intVol >= 1 && intVol <= 100)
                             {
-                                argOperator = e.GetArg("vol").Substring(0, 1);
-                                if (argOperator != "+" || argOperator != "-")
+                                //convert the value that we deam a percent value to a string to format it
+                                string stringVol = intVol.ToString();
+                                string t = null;
+                                if(stringVol.Length == 1)
                                 {
-                                    //return error if we dont have a + or -
-                                    return;
+                                    t = $".0{stringVol}";
+                                }
+                                else
+                                {
+                                    t = $".{stringVol}";
+                                }
+                                
+
+                                //convert to float
+                                float newVol = float.Parse(t, System.Globalization.CultureInfo.InvariantCulture);
+
+                                if (newVol >= 0f && newVol <= 1f)
+                                {
+                                    //valid number
+                                    _config.volume = newVol;
+                                    _config.SaveFile();
+
+                                    player.volume = newVol; //send the updated value to the var so we dont have to load the config file everytime in the loop.
+
+                                    await e.Channel.SendMessage($"{e.User.Name},\rI have updated the volume to {e.GetArg("vol")}%.");
+                                    _logs.logMessage("Info", "commandsSyste.Volume", $"Volume was changed to {newVol}%", e.User.Name);
                                 }
                             }
-                            catch
+                            else if(intVol >= 101)
                             {
-                                Console.WriteLine("");
+                                await e.Channel.SendMessage($"{e.User.Name},\rThe value you gave was higher then 100%, sorry.");
                             }
-
-                            //parse the int value
-                            try
+                            else if(intVol <= 0)
                             {
-                                //get the number value
-                                string value = e.GetArg("vol").Substring(1);
-                                int.Parse(value);
+                                await e.Channel.SendMessage($"{e.User.Name},\rThe value can't go below 1, sorry.");
                             }
-                            catch
-                            {
-                                //failed to parse the int value from arg
-                                return;
-                            }
-
-                            if (argOperator == "+")
-                            {
-                                newValue = oldVolume + argValue;
-                            }
-
-                            if (argOperator == "-")
-                            {
-                                newValue = oldVolume - argValue;
-                            }
-
-                            _config.volume = newValue;
-                            _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
-
-                            await e.Channel.SendMessage($"{e.User.Name} changed default volume from " + oldVolume + " to " + newValue + ".");
-                            _logs.logMessage("Info", "commandsSystem.vol", $"Vol was changed from {oldVolume} to {newValue}", e.User.Name);
+                            
                         }
                         catch(Exception error)
                         {
@@ -307,7 +299,7 @@ namespace discordMusicBot.src.Modules
                             {
                                 case "default":                                    
                                     _config.idDefaultGroup = id;
-                                    _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+                                    _config.SaveFile();
 
                                     await e.Channel.SendMessage($"Permission Role has been updated.");
                                     _logs.logMessage("Info", "commandsSystem.setGroup default", $"Default role updated to {e.GetArg("id")}", e.User.Name);
@@ -315,14 +307,14 @@ namespace discordMusicBot.src.Modules
                                     break;
                                 case "mods":
                                     _config.idModsGroup = id;
-                                    _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+                                    _config.SaveFile();
 
                                     await e.Channel.SendMessage($"Permission Role has been updated.");
                                     _logs.logMessage("Info", "commandsSystem.setGroup mods", $"Mods role updated to {e.GetArg("id")}", e.User.Name);
                                     break;
                                 case "admins":
                                     _config.idAdminGroup = id;
-                                    _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+                                    _config.SaveFile();
 
                                     await e.Channel.SendMessage($"Permission Role has been updated.");
                                     _logs.logMessage("Info", "commandsSystem.setGroup admins", $"Admins role updated to {e.GetArg("id")}", e.User.Name);
@@ -359,7 +351,7 @@ namespace discordMusicBot.src.Modules
                             else
                             {
                                 _config.Prefix = e.GetArg("id")[0];
-                                _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+                                _config.SaveFile();
 
                                 await e.Channel.SendMessage($"Character prefix has been changed to {e.GetArg("id")} and will be active on next restart.");
                                 _logs.logMessage("Info", "commandsSystem.setPrefix", $"Commands prefix was changed to {e.GetArg("id")}.", e.User.Name);
@@ -514,7 +506,7 @@ namespace discordMusicBot.src.Modules
                                     if (value != -1)
                                     {
                                         _config.maxTrackSubmitted = value;
-                                        _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+                                        _config.SaveFile();
                                         await e.Channel.SendMessage($"{e.User.Name},\rI have adjusted the max number of submitted tracks to {e.GetArg("value")}.");
                                     }
                                 }

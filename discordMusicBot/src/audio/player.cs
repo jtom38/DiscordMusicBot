@@ -9,6 +9,7 @@ using Discord.Audio;
 using NAudio;
 using NAudio.Wave;
 using System.IO;
+using System.Diagnostics.Contracts;
 
 namespace discordMusicBot.src.audio
 {
@@ -27,28 +28,31 @@ namespace discordMusicBot.src.audio
 
         public static bool playingSong = true;
 
-        //private float volume = .3f;
+        public static float volume = .10f;
 
-        //used to play the music to the room
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="filepath">
+        ///     Full filepath needed to track
+        /// </param>
+        /// <param name="voiceChannel">
+        ///     Send the room that the bot is in
+        /// </param>
+        /// <param name="_client">
+        ///     _client
+        /// </param>
+        /// <returns></returns>
         public async Task SendAudio(string filepath, Channel voiceChannel, DiscordClient _client)
         {
-            // When we use the !play command, it'll start this method
-
-            // The comment below is how you'd find the first voice channel on the server "Somewhere"
-            //var a = _client.FindServers("Waifu Lounge").
-            //var voiceChannel2 = _client.FindServers("Somewhere").FirstOrDefault().VoiceChannels.FirstOrDefault();
-            // Since we already know the voice channel, we don't need that.
-            // So... join the voice channel:
 
             //try to find a way to tell if she is already in 1. connect to a voice room and 2 in your voice room
-
             _nAudio = await _client.GetService<AudioService>().Join(voiceChannel);
 
             playingSong = true;
-
-            // Simple try and catch.
             try
             {
+                
 
                 var channelCount = _client.GetService<AudioService>().Config.Channels; // Get the number of AudioChannels our AudioService has been configured to use.
                 var OutFormat = new WaveFormat(48000, 16, channelCount); // Create a new Output Format, using the spec that Discord will accept, and with the number of channels that our client supports.
@@ -63,30 +67,67 @@ namespace discordMusicBot.src.audio
                     // Add in the "&& playingSong" so that it only plays while true. For our cheesy skip command.
                     // AGAIN WARNING YOU NEED opus.dll libsodium.dll
                     // If you do not have these, this will not work.
-                    while ((byteCount = resampler.Read(buffer, 0, blockSize)) > 0 && playingSong) // Read audio into our buffer, and keep a loop open while data is present
-                    {
-                        if (byteCount < blockSize)
-                        {
-                            // Incomplete Frame
-                            for (int i = byteCount; i < blockSize; i++)
-                                buffer[i] = 0;
-                        }
 
-                        _nAudio.Send(buffer, 0, blockSize); // Send the buffer to Discord
+                    try
+                    {
+                        while ((byteCount = resampler.Read(buffer, 0, blockSize)) > 0 && playingSong) // Read audio into our buffer, and keep a loop open while data is present
+                        {
+
+                            //adjust volume
+                            byte[] adjustedBuffer = ScaleVolumeSafeAllocateBuffers(buffer, volume);
+
+                            if (byteCount < blockSize)
+                            {
+                                // Incomplete Frame
+                                for (int i = byteCount; i < blockSize; i++)
+                                    buffer[i] = 0;
+                            }
+
+                            _nAudio.Send(adjustedBuffer, 0, blockSize); // Send the buffer to Discord
+                        }
                     }
-                    await _nAudio.Disconnect();
+                    catch(Exception error)
+                    {
+                        await _client.GetService<AudioService>().Join(voiceChannel);
+                        Console.WriteLine(error.ToString());
+                    }
+                    //await _nAudio.Disconnect();
                 }
             }
-            catch
+            catch(Exception error)
             {
                 System.Console.WriteLine("Something went wrong. :(");
             }
-            await _nAudio.Disconnect();
+            //await _nAudio.Disconnect();
         }
 
-        public float VolumeReturn()
+        public static byte[] ScaleVolumeSafeAllocateBuffers(byte[] audioSamples, float volume)
         {
-            return _config.volume;
+            Contract.Requires(audioSamples != null);
+            Contract.Requires(audioSamples.Length % 2 == 0);
+            Contract.Requires(volume >= 0f && volume <= 1f);
+
+            var output = new byte[audioSamples.Length];
+            if (Math.Abs(volume - 1f) < 0.0001f)
+            {
+                Buffer.BlockCopy(audioSamples, 0, output, 0, audioSamples.Length);
+                return output;
+            }
+
+            // 16-bit precision for the multiplication
+            int volumeFixed = (int)Math.Round(volume * 65536d);
+
+            for (var i = 0; i < output.Length; i += 2)
+            {
+                // The cast to short is necessary to get a sign-extending conversion
+                int sample = (short)((audioSamples[i + 1] << 8) | audioSamples[i]);
+                int processed = (sample * volumeFixed) >> 16;
+
+                output[i] = (byte)processed;
+                output[i + 1] = (byte)(processed >> 8);
+            }
+
+            return output;
         }
 
         /// <summary>
