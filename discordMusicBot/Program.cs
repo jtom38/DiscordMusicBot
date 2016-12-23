@@ -11,6 +11,8 @@ using Discord.Commands.Permissions.Levels;
 using Discord.Commands.Permissions.Visibility;
 using Discord.Modules;
 using discordMusicBot.src;
+using discordMusicBot.src.sys;
+using discordMusicBot.src.audio;
 using discordMusicBot.src.Modules;
 
 namespace discordMusicBot
@@ -26,20 +28,21 @@ namespace discordMusicBot
 
     public class Program
     {
-
-        public static bool restartFlag { get; set; }
-
         static void Main(string[] args) => new Program().Start();
 
+        public static bool restartFlag = false;
+
+        private IAudioClient _voice;    //being used so the event can disconnect the bot from the room when she is left alone
         private DiscordClient _client;
         private configuration _config;
 
         player _player = new player();
         playlist _playlist = new playlist();
+        logs _logs = new logs();
+        startup _startup = new startup();
 
         public void loopRestart()
         {
-            restartFlag = false;
             while(restartFlag == false)
             {
                 Start();
@@ -49,15 +52,15 @@ namespace discordMusicBot
         public void Start()
         {
 
-            startupCheck();
+            _startup.startupCheck();
 
-            _config = configuration.LoadFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+            _config = configuration.LoadFile();
 
             _client = new DiscordClient(x =>
             {
                 x.AppName = "C# Music Bot";
                 x.AppUrl = "https://github.com/luther38/DiscordMusicBot";
-                x.AppVersion = "0.1.0";
+                x.AppVersion = "0.1.4";
                 x.UsePermissionsCache = true;
                 //x.LogLevel = LogSeverity.Info;
                 x.LogHandler = OnLogMessage;
@@ -84,13 +87,13 @@ namespace discordMusicBot
             _client.AddModule<commandsPlayer>("commandsPlayer", ModuleFilter.ServerWhitelist);
             _client.AddModule<commandsSystem>("commandsSystem", ModuleFilter.ServerWhitelist);
             _client.AddModule<commandsPlaylist>("commandsPlaylist", ModuleFilter.ServerWhitelist);
+            _client.AddModule<commandsWeb>("commandsWeb", ModuleFilter.ServerWhitelist);
             _client.GetService<AudioService>();
 
             //check the playlist file
-            //_playlist.getPlaylistFile();
-            _playlist.loadPlaylist();
-            _playlist.loadBlacklist();
+            _playlist.shuffleLibrary();
 
+            //this is used to force the bot the dc from the room if she is left alone.
             _client.UserUpdated += async (s, e) =>
             {
 
@@ -103,14 +106,17 @@ namespace discordMusicBot
 
                     if (userCount.Count <= 1)
                     {
-                        //Console.WriteLine("Bot is alone on a room.  Stop music.");
                         _client.SetGame(null);
-                        await _player.cmd_stop();
-                    }
-                    else
-                    {
-                        //Console.WriteLine("At least one person is in the room. Play Music.");
-                        //pushing this resume to beta... just need more time and refactoring to get this working the way I want.
+                        _player.cmd_stop();
+
+                        //double checking to make sure she isnt in a room.  
+                        //Event shouldnt have flagged but reguardless double checking
+                        if (bot.ToString() != null) 
+                        {
+                            await bot.LeaveAudio();
+                        }
+
+                        //Console.WriteLine("Bot is left alone.  Music is stopping.");
                     }
                 }
                 catch
@@ -128,136 +134,22 @@ namespace discordMusicBot
                     try
                     {
                         await _client.Connect(_config.Token, TokenType.Bot);
-                        _client.SetGame("Discord.Net");
-                        Console.WriteLine("Connected to Discord.");
+                        _client.SetGame(null);
+                        _logs.logMessage("Info", "program.Start", "Connected to Discord", "system");
+                        //Console.WriteLine("Connected to Discord.");
                         //await _client.ClientAPI.Send(new Discord.API.Client.Rest.HealthRequest());
+
                         break;
                     }
                     catch (Exception ex)
                     {
                         _client.Log.Error($"Login Failed", ex);
-                        await Task.Delay(_client.Config.FailedReconnectDelay);
+                        _logs.logMessage("Error", "program.Start", ex.ToString(), "system");
+                        //await Task.Delay(_client.Config.FailedReconnectDelay);
+                        await Task.Delay(3000);
                     }
                 }
             });
-        }
-
-        private void startupCheck()
-        {
-            makeCacheFolder();
-            makeConfigFolder();
-            checkConfigFile();
-            checkToken();
-            setOwnerID();
-            checkCommandPrefix();
-        }
-
-        private void makeCacheFolder()
-        {
-            if (Directory.Exists("cache"))
-            {
-                return;
-            }
-            else
-            {
-                Directory.CreateDirectory("cache");
-            }        
-        }
-
-        private void makeConfigFolder()
-        {
-            if (Directory.Exists("configs"))
-            {
-                return;
-            }
-            else
-            {
-                Directory.CreateDirectory("configs");
-            }
-        }
-
-        private void checkConfigFile()
-        {
-            var configPath = Directory.GetCurrentDirectory() + "\\configs\\config.json";
-
-            try
-            {
-                if(File.Exists(configPath))
-                {
-                    _config = configuration.LoadFile(configPath);
-                }
-                else
-                {
-                    _config = new configuration();
-                    _config.SaveFile(configPath);
-                }
-                
-
-            }
-            catch
-            {
-                //unable to find the file
-                _config = new configuration();
-                _config.SaveFile(configPath);
-            }
-        }
-
-        private void checkToken()
-        {
-            //check for the bot token
-            try
-            {
-                _config = configuration.LoadFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
-                if(_config.Token != "")
-                {
-                    Console.WriteLine("Token has been found in config.json");
-                }
-                else
-                {
-                    Console.WriteLine("Please enter a valid token.");
-                    Console.Write("Token: ");
-
-                    _config.Token = Console.ReadLine();                     // Read the user's token from the console.
-                    _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
-                }          
-            }
-            catch(Exception e)
-            {
-                Console.WriteLine("Error: " + e);
-            }
-        }
-
-        private void setOwnerID()
-        {
-            try
-            {
-                _config = configuration.LoadFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
-                //ulong ownerID = _config.Owner;
-
-                if (Int64.Parse(_config.Owner.ToString()) != 0)
-                {
-                    Console.WriteLine("Owner ID has been found in config.json");
-                }
-                else
-                {
-                    Console.WriteLine("Please enter your user ID to take ownership of this bot.");
-                    Console.Write("ID: ");
-
-                    ulong id = Convert.ToUInt64(Console.ReadLine());
-
-                    _config.Owner = id;
-                    _config.SaveFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
-                }
-            }
-            catch(Exception error)
-            {
-                Console.WriteLine($"Error: {error}");
-            }
-        }
-        
-        private void checkCommandPrefix()
-        {
-            Console.WriteLine("Current commandPrefix = " + _config.Prefix);
         }
 
         private void OnCommandError(object sender, CommandErrorEventArgs e)

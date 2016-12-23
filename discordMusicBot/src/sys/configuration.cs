@@ -1,10 +1,12 @@
 ﻿using Newtonsoft.Json;
 using System.IO;
 
-namespace discordMusicBot.src
+namespace discordMusicBot.src.sys
 {
     public class configuration
     {
+        public static string configFile = Directory.GetCurrentDirectory() + "\\configs\\config.json";
+
         /// <summary> 
         /// Your bot's command prefix. Please don't pick `!`. 
         /// </summary>
@@ -34,8 +36,14 @@ namespace discordMusicBot.src
         ///     idAdminGroup = id for bot admins/owners, Custom group.
         /// </summary>
         public ulong idAdminGroup { get; set; }
+        /// <summary>
+        /// Used to set the level and write logs according to what the user wants.
+        /// </summary>
+        public int logLevel { get; set; }
 
-        public int volume { get; set; }
+        public int maxTrackSubmitted { get; set; }
+
+        public float volume { get; set; }
 
         public configuration()
         {
@@ -44,30 +52,31 @@ namespace discordMusicBot.src
             Token = "";
             BindToChannels = new ulong[] { 0 };
             defaultRoomID = 0;
-            volume = 0;
+            volume = .10f;
             idDefaultGroup = new ulong { };
             idModsGroup = new ulong { };
             idAdminGroup = new ulong { };
-
+            logLevel = -1;
+            maxTrackSubmitted = 5;
         }
 
         /// <summary> Save the current configuration object to a file. </summary>
         /// <param name="loc"> The configuration file's location. </param>
-        public void SaveFile(string loc)
+        public void SaveFile()
         {
             string json = JsonConvert.SerializeObject(this, Formatting.Indented);
 
-            if (!File.Exists(loc))
-                File.Create(loc).Close();
+            if (!File.Exists(configFile))
+                File.Create(configFile).Close();
 
-            File.WriteAllText(loc, json);
+            File.WriteAllText(configFile, json);
         }
 
         /// <summary> Load the information saved in your configuration file. </summary>
         /// <param name="loc"> The configuration file's location. </param>
-        public static configuration LoadFile(string loc)
+        public static configuration LoadFile()
         {
-            string json = File.ReadAllText(loc);
+            string json = File.ReadAllText(configFile);
             return JsonConvert.DeserializeObject<configuration>(json);
         }
     }
