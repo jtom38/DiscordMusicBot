@@ -39,6 +39,7 @@ namespace discordMusicBot.src.audio
         public static string[] npLike { get; set; }
         public static string[] npSkip { get; set; }
         public static string npFileName { get; set; }
+        public static bool npDeleteAfterPlaying = false;
 
         static string playlistFile = Directory.GetCurrentDirectory() + "\\configs\\playlist.json";
         static string blacklistFile = Directory.GetCurrentDirectory() + "\\configs\\blacklist.json";
@@ -200,6 +201,7 @@ namespace discordMusicBot.src.audio
                         npLike = null;
                         npSkip = null;
                         npFileName = null;
+                        npDeleteAfterPlaying = false;
 
                         //check to see if someone has something queued up in submmitted
                         if (listSubmitted.Count >= 1)
@@ -241,20 +243,12 @@ namespace discordMusicBot.src.audio
                         
                         _client.SetGame(npTitle);
 
-                        _logs.logMessage("Info", "playlist.playAutoQueue", $"Track {npTitle} was sent to the audio player.", "system");
+                        _logs.logMessage("Info", "playlist.playAutoQueue", $"Track:'{npTitle}' was sent to the audio player.", "system");
 
                         await _player.SendAudio(filePath, voiceChannel, _client); //send the file and functions over to the audio player to send to the server
 
                         //if a user submitted the song remove it from the disk
-                        if (npSource == "Submitted")
-                        {
-                            File.Delete(filePath);
-                            removeTrackSubmitted(npUrl);
-                        }
-                        else
-                        {
-                            moveAutoQueueTrackPlayedToBackOfQueue();
-                        }
+                        removeTrackPlayed(filePath);
 
                     }
                 }
@@ -390,26 +384,24 @@ namespace discordMusicBot.src.audio
                     int t = listLibrary.FindIndex(x => x.url == listSubmitted[0].url);
                     if(t != -1)
                     {
-                        //used in the new playlist
-                        npTitle = listSubmitted[0].title;
-                        npUrl = listSubmitted[0].url;
-                        npUser = listSubmitted[0].user;
-                        npSource = "Library";
-                        npLike = listSubmitted[0].like;
-                        npSkip = listSubmitted[0].skips;
+                        //Track was found in the Library
                         npFileName = listSubmitted[0].filename;
+                        npDeleteAfterPlaying = false;
                     }
                     else
                     {
-                        //used in the new playlist
-                        npTitle = listSubmitted[0].title;
-                        npUrl = listSubmitted[0].url;
-                        npUser = listSubmitted[0].user;
-                        npSource = "Submitted";
-                        npLike = listSubmitted[0].like;
-                        npSkip = listSubmitted[0].skips;
+                        //Not found in the library
                         npFileName = null;
+                        npDeleteAfterPlaying = true;
                     }
+
+                    npTitle = listSubmitted[0].title;
+                    npUrl = listSubmitted[0].url;
+                    npUser = listSubmitted[0].user;
+                    npSource = "Submitted";
+                    npLike = listSubmitted[0].like;
+                    npSkip = listSubmitted[0].skips;
+
                     _logs.logMessage("Debug", "playlist.pickTrackFromSubmitted", $"Title: {npTitle} was picked from listSubmitted.", "System");
                 }
                 else
@@ -490,7 +482,7 @@ namespace discordMusicBot.src.audio
         }
         
         /// <summary>
-        /// 
+        /// Checks to see if a user can submit another track
         /// </summary>
         /// <param name="user"></param>
         /// <returns>
@@ -519,6 +511,34 @@ namespace discordMusicBot.src.audio
                 return -1;
             }
         } 
+
+        /// <summary>
+        /// Figures out what to do with the track now that it has been played.
+        /// </summary>
+        /// <param name="filePath"></param>
+        private void removeTrackPlayed(string filePath)
+        {
+            try
+            {
+                if(npSource == "Submitted")
+                {
+                    removeTrackSubmitted(npUrl);
+
+                    if (npDeleteAfterPlaying == true)
+                    {
+                        File.Delete(filePath);
+                    }
+                }
+                else if(npSource == "Library")
+                {
+                    moveAutoQueueTrackPlayedToBackOfQueue();
+                }
+            }
+            catch(Exception error)
+            {
+                _logs.logMessage("Error", "playlist.removeTrackPlayed", error.ToString(), "system");
+            }
+        }
 
         public async Task<string> cmd_play(string url, string user)
         {

@@ -21,45 +21,56 @@ namespace discordMusicBot.src.audio
             /// https://github.com/jamesqo/libvideo/blob/master/docs/README.md
             ///</summary>
 
-            var youtube = YouTube.Default;
-            var video = youtube.GetAllVideos(url);
-
-            //look at the video and now extract from all the url's the ones that are just audio
-            //this way we dont have to do any extraction of video to audio
-            var audio = video
-                .Where(e => e.AudioFormat == AudioFormat.Aac && e.AdaptiveKind == AdaptiveKind.Audio)
-                .ToList();
-
-            string workingDir = Directory.GetCurrentDirectory() + "\\cache\\";
-
-            string fileAAC = audio[0].FullName.Remove(audio[0].FullName.Length - 4 ) + ".aac"; // should remove the .mp4 from the filename and adds aac to the filename
-            //string fileAAC = fileName + ".aac"; // 
-
-            string title = audio[0].Title.Remove(audio[0].Title.Length - 10); // removes the " - youtube" part of the string
-
-            if(File.Exists(workingDir + fileAAC))
+            try
             {
-                // do nothing
-                _logs.logMessage("Debug", "downloader.download_audio", "URL " + url + " was already downloaded, ignoring", "system");               
-            }
-            else
-            {
-                //download the file
-                if (audio.Count > 0)
+                var youtube = YouTube.Default;
+                var video = youtube.GetAllVideos(url);
+
+                //look at the video and now extract from all the url's the ones that are just audio
+                //this way we dont have to do any extraction of video to audio
+                var audio = video
+                    .Where(e => e.AudioFormat == AudioFormat.Aac && e.AdaptiveKind == AdaptiveKind.Audio)
+                    .ToList();
+
+                string workingDir = Directory.GetCurrentDirectory() + "\\cache\\";
+
+                string fileAAC = audio[0].FullName.Remove(audio[0].FullName.Length - 4) + ".aac"; // should remove the .mp4 from the filename and adds aac to the filename
+                                                                                                  //string fileAAC = fileName + ".aac"; // 
+
+                string title = audio[0].Title.Remove(audio[0].Title.Length - 10); // removes the " - youtube" part of the string
+
+                if (File.Exists(workingDir + fileAAC))
                 {
-                    File.WriteAllBytes(workingDir + fileAAC, audio[0].GetBytes());
-                    _logs.logMessage("Info", "downloader.download_audio", $"Downloaded {url} to cache.", "system");
+                    // do nothing
+                    _logs.logMessage("Debug", "downloader.download_audio", "URL " + url + " was already downloaded, ignoring", "system");
                 }
+                else
+                {
+                    //download the file
+                    if (audio.Count > 0)
+                    {
+                        File.WriteAllBytes(workingDir + fileAAC, audio[0].GetBytes());
+                        _logs.logMessage("Info", "downloader.download_audio", $"Downloaded {url} to cache.", "system");
+                    }
+                }
+
+                string[] returnVar = 
+                {
+                        audio[0].Title,                     //pass the title back
+                        fileAAC,                            //pass the filename, not sure if we need to retain this
+                        workingDir + fileAAC,               //pass the full path to the file to be played back
+                        audio[0].AudioBitrate.ToString()    //pass the bitrate so we can return the value
+                };
+
+                return returnVar;
+            }
+            catch(Exception error)
+            {
+                
+                _logs.logMessage("Error", "youtube.download_audio", error.ToString(), "system");
+                return null;
             }
 
-            string[] returnVar = {
-                audio[0].Title,                     //pass the title back
-                fileAAC,                            //pass the filename, not sure if we need to retain this
-                workingDir + fileAAC,               //pass the full path to the file to be played back
-                audio[0].AudioBitrate.ToString()    //pass the bitrate so we can return the value
-            };
-
-            return returnVar;
         }
 
         public string ConvertAACToWAV(string songTitle, string cacheDir)

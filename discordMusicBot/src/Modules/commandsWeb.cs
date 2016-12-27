@@ -21,7 +21,7 @@ namespace discordMusicBot.src.Modules
 
         urban _urban = new urban();
         rule34 _rule34 = new rule34();
-        danbooru _danbooru = new danbooru();
+        booru _danbooru = new booru();
         logs _logs = new logs();
 
         void IModule.Install(ModuleManager manager)
@@ -106,35 +106,86 @@ namespace discordMusicBot.src.Modules
                             {
                                 case "dabooru":
                                 case "dan":
-                                    result = _danbooru.danSearchTag(e.GetArg("tag"));
+                                case "d":
+                                    result = _danbooru.webRequestStart("danbooru", e.GetArg("tag"));
 
                                     if(result != null)
                                     {
-                                        await e.Channel.SendMessage($"Result from {result[1]}\rURL: {result[0]}\rTags: {result[2]}");
+                                        //await e.Channel.SendMessage($"Result from {result[1]}\rURL: {result[0]}\rTags: {result[2]}");
+                                        await e.Channel.SendMessage($"Result from {result[1]}\rURL: {result[0]}");
                                     }
                                     else
                                     {
                                         await e.Channel.SendMessage($"Unable to find anything with the tag: {e.GetArg("tag")}");
                                     }
                                     break;
+                                case "konachan":
+                                case "kona":
+                                case "k":
+                                    {
+                                        result = _danbooru.webRequestStart("konachan", e.GetArg("tag"));
+
+                                        if (result != null)
+                                        {
+                                            await e.Channel.SendMessage($"Result from {result[1]}\rURL: {result[0]}\rTags: {result[2]}");
+                                            //await e.Channel.SendMessage($"Result from {result[1]}\rURL: {result[0]}");
+                                        }
+                                        else
+                                        {
+                                            await e.Channel.SendMessage($"Unable to find anything with the tag: {e.GetArg("tag")}");
+                                        }
+                                    }
+                                    break;
+                                case "yandere":
+                                case "yan":
+                                case "y":
+                                    {
+                                        result = _danbooru.webRequestStart("yandere", e.GetArg("tag"));
+
+                                        if (result != null)
+                                        {
+                                            await e.Channel.SendMessage($"Result from {result[1]}\rURL: {result[0]}\rTags: {result[2]}");
+                                            //await e.Channel.SendMessage($"Result from {result[1]}\rURL: {result[0]}");
+                                        }
+                                        else
+                                        {
+                                            await e.Channel.SendMessage($"Unable to find anything with the tag: {e.GetArg("tag")}");
+                                        }
+                                    }
+                                    break;
                                 case "rule34":
                                 case "r34":
+                                case "r":
                                     result = _rule34.rule34QuerrySite(e.GetArg("tag"));
 
                                     if( result != null)
                                     {
-
+                                        await e.Channel.SendMessage($"Result from {result[1]}\rURL: {result[0]}\rTags: {result[2]}");
                                     }
                                     else
                                     {
-
+                                        await e.Channel.SendMessage($"Unable to find anything with the tag: {e.GetArg("tag")} on 'rule34.xxx'.");
                                     }
                                     break;
                                 default:
+                                    Random rng = new Random();
+                                    int num = rng.Next(0, 2); //max is the number of sites
 
-
-                                    result = _danbooru.danSearchTag(e.GetArg("site"));
-
+                                    switch (num)
+                                    {
+                                        case 0:
+                                            result = _danbooru.webRequestStart("danbooru", e.GetArg("site"));
+                                            break;
+                                        case 1:
+                                            result = _danbooru.webRequestStart("konachan", e.GetArg("tag"));
+                                            break;
+                                        case 2:
+                                            result = _danbooru.webRequestStart("yandere", e.GetArg("tag"));
+                                            break;
+                                        case 3:
+                                            break;
+                                    }
+                                    
                                     if (result != null)
                                     {
                                         await e.Channel.SendMessage($"Result from {result[1]}\rURL: {result[0]}\rTags: {result[2]}");

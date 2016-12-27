@@ -44,6 +44,10 @@ namespace discordMusicBot.src.sys
         public int maxTrackSubmitted { get; set; }
 
         public float volume { get; set; }
+        /// <summary>
+        /// If this is not set smut can be sent to any text channel
+        /// </summary>
+        public ulong smutTextChannel { get; set; }
 
         public configuration()
         {
@@ -58,6 +62,7 @@ namespace discordMusicBot.src.sys
             idAdminGroup = new ulong { };
             logLevel = -1;
             maxTrackSubmitted = 5;
+            smutTextChannel = new ulong { };
         }
 
         /// <summary> Save the current configuration object to a file. </summary>

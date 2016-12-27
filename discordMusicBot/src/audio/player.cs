@@ -52,7 +52,6 @@ namespace discordMusicBot.src.audio
             playingSong = true;
             try
             {
-                
 
                 var channelCount = _client.GetService<AudioService>().Config.Channels; // Get the number of AudioChannels our AudioService has been configured to use.
                 var OutFormat = new WaveFormat(48000, 16, channelCount); // Create a new Output Format, using the spec that Discord will accept, and with the number of channels that our client supports.
@@ -67,7 +66,6 @@ namespace discordMusicBot.src.audio
                     // Add in the "&& playingSong" so that it only plays while true. For our cheesy skip command.
                     // AGAIN WARNING YOU NEED opus.dll libsodium.dll
                     // If you do not have these, this will not work.
-
                     try
                     {
                         while ((byteCount = resampler.Read(buffer, 0, blockSize)) > 0 && playingSong) // Read audio into our buffer, and keep a loop open while data is present
@@ -86,19 +84,17 @@ namespace discordMusicBot.src.audio
                             _nAudio.Send(adjustedBuffer, 0, blockSize); // Send the buffer to Discord
                         }
                     }
-                    catch(Exception error)
+                    catch (Exception error)
                     {
-                        await _client.GetService<AudioService>().Join(voiceChannel);
+                        //await _client.GetService<AudioService>().Join(voiceChannel);
                         Console.WriteLine(error.ToString());
                     }
-                    //await _nAudio.Disconnect();
                 }
             }
-            catch(Exception error)
+            catch (Exception error)
             {
-                System.Console.WriteLine("Something went wrong. :(");
+                Console.WriteLine("Something went wrong. :(");
             }
-            //await _nAudio.Disconnect();
         }
 
         public static byte[] ScaleVolumeSafeAllocateBuffers(byte[] audioSamples, float volume)

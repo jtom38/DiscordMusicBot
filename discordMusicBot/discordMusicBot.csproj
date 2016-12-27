@@ -105,7 +105,7 @@
     <Compile Include="src\audio\playlist.cs" />
     <Compile Include="src\sys\startup.cs" />
     <Compile Include="src\sys\system.cs" />
-    <Compile Include="src\Web\danbooru.cs" />
+    <Compile Include="src\Web\booru.cs" />
     <Compile Include="src\Web\rule34.cs" />
     <Compile Include="src\Web\urban.cs" />
   </ItemGroup>

@@ -13,13 +13,37 @@ namespace discordMusicBot.src.Web
 {
     class rule34
     {
-
+        public class ListRule34
+        {
+            public int id { get; set; }
+            public string md5 { get; set; }
+            public string file_name { get; set; }
+            public string file_url { get; set; }
+            public int height { get; set; }
+            public int width { get; set; }
+            public string preview_url { get; set; }
+            public int preview_height { get; set; }
+            public int preview_width { get; set; }
+            public string rating { get; set; }
+            public string date { get; set; }
+            public string is_warehoused { get; set; }
+            public string tags { get; set; }
+            public string source { get; set; }
+            public int score { get; set; }
+            public string author { get; set; }
+        }
 
         public string[] rule34QuerrySite(string tag)
         {
             try
             {
-                string ParseValue = $"http://rule34.paheal.net/api/danbooru/find_posts/index.xml?tags={tag}";
+                //string ParseValue = $"http://rule34.paheal.net/api/danbooru/find_posts/index.xml";
+                string ParseValue = $"https://rule34.xxx//index.php?page=dapi&s=post&q=index";
+                
+                if (tag != "")
+                {
+                    ParseValue = ParseValue + $"&tags={tag}";
+                }
 
                 HttpWebRequest httpWebRequest = (HttpWebRequest)WebRequest.Create(ParseValue);
                 httpWebRequest.Method = WebRequestMethods.Http.Get;
@@ -36,46 +60,61 @@ namespace discordMusicBot.src.Web
                         string urlResponce = readStream.ReadToEnd();
                         //urlResponce = urlResponce.Remove(0, 38);
 
-                        var dic = XDocument
-                            .Parse(urlResponce)
-                            .Descendants("Post")
-                            .ToDictionary(
-                                c => c.Attribute("file_url").Value,
-                                c => Convert.ChangeType(
-                                    c.Value, 
-                                    GetType(c.Attribute("DataType").Value)
-                                )
-                            );
+                        //XDocument xdoc = XDocument.Parse(urlResponce);
 
-                        string[] returned = null;
-                        return returned;
+                        List<ListRule34> xmls =
+                            (from xml in XDocument.Parse(urlResponce).Root.Elements("post")
+                             select new ListRule34
+                             {
+                                 id = (int)xml.Attribute("id"),
+                                 md5 = (string)xml.Attribute("md5"),
+                                 file_name = (string)xml.Attribute("file_name"),
+                                 file_url = (string)xml.Attribute("file_url"),
+                                 height = (int)xml.Attribute("height"),
+                                 width = (int)xml.Attribute("width"),
+                                 preview_url = (string)xml.Attribute("preview_url"),
+                                 preview_height = (int)xml.Attribute("preview_height"),
+                                 preview_width = (int)xml.Attribute("preview_width"),
+                                 rating = (string)xml.Attribute("rating"),
+                                 date = (string)xml.Attribute("date"),
+                                 is_warehoused = (string)xml.Attribute("is_warehoused"),
+                                 tags = (string)xml.Attribute("tags"),
+                                 source = (string)xml.Attribute("source"),
+                                 score = (int)xml.Attribute("score"),
+                                 author = (string)xml.Attribute("author")
+                             }).ToList();
+
+                        if(xmls.Count >= 1)
+                        {
+                            Random rng = new Random();
+
+                            int counter = rng.Next(0, xmls.Count);
+
+                            bool loop = true;
+                            while (loop == true)
+                            {
+                                if (xmls[counter].file_url != "")
+                                {
+                                    string[] returnResult = { "https:" + xmls[counter].file_url, "rule34", xmls[counter].tags };
+                                    return returnResult;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            return null;
+                        }
+                        return null;
                     }
                 }
             }
             catch(Exception error)
             {
+                Console.WriteLine(error);
                 return null;
             }
 
 
-        }
-
-        private static Type GetType(string type)
-        {
-            switch (type)
-            {
-                case "Integer":
-                    return typeof(int);
-                case "String":
-                    return typeof(string);
-                case "Boolean":
-                    return typeof(bool);
-                // TODO: add any other types that you want to support
-                default:
-                    throw new NotSupportedException(
-                        string.Format("The type {0} is not supported", type)
-                    );
-            }
         }
 
     }
