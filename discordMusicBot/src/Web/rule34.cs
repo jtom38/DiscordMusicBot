@@ -37,15 +37,18 @@ namespace discordMusicBot.src.Web
         {
             try
             {
-                //string ParseValue = $"http://rule34.paheal.net/api/danbooru/find_posts/index.xml";
-                string ParseValue = $"https://rule34.xxx//index.php?page=dapi&s=post&q=index";
+                string url = null;
                 
                 if (tag != "")
                 {
-                    ParseValue = ParseValue + $"&tags={tag}";
+                    url = $"https://rule34.xxx//index.php?page=dapi&s=post&q=index&tags={tag}";
+                }
+                else
+                {
+                    url = "https://rule34.xxx//index.php?page=dapi&s=post&q=index";
                 }
 
-                HttpWebRequest httpWebRequest = (HttpWebRequest)WebRequest.Create(ParseValue);
+                HttpWebRequest httpWebRequest = (HttpWebRequest)WebRequest.Create(url);
                 httpWebRequest.Method = WebRequestMethods.Http.Get;
 
                 // This goes out and actually performs the web client request sorta thing	
@@ -58,9 +61,6 @@ namespace discordMusicBot.src.Web
                     {
 
                         string urlResponce = readStream.ReadToEnd();
-                        //urlResponce = urlResponce.Remove(0, 38);
-
-                        //XDocument xdoc = XDocument.Parse(urlResponce);
 
                         List<ListRule34> xmls =
                             (from xml in XDocument.Parse(urlResponce).Root.Elements("post")
@@ -95,8 +95,8 @@ namespace discordMusicBot.src.Web
                             {
                                 if (xmls[counter].file_url != "")
                                 {
-                                    string[] returnResult = { "https:" + xmls[counter].file_url, "rule34", xmls[counter].tags };
-                                    return returnResult;
+                                        string[] returnResult = { "https:" + xmls[counter].file_url, "rule34", xmls[counter].tags };
+                                        return returnResult;
                                 }
                             }
                         }

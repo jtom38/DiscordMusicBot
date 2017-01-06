@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using discordMusicBot.src.sys;
 using discordMusicBot.src.audio;
+using discordMusicBot.src.Web;
 using Discord;
 using Discord.Commands;
 using Discord.Commands.Permissions.Levels;
@@ -25,6 +26,7 @@ namespace discordMusicBot.src.Modules
         system _system = new system();
         network _network = new network();
         logs _logs = new logs();
+        discordStatus _discordStatus = new discordStatus();
 
         void IModule.Install(ModuleManager manager)
         {
@@ -242,127 +244,6 @@ namespace discordMusicBot.src.Modules
 
                     });
 
-                _client.GetService<CommandService>().CreateCommand("serverIds")
-                    .Alias("serverIds")
-                    .Description("Exports roles IDs.\rPermission: Owner")
-                    .MinPermissions((int)PermissionLevel.GroupAdmin)
-                    .Do(async e =>
-                    {
-                        try
-                        {
-                            //extract the roles and id's from the server
-                            List<Role> serverRolesList = e.Server.Roles.ToList();
-
-                            string result = null;
-                            for (int i = 0; i < serverRolesList.Count; i++)
-                            {
-                                result = result + $"{serverRolesList[i].Name} = {serverRolesList[i].Id}\r";
-                            }
-
-                            Channel userPM = await e.User.CreatePMChannel();
-                            await userPM.SendMessage($"```\r{result}\r```");
-                            _logs.logMessage("Info", "commandsSystem.serverIds", "User requested the server role IDs.", e.User.Name);
-                        }
-                        catch(Exception error)
-                        {
-                            _logs.logMessage("Error", "commandsSystem.serverIds", error.ToString(), e.User.Name);
-                        }
-                    });
-
-                _client.GetService<CommandService>().CreateCommand("setGroup")
-                    .Alias("sg")
-                    .Description($"Sets the role group needed for basic commands.\r{_config.Prefix}setGroup default id\r{_config.Prefix}setGroup mods id\r{_config.Prefix}setGroup admins id\rPermission: Owner")
-                    .Parameter("role", ParameterType.Optional)
-                    .Parameter("id", ParameterType.Optional)
-                    .MinPermissions((int)PermissionLevel.BotOwner)
-                    .Do(async e =>
-                    {
-                        try
-                        {
-                            ulong id = new ulong { };
-                            try
-                            {
-                                id = Convert.ToUInt64(e.GetArg("id"));
-                            }
-                            catch
-                            {
-
-                            }
-                            
-                            if(e.GetArg("id") == null)
-                            {
-                                await e.Channel.SendMessage($"Please submit a role ID.\rExample: {_config.Prefix}setGroup default 139135090637668350");
-                                return;
-                            }
-
-                            switch (e.GetArg("role"))
-                            {
-                                case "default":                                    
-                                    _config.idDefaultGroup = id;
-                                    _config.SaveFile();
-
-                                    await e.Channel.SendMessage($"Permission Role has been updated.");
-                                    _logs.logMessage("Info", "commandsSystem.setGroup default", $"Default role updated to {e.GetArg("id")}", e.User.Name);
-
-                                    break;
-                                case "mods":
-                                    _config.idModsGroup = id;
-                                    _config.SaveFile();
-
-                                    await e.Channel.SendMessage($"Permission Role has been updated.");
-                                    _logs.logMessage("Info", "commandsSystem.setGroup mods", $"Mods role updated to {e.GetArg("id")}", e.User.Name);
-                                    break;
-                                case "admins":
-                                    _config.idAdminGroup = id;
-                                    _config.SaveFile();
-
-                                    await e.Channel.SendMessage($"Permission Role has been updated.");
-                                    _logs.logMessage("Info", "commandsSystem.setGroup admins", $"Admins role updated to {e.GetArg("id")}", e.User.Name);
-                                    break;
-                                default:
-
-                                    await e.Channel.SendMessage($"Please submit a group level.\rAvailable args\rdefault\rmods\radmins\rExample: {_config.Prefix}setGroup default 139135090637668350");
-                                    break;
-                            }
-
-                        }
-                        catch(Exception error)
-                        {
-                            _logs.logMessage("Error", "commandsSystem.setGroup", error.ToString(), e.User.Name);
-                        }
-                    });
-
-                _client.GetService<CommandService>().CreateCommand("setPrefix")
-                    .Alias("sp")
-                    .Description("Changes the prefix that the bot will listen to.\rPermission: Owner")
-                    .Parameter("id", ParameterType.Optional)
-                    .MinPermissions((int)PermissionLevel.BotOwner)
-                    .Do(async e =>
-                    {
-                        try
-                        {
-                            if(e.GetArg("id") == "#" ||
-                            e.GetArg("id") == "/" ||
-                            e.GetArg("id") == "@")
-                            {
-                                await e.Channel.SendMessage($"Please pick another command character that is not one of the following.\r'#' '/' '@'");
-                                return;
-                            }
-                            else
-                            {
-                                _config.Prefix = e.GetArg("id")[0];
-                                _config.SaveFile();
-
-                                await e.Channel.SendMessage($"Character prefix has been changed to {e.GetArg("id")} and will be active on next restart.");
-                                _logs.logMessage("Info", "commandsSystem.setPrefix", $"Commands prefix was changed to {e.GetArg("id")}.", e.User.Name);
-                            }
-                        }
-                        catch (Exception error)
-                        {
-                            _logs.logMessage("Error", "commandsSystem.setPrefix", error.ToString(), e.User.Name);
-                        }
-                    });
-
                 _client.GetService<CommandService>().CreateCommand("about")
                     .Alias("about")
                     .Description("Returns with github infomation.\rPermission: Everyone")
@@ -379,83 +260,7 @@ namespace discordMusicBot.src.Modules
                         {
                             _logs.logMessage("Error", "commandsSystem.about", error.ToString(), e.User.Name);
                         }
-                    });
-
-                _client.GetService<CommandService>().CreateCommand("export")
-                    .Alias("export")
-                    .Description($"Exports current files based on given arg.\r{_config.Prefix}export playlist\r{_config.Prefix}export blacklist\r{_config.Prefix}export log = Running log file.\rPermission: Mods")
-                    .Parameter("file",ParameterType.Optional)
-                    .MinPermissions((int)PermissionLevel.GroupAdmin)
-                    .Do(async e =>
-                    {
-                        try
-                        {
-                            string argFile = e.GetArg("file");
-
-                            Channel userPM = await e.User.CreatePMChannel();
-
-                            switch (argFile)
-                            {
-                                case "playlist":
-                                case "pl":
-                                    bool plExport = _system.cmd_plExport();
-
-                                    if (plExport == true)
-                                    {
-                                        await userPM.SendFile(Directory.GetCurrentDirectory() + "\\configs\\playlist_export.json");
-                                        await e.Channel.SendMessage($"{e.User.Name},\rPlease check the PM that I sent you for your file request.");
-                                        File.Delete(Directory.GetCurrentDirectory() + "\\configs\\playlist_export.json");
-
-                                        _logs.logMessage("Info", "commandsSystem.Export Playlist", "User requested the playlist file.", e.User.Name);
-                                    }
-                                    else
-                                    {
-                                        await e.Channel.SendMessage("Error generating file.\rPlease inform the server owner for more infomation.");
-                                    }
-
-                                    break;
-                                case "blacklist":
-                                case "bl":
-                                    bool blExport = _system.cmd_blExport();
-
-                                    if (blExport == true)
-                                    {                                        
-                                        await userPM.SendFile(Directory.GetCurrentDirectory() + "\\configs\\blacklist_export.json");
-                                        await e.Channel.SendMessage($"{e.User.Name},\rPlease check the PM that I sent you for your file request.");
-                                        File.Delete(Directory.GetCurrentDirectory() + "\\configs\\blacklist_export.json");
- 
-                                        _logs.logMessage("Info", "commandsSystem.Export Blacklist", "User requested the blacklist file.", e.User.Name);
-                                    }
-                                    else
-                                    {
-                                        await e.Channel.SendMessage("Error generating file.\rPlease inform the server owner for more infomation.");
-                                    }
-
-                                    break;
-                                case "log":
-
-                                    await userPM.SendFile(Directory.GetCurrentDirectory() + "\\logs.txt");
-                                    await e.Channel.SendMessage($"{e.User.Name},\rPlease check the PM that I sent you for your file request.");
-                                    _logs.logMessage("Info", "commandsSystem.Export log", "User requested the log file.", e.User.Name);
-
-                                    break;
-                                case "config":
-                                    await userPM.SendFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
-                                    await e.Channel.SendMessage($"{e.User.Name},\rPlease check the PM that I sent you for your file request.");
-                                    _logs.logMessage("Info", "commandsSystem.Export config", "User requested the config file.", e.User.Name);
-
-                                    break;
-                                default:
-                                    await e.Channel.SendMessage($"Invalid arguemnt found!\rPlease use one of the following.\r{_config.Prefix}export pl = Playlist\r{_config.Prefix}export bl = Blacklist\r{_config.Prefix}export log = Running log file.");
-                                    break;
-                            }
-
-                        }
-                        catch (Exception error)
-                        {
-                            _logs.logMessage("Error", "commandsSystem.export", error.ToString(), e.User.Name);
-                        }
-                    });
+                    }) ;
 
                 _client.GetService<CommandService>().CreateCommand("ping")
                     .Alias("ping")
@@ -483,46 +288,351 @@ namespace discordMusicBot.src.Modules
                             _logs.logMessage("Error", "commandsSystem.ping", error.ToString(), e.User.Name);
                         }
                     });
-                _client.GetService<CommandService>().CreateCommand("maxSubmitted")
-                    .Alias("maxSub")
-                    .Description($"Changes the max number of tracks a user can submit to the queue.\r{_config.Prefix}maxSubmitted 10\rPermission: Admins")
+
+                _client.GetService<CommandService>().CreateCommand("status")
+                    .Alias("status")
+                    .Description($"Returns the current tracked stats.\rPermission: Everyone")
                     .Parameter("value", ParameterType.Optional)
+                    .MinPermissions((int)PermissionLevel.GroupUsers)
+                    .Do(async e =>
+                    {
+                        try
+                        {
+                            _config = configuration.LoadFile(); //refresh the data
+
+                            switch (e.GetArg("value").ToLower())
+                            {
+                                case "discord":
+                                case "d":
+                                    string[] status = _discordStatus.getCurrentStatus();
+
+                                    
+                                    
+                                    
+                                    //await e.Channel.
+                                    await e.Channel.SendMessage($"{status[0]}\r{status[1]}\r{status[2]}\r{status[3]}");
+                                    break;
+
+                                case "ping":
+                                case "p":
+                                    var t = e.Server.Region;
+                                    long ping = _network.cmd_ping(t.Hostname);
+
+                                    await e.Channel.SendMessage($"Data Center: {t.Name}\r\tPing: {ping}");
+                                    break;
+
+                                case "system":
+                                case "s":
+                                    break;
+
+                                case "volume":
+                                case "v":
+
+                                    await e.Channel.SendMessage($"Volume: {_config.volume}");
+                                    break;
+
+                                default:
+                                    await e.Channel.SendMessage($"");
+                                    break;
+                            }
+
+
+                            //await e.Channel.SendMessage($"rBot Uptime: Not Tracked Yet\rAudio Data\r\tTracks Played: Placeholder\r\t");
+                        }
+                        catch (Exception error)
+                        {
+                            _logs.logMessage("Error", "commandsSystem.Status", error.ToString(), e.User.Name);
+                        }
+                    });
+
+                _client.GetService<CommandService>().CreateCommand("admin")
+                    .Alias("a")
+                    .Description($"Returns the current tracked stats.\rPermission: Everyone")
+                    .Parameter("function", ParameterType.Optional)
+                    .Parameter("value", ParameterType.Optional)
+                    .Parameter("id",ParameterType.Optional)
                     .MinPermissions((int)PermissionLevel.GroupAdmin)
                     .Do(async e =>
                     {
                         try
                         {
-                            if(e.GetArg("value") == "")
+                            switch (e.GetArg("function").ToLower())
                             {
-                                await e.Channel.SendMessage($"{e.User.Name},\rMax Submitted: {_config.maxTrackSubmitted}");
-                            }
-                            else
-                            {
-                                int value = -1;
-                                bool parseResult = int.TryParse(e.GetArg("value"), out value);
-
-                                if (parseResult == true)
-                                {
-                                    if (value != -1)
+                                case "setsmut":
+                                case "smut":
+                                case "ss":
+                                    try
                                     {
-                                        _config.maxTrackSubmitted = value;
-                                        _config.SaveFile();
-                                        await e.Channel.SendMessage($"{e.User.Name},\rI have adjusted the max number of submitted tracks to {e.GetArg("value")}.");
+
+                                        if (e.GetArg("value") == "")
+                                        {
+                                            await e.Channel.SendMessage($"Please submit a Text Channel ID for smut to configure where smut can be sent to.\rExample: {_config.Prefix}admin setSmut 139135090637668350");
+                                            return;
+                                        }
+                                        else
+                                        {
+                                            ulong id = new ulong { };
+                                            try
+                                            {
+                                                id = Convert.ToUInt64(e.GetArg("value"));
+                                            }
+                                            catch
+                                            {
+
+                                            }
+
+                                            _config.smutTextChannel = id;
+                                            _config.SaveFile();
+
+                                            await e.Channel.SendMessage($"Smut Text Channel has been updated.");
+                                            _logs.logMessage("Info", "commandsSystem.admin.setSmut", $"Smut Text Channel updated to {e.GetArg("id")}", e.User.Name);
+                                        }
+                                        
                                     }
-                                }
-                                else
-                                {
-                                    await e.Channel.SendMessage($"{e.User.Name},\rPlease enter a number value to adjust the max number of tracks a user can submit.");
-                                }
+                                    catch(Exception error)
+                                    {
+                                        _logs.logMessage("Error", "commandsSystem.admin.setSmut", error.ToString(), "System");
+                                    }
+                                    break;
+
+                                case "setprefix":
+                                case "prefix":
+                                case "sp":
+                                    try
+                                    {
+                                        if (e.GetArg("value") == "#" ||
+                                            e.GetArg("value") == "/" ||
+                                            e.GetArg("value") == "@")
+                                        {
+                                            await e.Channel.SendMessage($"Please pick another command character that is not one of the following.\r'#' '/' '@'");
+                                            return;
+                                        }
+                                        else if(e.GetArg("value") == "")
+                                        {
+                                            await e.Channel.SendMessage($"Please submit a value to make as a new command character.");
+                                            return;
+                                        }
+                                        else
+                                        {
+                                            _config.Prefix = e.GetArg("value")[0];
+                                            _config.SaveFile();
+
+                                            await e.Channel.SendMessage($"Character prefix has been changed to {e.GetArg("value")} and will be active on next restart.");
+                                            _logs.logMessage("Info", "commandsSystem.admin.setPrefix", $"Commands prefix was changed to {e.GetArg("value")}.", e.User.Name);
+                                        }
+                                    }
+                                    catch (Exception error)
+                                    {
+                                        _logs.logMessage("Error", "commandsSystem.admin.setPrefix", error.ToString(), e.User.Name);
+                                    }
+                                    break;
+
+                                case "export":
+                                case "e":
+                                    try
+                                    {
+                                        Channel userPM = await e.User.CreatePMChannel();
+
+                                        switch (e.GetArg("value"))
+                                        {
+                                            case "playlist":
+                                            case "pl":
+                                                bool plExport = _system.cmd_plExport();
+
+                                                if (plExport == true)
+                                                {
+                                                    await userPM.SendFile(Directory.GetCurrentDirectory() + "\\configs\\playlist_export.json");
+                                                    await e.Channel.SendMessage($"{e.User.Name},\rPlease check the PM that I sent you for your file request.");
+                                                    File.Delete(Directory.GetCurrentDirectory() + "\\configs\\playlist_export.json");
+
+                                                    _logs.logMessage("Info", "commandsSystem.Export Playlist", "User requested the playlist file.", e.User.Name);
+                                                }
+                                                else
+                                                {
+                                                    await e.Channel.SendMessage("Error generating file.\rPlease inform the server owner for more infomation.");
+                                                }
+
+                                                break;
+                                            case "blacklist":
+                                            case "bl":
+                                                bool blExport = _system.cmd_blExport();
+
+                                                if (blExport == true)
+                                                {
+                                                    await userPM.SendFile(Directory.GetCurrentDirectory() + "\\configs\\blacklist_export.json");
+                                                    await e.Channel.SendMessage($"{e.User.Name},\rPlease check the PM that I sent you for your file request.");
+                                                    File.Delete(Directory.GetCurrentDirectory() + "\\configs\\blacklist_export.json");
+
+                                                    _logs.logMessage("Info", "commandsSystem.Export Blacklist", "User requested the blacklist file.", e.User.Name);
+                                                }
+                                                else
+                                                {
+                                                    await e.Channel.SendMessage("Error generating file.\rPlease inform the server owner for more infomation.");
+                                                }
+
+                                                break;
+                                            case "log":
+
+                                                await userPM.SendFile(Directory.GetCurrentDirectory() + "\\logs.txt");
+                                                await e.Channel.SendMessage($"{e.User.Name},\rPlease check the PM that I sent you for your file request.");
+                                                _logs.logMessage("Info", "commandsSystem.Export log", "User requested the log file.", e.User.Name);
+
+                                                break;
+                                            case "config":
+                                                await userPM.SendFile(Directory.GetCurrentDirectory() + "\\configs\\config.json");
+                                                await e.Channel.SendMessage($"{e.User.Name},\rPlease check the PM that I sent you for your file request.");
+                                                _logs.logMessage("Info", "commandsSystem.Export config", "User requested the config file.", e.User.Name);
+
+                                                break;
+                                            default:
+                                                await e.Channel.SendMessage($"Invalid arguemnt found!\rPlease use one of the following.\r{_config.Prefix}export pl = Playlist\r{_config.Prefix}export bl = Blacklist\r{_config.Prefix}export log = Running log file.");
+                                                break;
+                                        }
+
+                                    }
+                                    catch (Exception error)
+                                    {
+                                        _logs.logMessage("Error", "commandsSystem.export", error.ToString(), e.User.Name);
+                                    }
+                                    break;
+
+                                case "setgroup":
+                                case "group":
+                                case "sg":
+                                    try
+                                    {
+                                        ulong id = new ulong { };
+                                        try
+                                        {
+                                            id = Convert.ToUInt64(e.GetArg("id"));
+                                        }
+                                        catch
+                                        {
+
+                                        }
+
+                                        if (e.GetArg("id") == "")
+                                        {
+                                            await e.Channel.SendMessage($"Please submit a role ID.\rExample: {_config.Prefix}setGroup default 139135090637668350");
+                                            return;
+                                        }
+
+                                        switch (e.GetArg("value"))
+                                        {
+                                            case "default":
+                                                _config.idDefaultGroup = id;
+                                                _config.SaveFile();
+
+                                                await e.Channel.SendMessage($"Permission Role has been updated.");
+                                                _logs.logMessage("Info", "commandsSystem.admin.setGroup default", $"Default role updated to {e.GetArg("id")}", e.User.Name);
+
+                                                break;
+                                            case "mods":
+                                                _config.idModsGroup = id;
+                                                _config.SaveFile();
+
+                                                await e.Channel.SendMessage($"Permission Role has been updated.");
+                                                _logs.logMessage("Info", "commandsSystem.admin.setGroup mods", $"Mods role updated to {e.GetArg("id")}", e.User.Name);
+                                                break;
+                                            case "admins":
+                                                _config.idAdminGroup = id;
+                                                _config.SaveFile();
+
+                                                await e.Channel.SendMessage($"Permission Role has been updated.");
+                                                _logs.logMessage("Info", "commandsSystem.admin.setGroup admins", $"Admins role updated to {e.GetArg("id")}", e.User.Name);
+                                                break;
+                                            default:
+
+                                                await e.Channel.SendMessage($"Please submit a group level.\rAvailable args\rdefault\rmods\radmins\rExample: {_config.Prefix}admin setGroup default 139135090637668350");
+                                                break;
+                                        }
+
+                                    }
+                                    catch (Exception error)
+                                    {
+                                        _logs.logMessage("Error", "commandsSystem.admin.setGroup", error.ToString(), e.User.Name);
+                                    }
+                                    break;
+
+                                case "maxSubmitted":
+                                case "submit":
+                                case "ms":
+                                    try
+                                    {
+                                        if (e.GetArg("value") == "")
+                                        {
+                                            await e.Channel.SendMessage($"{e.User.Name},\rMax Submitted: {_config.maxTrackSubmitted}\rIf you want to disable this enter value '-1'");
+                                        }
+                                        else
+                                        {
+                                            int value = -2;
+                                            bool parseResult = int.TryParse(e.GetArg("value"), out value);
+
+                                            if (parseResult == true)
+                                            {
+                                                if (value == -1)
+                                                {
+                                                    _config.maxTrackSubmitted = value;
+                                                    _config.SaveFile();
+                                                    await e.Channel.SendMessage($"{e.User.Name},\rI have disabled this function for you.");
+                                                    _logs.logMessage("Info", "commandsSystem.admin.maxSubmitted", $"Max number of submitted tracks is now disabled", e.User.Name);
+                                                }
+                                                else if (value != -2)
+                                                {
+                                                    await e.Channel.SendMessage($"Error generated.  Default value was found.");
+                                                }
+                                                else
+                                                {
+                                                    _config.maxTrackSubmitted = value;
+                                                    _config.SaveFile();
+                                                    await e.Channel.SendMessage($"{e.User.Name},\rI have adjusted the max number of submitted tracks to {e.GetArg("value")}.");
+                                                    _logs.logMessage("Info", "commandsSystem.admin.maxSubmitted", $"Max number of submitted tracks is now {e.GetArg("value")}", e.User.Name);
+                                                }
+                                            }
+                                            else
+                                            {
+                                                await e.Channel.SendMessage($"{e.User.Name},\rPlease enter a number value to adjust the max number of tracks a user can submit.");
+                                            }
+                                        }
+
+                                    }
+                                    catch (Exception error)
+                                    {
+                                        _logs.logMessage("Error", "commandsSystem.admin.maxSubmitted", error.ToString(), e.User.Name);
+                                    }
+                                    break;
+
+                                case "serverids":
+                                case "ids":
+                                    try
+                                    {
+                                        //extract the roles and id's from the server
+                                        List<Role> serverRolesList = e.Server.Roles.ToList();
+
+                                        string result = null;
+                                        for (int i = 0; i < serverRolesList.Count; i++)
+                                        {
+                                            result = result + $"{serverRolesList[i].Name} = {serverRolesList[i].Id}\r";
+                                        }
+
+                                        Channel userPM = await e.User.CreatePMChannel();
+                                        await userPM.SendMessage($"```\r{result}\r```");
+
+                                        _logs.logMessage("Info", "commandsSystem.admin.serverIds", "User requested the server role IDs.", e.User.Name);
+                                    }
+                                    catch (Exception error)
+                                    {
+                                        _logs.logMessage("Error", "commandsSystem.admin.serverIds", error.ToString(), e.User.Name);
+                                    }
+
+                                    break;
                             }
-                            
                         }
                         catch (Exception error)
                         {
                             _logs.logMessage("Error", "commandsSystem.maxSubmitted", error.ToString(), e.User.Name);
                         }
                     });
-
             });
         }
     }

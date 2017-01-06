@@ -25,13 +25,11 @@ namespace discordMusicBot.src.audio
 
     class playlist
     {
-        public static List<ListPlaylist> listLibrary = new List<ListPlaylist>();        
-        public static List<ListPlaylist> listBlacklist = new List<ListPlaylist>();
-        public static List<ListPlaylist> listQueue = new List<ListPlaylist>();
-        public static List<ListPlaylist> listSubmitted = new List<ListPlaylist>();
-        public static List<ListPlaylist> listBeenPlayed = new List<ListPlaylist>();
-        public static List<ListPlaylist> listAllSongsPlayed = new List<ListPlaylist>();
+        public static List<ListPlaylist> listLibrary = new List<ListPlaylist>();
         public static List<ListPlaylist> listAutoQueue = new List<ListPlaylist>();
+        public static List<ListPlaylist> listBlacklist = new List<ListPlaylist>();
+        public static List<ListPlaylist> listSubmitted = new List<ListPlaylist>();
+               
         public static string npTitle { get; set; }
         public static string npUser { get; set; }
         public static string npUrl { get; set; }
@@ -192,63 +190,41 @@ namespace discordMusicBot.src.audio
                     //given the loop is always active lets make another loop that we can pause when needed
                     while (playlistActive == true)
                     {
-
-                        //reset the nowplaying vars given a new song is being picked
-                        npUrl = null;
-                        npTitle = null;
-                        npUser = null;
-                        npSource = null;
-                        npLike = null;
-                        npSkip = null;
-                        npFileName = null;
-                        npDeleteAfterPlaying = false;
-
-                        //check to see if someone has something queued up in submmitted
-                        if (listSubmitted.Count >= 1)
+                        try
                         {
-                            pickTrackFromSubmitted();
+                            //reset the nowplaying vars given a new song is being picked
+                            npUrl = null;
+                            npTitle = null;
+                            npUser = null;
+                            npSource = null;
+                            npLike = null;
+                            npSkip = null;
+                            npFileName = null;
+                            npDeleteAfterPlaying = false;
+
+                            string filePath = null;
+
+                            //check to see if someone has something queued up in submmitted
+                            if (listSubmitted.Count >= 1)
+                                await pickTrackFromSubmitted();
+                            else if (listSubmitted.Count == 0) //if nothing is found go back to the listAutoQueue
+                                await getAutoQueueTrackInfo();
+
+                            filePath = await getFileNameToPlay(); // get the file name that we are going to pass to the player
+
+                            _client.SetGame(npTitle); //update the track that is currently playing
+
+                            _logs.logMessage("Info", "playlist.playAutoQueue", $"Track:'{npTitle}' was sent to the audio player.", "system");
+
+                            await _player.SendAudio(filePath, voiceChannel, _client); //send the file and functions over to the audio player to send to the server
+
+                            await removeTrackPlayed(filePath); //if a user submitted the song remove it from the disk
                         }
-                        else
+                        catch
                         {
-                            //if nothing is found go back to the listAutoQueue
-                            getAutoQueueTrackInfo();
+                            //putting this here to try to catch and keep the loop active.  Not sure if it will fix anything though.
                         }
 
-                        //pass off to download the file for cache
-                        string filePath = null;
-                        if(npFileName == null)
-                        {
-                            string[] file = await _downloader.download_audio(npUrl);
-                            filePath = Directory.GetCurrentDirectory() + "\\cache\\" + file[1];
-                            npFileName = file[1];
-
-                            //need to write the data to the listLibrary with the new fileName so we avoid downloading again 
-                            updateFileNameInTheLibrary();
-                        }
-                        else
-                        {
-                            filePath = Directory.GetCurrentDirectory() + "\\cache\\" + npFileName;
-                            if (!File.Exists(filePath)) //check to make sure the file is still on the disk.
-                            {
-                                //if we cant find the file for some reason, go download it again.
-                                string[] file = await _downloader.download_audio(npUrl);
-                                filePath = Directory.GetCurrentDirectory() + "\\cache\\" + file[1];
-                                npFileName = file[1];
-
-                                //need to write the data to the listLibrary with the new fileName so we avoid downloading again 
-                                updateFileNameInTheLibrary();
-                            }
-
-                        }                      
-                        
-                        _client.SetGame(npTitle);
-
-                        _logs.logMessage("Info", "playlist.playAutoQueue", $"Track:'{npTitle}' was sent to the audio player.", "system");
-
-                        await _player.SendAudio(filePath, voiceChannel, _client); //send the file and functions over to the audio player to send to the server
-
-                        //if a user submitted the song remove it from the disk
-                        removeTrackPlayed(filePath);
 
                     }
                 }
@@ -259,7 +235,7 @@ namespace discordMusicBot.src.audio
             }
         }
 
-        private void getAutoQueueTrackInfo()
+        private async Task<bool> getAutoQueueTrackInfo()
         {
             try
             {
@@ -275,19 +251,70 @@ namespace discordMusicBot.src.audio
                     npFileName = listAutoQueue[0].filename;
 
                     _logs.logMessage("Debug", "playlist.getAutoQueueTrackInfo", $"URL: {npUrl} was picked to be played.", "system");
+                    await Task.Delay(1);
+                    return true;
                 }
-
+                await Task.Delay(1);
+                return false;
             }
             catch (Exception error)
             {
                 _logs.logMessage("Error", "playlist.getAutoQueueTrackInfo", error.ToString(), "system");
+                await Task.Delay(1);
+                return false;
             }
         }
 
-        private void moveAutoQueueTrackPlayedToBackOfQueue()
+        private async Task<string> getFileNameToPlay()
         {
             try
             {
+                //pass off to download the file for cache
+                string filePath = null;
+                filePath = Directory.GetCurrentDirectory() + "\\cache\\";
+
+                if (npFileName == null)
+                {
+                    string[] file = await _downloader.download_audio(npUrl);
+                    filePath = filePath + file[1];
+                    npFileName = file[1];
+
+                    //need to write the data to the listLibrary with the new fileName so we avoid downloading again 
+                    updateFileNameInTheLibrary();
+
+                    return filePath;
+                }
+                else
+                {
+                    filePath = Directory.GetCurrentDirectory() + "\\cache\\" + npFileName;
+                    if (!File.Exists(filePath)) //check to make sure the file is still on the disk.
+                    {
+                        //if we cant find the file for some reason, go download it again.
+                        string[] file = await _downloader.download_audio(npUrl);
+                        filePath = Directory.GetCurrentDirectory() + "\\cache\\" + file[1];
+                        npFileName = file[1];
+
+                        //need to write the data to the listLibrary with the new fileName so we avoid downloading again 
+                        updateFileNameInTheLibrary();
+
+                        return filePath;
+                    }
+
+                    return filePath;
+                }
+            }
+            catch(Exception error)
+            {
+                _logs.logMessage("Error", "playlist.getFileNameToPlay", error.ToString(), "system");
+                return null;
+            }
+        }
+
+        private async void moveAutoQueueTrackPlayedToBackOfQueue()
+        {
+            try
+            {
+                await Task.Delay(1);
                 //get infomation for line 0 in memory
                 string title = listAutoQueue[0].title;
                 string url = listAutoQueue[0].url;
@@ -318,10 +345,12 @@ namespace discordMusicBot.src.audio
             }
         }
 
-        public void getTrackFromSubmittedQueue()
+        public async void getTrackFromSubmittedQueue()
         {
             try
             {
+                await Task.Delay(1);
+                
                 if(listSubmitted.Count >= 1)
                 {
                     npTitle = listSubmitted[0].title;
@@ -340,10 +369,12 @@ namespace discordMusicBot.src.audio
             }
         }
 
-        private void updateFileNameInTheLibrary()
+        private async void updateFileNameInTheLibrary()
         {
             try
             {
+                await Task.Delay(1);
+
                 // take the title stored in memory and find the record in
                 var Result = listLibrary.FindIndex(x => x.title == npTitle);
 
@@ -359,7 +390,6 @@ namespace discordMusicBot.src.audio
                 else
                 {
                     _logs.logMessage("Error", "playlist.updateFileNameInTheLibrary", $"Unable to update {npTitle}.  Unable to find the index number for the requested title.", "system");
-                    return;
                 }
                 
             }
@@ -374,7 +404,7 @@ namespace discordMusicBot.src.audio
         /// takes prority over library tracks
         /// </summary>
         /// <returns></returns>
-        public void pickTrackFromSubmitted()
+        private async Task<bool> pickTrackFromSubmitted()
         {
             try
             {
@@ -403,19 +433,23 @@ namespace discordMusicBot.src.audio
                     npSkip = listSubmitted[0].skips;
 
                     _logs.logMessage("Debug", "playlist.pickTrackFromSubmitted", $"Title: {npTitle} was picked from listSubmitted.", "System");
+                    await Task.Delay(1);
+                    return true;
                 }
                 else
                 {
                     //shouldnt hit this ever
                     _logs.logMessage("Debug", "playlist.pickTrackFromSubmitted", "Function was hit even though nothing was in queue", "System");
+                    await Task.Delay(1);
+                    return false;
                 }
             }
             catch(Exception error)
             {
                 _logs.logMessage("Error", "playlist.pickTrackFromSubmitted", error.ToString(), "System");
+                await Task.Delay(1);
+                return false;
             }     
-
-
         }
 
         /// <summary>
@@ -423,7 +457,7 @@ namespace discordMusicBot.src.audio
         /// </summary>
         /// <param name="url"></param>
         /// <returns></returns>
-        public bool removeTrackSubmitted(string url)
+        public async Task<bool> removeTrackSubmitted(string url)
         {
             try
             {
@@ -457,7 +491,7 @@ namespace discordMusicBot.src.audio
         ///     returns true if match found
         ///     reutnrs false if no match found
         /// </returns>
-        private bool checkBlacklist(string title, string url)
+        private async Task<bool> checkBlacklist(string title, string url)
         {
             //check to make sure it wasnt in the blacklist
             //var titleResult = listBlacklist.Find(x => x.title == title);
@@ -490,7 +524,7 @@ namespace discordMusicBot.src.audio
         ///     0 = Too many tracks submitted
         ///     1 = Okay to add another track to queue
         /// </returns>
-        public int checkNumberOfTracksByUserSubmitted(string user)
+        public async Task<int> checkNumberOfTracksByUserSubmitted(string user)
         {
             try
             {
@@ -516,7 +550,7 @@ namespace discordMusicBot.src.audio
         /// Figures out what to do with the track now that it has been played.
         /// </summary>
         /// <param name="filePath"></param>
-        private void removeTrackPlayed(string filePath)
+        private async Task<bool> removeTrackPlayed(string filePath)
         {
             try
             {
@@ -533,10 +567,13 @@ namespace discordMusicBot.src.audio
                 {
                     moveAutoQueueTrackPlayedToBackOfQueue();
                 }
+                await Task.Delay(1);
+                return true;
             }
             catch(Exception error)
             {
                 _logs.logMessage("Error", "playlist.removeTrackPlayed", error.ToString(), "system");
+                return false;
             }
         }
 
@@ -564,17 +601,8 @@ namespace discordMusicBot.src.audio
                 {
                     string[] title = await _downloader.returnYoutubeTitle(url);
 
-                    //check to see if the song requested was played already and in the listSubmitted
-                    //this is used to deal with a issue discovered when testing a file playback error.
-                    //b.0005
-                    int beenPlayedPosition = listBeenPlayed.FindIndex(x => x.url == url);
-                    if (beenPlayedPosition != -1)
-                    {
-                        listSubmitted.RemoveAt(beenPlayedPosition);
-                    }
-
                     //test to see if the url was already blacklisted
-                    bool blacklistFound = checkBlacklist(title[0], url);
+                    bool blacklistFound = await checkBlacklist(title[0], url);
 
                     //if it wasnt found add it to the queue
                     if (blacklistFound != true)
@@ -609,7 +637,7 @@ namespace discordMusicBot.src.audio
         /// <summary>
         /// Used to discard the current queue and pick new files.
         /// </summary>
-        public string cmd_shuffle()
+        public async Task<string> cmd_shuffle()
         {
             //Take the listSubmitted and shuffle it
 
@@ -662,17 +690,19 @@ namespace discordMusicBot.src.audio
         /// Responds with the infomation of the current playing track.
         /// </summary>
         /// <returns></returns>
-        public string[] cmd_np()
+        public async Task<string[]> cmd_np()
         {
             try
             {
                 string[] value = { npTitle, npUrl, npUser, npSource };
+                await Task.Delay(1);
                 return value;
 
             }
             catch(Exception error)
             {
                 _logs.logMessage("Error", "playlist.cmd_np", error.ToString(), "system");
+                await Task.Delay(1);
                 return null;
             }
 ;
@@ -681,7 +711,7 @@ namespace discordMusicBot.src.audio
         /// <summary>
         /// Used to remove the currently playing track from the library based off whats in the NowPlaying variables
         /// </summary>
-        public bool cmd_npRemove()
+        public async Task<bool> cmd_npRemove()
         {
             try
             {
@@ -694,13 +724,13 @@ namespace discordMusicBot.src.audio
                     {
                         listLibrary.RemoveAt(urlResult); //remove the value from the list
                         savePlaylist(); //save the change
-                        
-
+                        await Task.Delay(1);
                         return true;
                     }
                     else
                     {
                         _logs.logMessage("Debug", "playlist.npRemove", "User requested a value to be removed but the nowPlaying track was not found in the library.", "system");
+                        await Task.Delay(1);
                         return false; // value was not found
                     }
                 }
@@ -721,7 +751,7 @@ namespace discordMusicBot.src.audio
         /// <summary>
         /// Used to display the currently queued up tracks by the users
         /// </summary>
-        public string cmd_queue(int limit)
+        public async Task<string> cmd_queue(int limit)
         {
             try
             {
@@ -756,17 +786,19 @@ namespace discordMusicBot.src.audio
                         return result;
                     }
                 }
+                await Task.Delay(1);
                 return result;
             }
             catch(Exception error)
             {
                 _logs.logMessage("Error", "playlist.cmd_queue", error.ToString(), "system");
+                await Task.Delay(1);
                 return null;
             }
 
         }
 
-        public bool cmd_voteUp(string userID)
+        public async Task<bool> cmd_voteUp(string userID)
         {
             try
             {
@@ -820,17 +852,18 @@ namespace discordMusicBot.src.audio
                         savePlaylist();
                     }
                 }
-                
+                await Task.Delay(1);
                 return true;
             }
             catch(Exception error)
             {
                 _logs.logMessage("Error", "playlist.cmd_voteUp", error.ToString(), "system");
+                await Task.Delay(1);
                 return false;
             }
         }
 
-        public int cmd_voteDown(string userID)
+        public async Task<int> cmd_voteDown(string userID)
         {
             try
             {
@@ -888,20 +921,23 @@ namespace discordMusicBot.src.audio
                         //save the library
                         savePlaylist();
                     }
-                }                
+                }
+                await Task.Delay(1);
                 return 1;
             }
             catch(Exception error)
             {
-
+                await Task.Delay(1);
                 return 0;
             }
         }
 
-        public string cmd_searchLibrary(string mode, string query,string userName)
+        public async Task<string> cmd_searchLibrary(string mode, string query,string userName)
         {
             try
             {
+                await Task.Delay(1);
+
                 //read the start of the query and figure out what type of query they want
                 string modeLower = mode.ToLower();
                 string queryLower = query.ToLower(); //convert the query to lowercase to easy search
@@ -932,14 +968,12 @@ namespace discordMusicBot.src.audio
                     {
                         returnResult = returnResult + $"{i+1} Title: {tempList[i].title}\r";
                     }
-                    
                     return returnResult;
                 }
                 else if(tempList.Count == 0)
                 {
                     return $"Unable to find anything with the term {query}.";
                 }
-
                 return null;
 
             }

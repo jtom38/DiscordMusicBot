@@ -36,7 +36,6 @@ namespace discordMusicBot.src.audio
 
                 string fileAAC = audio[0].FullName.Remove(audio[0].FullName.Length - 4) + ".aac"; // should remove the .mp4 from the filename and adds aac to the filename
                                                                                                   //string fileAAC = fileName + ".aac"; // 
-
                 string title = audio[0].Title.Remove(audio[0].Title.Length - 10); // removes the " - youtube" part of the string
 
                 if (File.Exists(workingDir + fileAAC))
@@ -108,11 +107,15 @@ namespace discordMusicBot.src.audio
             {
                 var youtube = YouTube.Default;
                 var video = youtube.GetAllVideos(url);
-                var videoList = video.ToList();
+                //var videoList = video.ToList();
+                var videoList = video.FirstOrDefault();
+
+
+                string title = videoList.Title.Remove(videoList.Title.Length - 10); // removes the " - youtube" part of the string
 
                 string[] returnValue = {
-                    videoList[0].Title,
-                    videoList[0].FullName
+                    title,
+                    videoList.FullName
                 }; 
 
                 return returnValue;

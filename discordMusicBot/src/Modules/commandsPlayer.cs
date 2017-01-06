@@ -7,6 +7,7 @@ using System;
 using System.Threading.Tasks;
 using discordMusicBot.src.sys;
 using discordMusicBot.src.audio;
+using discordMusicBot.src.Web;
 using System.IO;
 using System.Collections.Generic;
 
@@ -39,13 +40,12 @@ namespace discordMusicBot.src.Modules
 
                 _client.GetService<CommandService>().CreateCommand("test")
                     .Alias("test")
-                    .Description("Placeholder for testing.")                
+                    .Description("Placeholder for testing.")      
+                    .Hide()        
                     .Do(async e =>
                     {
-
-
                         
-                        //await e.Channel.SendMessage("test");
+                        await e.Channel.SendMessage($"test");
                     });
             
                 _client.GetService<CommandService>().CreateCommand("play")
@@ -65,7 +65,7 @@ namespace discordMusicBot.src.Modules
                             }
 
                             //if return in 0 the user can add a track
-                            int UserSubmit = _playlist.checkNumberOfTracksByUserSubmitted(e.User.Name);
+                            int UserSubmit = await _playlist.checkNumberOfTracksByUserSubmitted(e.User.Name);
                             if(UserSubmit == 0)
                             {
                                 //add the url to the listSubmitted 
@@ -88,7 +88,7 @@ namespace discordMusicBot.src.Modules
                                     switch (e.GetArg("url").ToLower())
                                     {
                                         case "title":
-                                            string searchResult = _playlist.cmd_searchLibrary(e.GetArg("url"), e.GetArg("title"), e.User.Name);
+                                            string searchResult = await _playlist.cmd_searchLibrary(e.GetArg("url"), e.GetArg("title"), e.User.Name);
 
 
                                             if (searchResult == null)

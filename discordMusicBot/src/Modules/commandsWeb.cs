@@ -28,6 +28,7 @@ namespace discordMusicBot.src.Modules
         {
             _manager = manager;
             _client = manager.Client;
+            _config = configuration.LoadFile();
 
             manager.CreateCommands("", group =>
             {
@@ -97,9 +98,21 @@ namespace discordMusicBot.src.Modules
                     .Parameter("tag", ParameterType.Optional)
                     .MinPermissions((int)PermissionLevel.GroupUsers)
                     .Do(async e =>
-                    {
+                     {
                         try
                         {
+                            if(_config.smutTextChannel.ToString() != "0")
+                            {
+                                // we have a ID that was set
+                                // lets make sure that the Command was sent from the correct room.
+                                if(e.Channel.Id.ToString() != _config.smutTextChannel.ToString())
+                                {
+                                    //if it doesnt, return error and break out of the command
+                                    await e.Channel.SendMessage($"{e.User.Name},\r I am able to use this command in this room.  Please try again in the correct room.");
+                                    return;
+                                }
+                            }
+
                             string[] result = null;
 
                             switch (e.GetArg("site"))
@@ -111,8 +124,7 @@ namespace discordMusicBot.src.Modules
 
                                     if(result != null)
                                     {
-                                        //await e.Channel.SendMessage($"Result from {result[1]}\rURL: {result[0]}\rTags: {result[2]}");
-                                        await e.Channel.SendMessage($"Result from {result[1]}\rURL: {result[0]}");
+                                        await e.Channel.SendMessage($"{result[1]}: {result[0]}");
                                     }
                                     else
                                     {
@@ -127,12 +139,11 @@ namespace discordMusicBot.src.Modules
 
                                         if (result != null)
                                         {
-                                            await e.Channel.SendMessage($"Result from {result[1]}\rURL: {result[0]}\rTags: {result[2]}");
-                                            //await e.Channel.SendMessage($"Result from {result[1]}\rURL: {result[0]}");
+                                            await e.Channel.SendMessage($"{result[1]}: {result[0]}");
                                         }
                                         else
                                         {
-                                            await e.Channel.SendMessage($"Unable to find anything with the tag: {e.GetArg("tag")}");
+                                            await e.Channel.SendMessage($"Unable to find anything with the tag: {e.GetArg("tag")} on 'konachan.com'.");
                                         }
                                     }
                                     break;
@@ -144,12 +155,11 @@ namespace discordMusicBot.src.Modules
 
                                         if (result != null)
                                         {
-                                            await e.Channel.SendMessage($"Result from {result[1]}\rURL: {result[0]}\rTags: {result[2]}");
-                                            //await e.Channel.SendMessage($"Result from {result[1]}\rURL: {result[0]}");
+                                            await e.Channel.SendMessage($"{result[1]}: {result[0]}");
                                         }
                                         else
                                         {
-                                            await e.Channel.SendMessage($"Unable to find anything with the tag: {e.GetArg("tag")}");
+                                            await e.Channel.SendMessage($"Unable to find anything with the tag: {e.GetArg("tag")} on 'yande.re'.");
                                         }
                                     }
                                     break;
@@ -160,7 +170,7 @@ namespace discordMusicBot.src.Modules
 
                                     if( result != null)
                                     {
-                                        await e.Channel.SendMessage($"Result from {result[1]}\rURL: {result[0]}\rTags: {result[2]}");
+                                        await e.Channel.SendMessage($"{result[1]}: {result[0]}");
                                     }
                                     else
                                     {
@@ -168,43 +178,23 @@ namespace discordMusicBot.src.Modules
                                     }
                                     break;
                                 default:
-                                    Random rng = new Random();
-                                    int num = rng.Next(0, 2); //max is the number of sites
-
-                                    switch (num)
-                                    {
-                                        case 0:
-                                            result = _danbooru.webRequestStart("danbooru", e.GetArg("site"));
-                                            break;
-                                        case 1:
-                                            result = _danbooru.webRequestStart("konachan", e.GetArg("tag"));
-                                            break;
-                                        case 2:
-                                            result = _danbooru.webRequestStart("yandere", e.GetArg("tag"));
-                                            break;
-                                        case 3:
-                                            break;
-                                    }
+                                    result = _rule34.rule34QuerrySite(e.GetArg("site"));
                                     
                                     if (result != null)
                                     {
-                                        await e.Channel.SendMessage($"Result from {result[1]}\rURL: {result[0]}\rTags: {result[2]}");
-                                    }
+                                        await e.Channel.SendMessage($"{result[1]}: {result[0]}");
+                                     }
                                     else
                                     {
                                         await e.Channel.SendMessage($"Unable to find anything with the tag: {e.GetArg("site")}");
                                     }
                                     break;
                             }
-
-                            //await e.Channel.SendMessage("placeholder");
                         }
                         catch (Exception error)
                         {
-                            _logs.logMessage("Error", "commandsWeb.urbanDictionary", error.ToString(), e.User.Name);
+                            _logs.logMessage("Error", "commandsWeb.smut", error.ToString(), e.User.Name);
                         }
-
-
                     });
             });
         }

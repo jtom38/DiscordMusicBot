@@ -13,40 +13,51 @@ namespace discordMusicBot.src.sys
 
         private bool returnConfigLogLevel(string level)
         {
-            _config = configuration.LoadFile();
-
-            switch (_config.logLevel)
+            try
             {
-                case 0: // off
-                    break;
-                case 1: // debug catch everything
-                    if (level == "Debug" ||
-                        level == "Info" ||
-                        level == "Error")
-                        return true;
-                    break;
-                case 2: // info and errors
-                    if (level == "Info" ||
-                        level == "Error")
-                        return true;
-                    break;
-                case 3: // errors only
-                    if (level == "Error")
-                        return true;
-                    break;
+                _config = configuration.LoadFile();
+
+                switch (_config.logLevel)
+                {
+                    case 0: // off
+                        break;
+                    case 1: // debug catch everything
+                        if (level == "Debug" ||
+                            level == "Info" ||
+                            level == "Error")
+                            return true;
+                        break;
+                    case 2: // info and errors
+                        if (level == "Info" ||
+                            level == "Error")
+                            return true;
+                        break;
+                    case 3: // errors only
+                        if (level == "Error")
+                            return true;
+                        break;
+                }
+                return false;
             }
-            return false;
+            catch
+            {
+
+                return false;
+            }
+
         }
 
-        public void logMessage(string level, string source, string msg, string user)
+        public async void logMessage(string level, string source, string msg, string user)
         {
             try
             {
+                await Task.Delay(1);
                 //check what the user wants returned
                 bool configLevel = returnConfigLogLevel(level);
 
                 if(configLevel == true)
                     logFile(level, source, msg, user);
+
             }
             catch
             {
@@ -54,19 +65,17 @@ namespace discordMusicBot.src.sys
             }            
         }
 
-        private void logFile(string level, string source, string msg, string user)
+        private async void logFile(string level, string source, string msg, string user)
         {
             try
             {
+                await Task.Delay(1);
+
                 checkLogSize();
 
                 //if we dont find the logs.txt make it
                 if (!File.Exists("logs.txt"))
-                {
-                    
-
                     File.Create("logs.txt");
-                }
 
                 //write our event to the logs.txt file
                 using (StreamWriter txtLog = new StreamWriter("logs.txt", true))
@@ -79,7 +88,7 @@ namespace discordMusicBot.src.sys
             }
             catch(Exception error)
             {
-                Console.WriteLine($"Error in logs.logFile. Dump: {error}");
+                
             }
 
         }
@@ -94,11 +103,11 @@ namespace discordMusicBot.src.sys
 
                 if(length >= 1048576)
                 {
-                    //the file is now 5MB, archive it and make a fresh file.
+                    //the file is now 1MB, archive it and make a fresh file.
 
                     File.Move("logs.txt", $"logs_archive{DateTime.Now.ToString()}");
 
-                    logMessage("Info", "logs.checkLogSize", "The log file was 5mb, archiving it and making a fresh file.", "system");
+                    logMessage("Info", "logs.checkLogSize", "The log file was 1mb, archiving it and making a fresh file.", "system");
                 }
 
             }

@@ -26,41 +26,49 @@ namespace discordMusicBot.src.sys
         /// <returns></returns>
         public async Task<string> cmd_plAdd(string user, string url)
         {
-            //check to see if the url is found in listLibrary
-            // -1 means it was not found   
-            int urlResult = playlist.listLibrary.FindIndex(x => x.url == url);
-
-            if (urlResult == -1)
-            {                
-                //didnt find it already in the list
-                string[] title = await _downloader.returnYoutubeTitle(url);
-
-                //adds to the library
-                playlist.listLibrary.Add(new ListPlaylist
-                {
-                    title = title[0],
-                    user = user,
-                    url = url,
-                    filename = title[1]
-                });
-
-                _playlist.savePlaylist();
-
-                //add to the current playing queue.
-                playlist.listAutoQueue.Add(new ListPlaylist
-                {
-                    title = title[0],
-                    user = user,
-                    url = url,
-                    filename = title[1]
-                });
-                return title[0];
-            }
-            else
+            try
             {
-                //match found, dont add a dupe
-                return "dupe";
+                //check to see if the url is found in listLibrary
+                // -1 means it was not found   
+                int urlResult = playlist.listLibrary.FindIndex(x => x.url == url);
+
+                if (urlResult == -1)
+                {
+                    //didnt find it already in the list
+                    string[] title = await _downloader.returnYoutubeTitle(url);
+
+                    //adds to the library
+                    playlist.listLibrary.Add(new ListPlaylist
+                    {
+                        title = title[0],
+                        user = user,
+                        url = url,
+                        filename = title[1]
+                    });
+
+                    _playlist.savePlaylist();
+
+                    //add to the current playing queue.
+                    playlist.listAutoQueue.Add(new ListPlaylist
+                    {
+                        title = title[0],
+                        user = user,
+                        url = url,
+                        filename = title[1]
+                    });
+                    return title[0];
+                }
+                else
+                {
+                    //match found, dont add a dupe
+                    return "dupe";
+                }
+            }catch(Exception error)
+            {
+                _logs.logMessage("Error", "system.cmd_play", error.ToString(), "system");
+                return null;
             }
+
         }
 
         /// <summary>

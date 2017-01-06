@@ -42,7 +42,7 @@ namespace discordMusicBot.src.Modules
                     {
                         try
                         {
-                            string result = _playlist.cmd_shuffle();
+                            string result = await _playlist.cmd_shuffle();
 
                             if (result == "empty")
                             {
@@ -79,7 +79,7 @@ namespace discordMusicBot.src.Modules
                                 case "remove":
                                 case "r":
                                     //going to remove a track from the playlist with what is currently playing.
-                                    bool npRemoveResult = _playlist.cmd_npRemove();
+                                    bool npRemoveResult = await _playlist.cmd_npRemove();
                                     if (npRemoveResult == true)
                                     {
                                         _player.cmd_skip();
@@ -94,7 +94,7 @@ namespace discordMusicBot.src.Modules
                                     }
                                     break;
                                 default:
-                                    string[] result = _playlist.cmd_np();
+                                    string[] result = await _playlist.cmd_np();
                                     if (result[0] == null)
                                     {
                                         await e.Channel.SendMessage($"Sorry but a song is not currently playing.");
@@ -128,7 +128,7 @@ namespace discordMusicBot.src.Modules
                             if (e.GetArg("limit") == "")
                             {
                                 limit = 5;
-                                result = _playlist.cmd_queue(limit);
+                                result = await _playlist.cmd_queue(limit);
                                 await e.Channel.SendMessage($"```\r{result}\r```");
                             }
                             else
@@ -140,7 +140,7 @@ namespace discordMusicBot.src.Modules
                                     {
                                         limit = 20;
                                     }
-                                    result = _playlist.cmd_queue(limit);
+                                    result = await _playlist.cmd_queue(limit);
                                     await e.Channel.SendMessage($"```{result}\r```");
                                 }
                                 else
@@ -297,7 +297,7 @@ namespace discordMusicBot.src.Modules
                                 case "up":
                                 case "+":
                                 //parse the url and get the infomation then append to the blacklist.json
-                                    result = _playlist.cmd_voteUp(e.User.Id.ToString());
+                                    result = await _playlist.cmd_voteUp(e.User.Id.ToString());
 
                                     if(result == true)
                                     {
@@ -313,7 +313,7 @@ namespace discordMusicBot.src.Modules
                                 case "down":
                                 case "-":
                                     //parse the url and get the infomation then append to the blacklist.json
-                                    int intResult = _playlist.cmd_voteDown(e.User.Id.ToString());
+                                    int intResult = await _playlist.cmd_voteDown(e.User.Id.ToString());
 
                                     switch (intResult)
                                     {
