@@ -83,26 +83,28 @@ namespace discordMusicBot.src.Web
             public PixivUgoiraFrameData pixiv_ugoira_frame_data { get; set; }
         }
 
-        public string[] webRequestStart(string site, string tag)
+        public async Task<string[]> webRequestStart(string site, string tag)
         {
             try
             {
-                string returnURL = webURL(site, tag); //get the url that is going to be parsed
+                await Task.Delay(1);
 
-                string returnJson = webParse(returnURL); //hit the url and get the return infomation
+                string returnURL = await webURL(site, tag); //get the url that is going to be parsed
+
+                string returnJson = await webParse(returnURL); //hit the url and get the return infomation
 
                 string[] returnResult = null;
 
                 switch (site) //figure out what site we hit
                 {
                     case "danbooru":
-                        returnResult = webParseDan(returnJson);
+                        returnResult = await webParseDan(returnJson);
                         return returnResult;
                     case "konachan":
-                        returnResult = webParseKonachan(returnJson);
+                        returnResult = await webParseKonachan(returnJson);
                         return returnResult;
                     case "yandere":
-                        returnResult = webParseYandere(returnJson);
+                        returnResult = await webParseYandere(returnJson);
                         return returnResult;
                     case "rule34":
                         return returnResult;
@@ -110,16 +112,19 @@ namespace discordMusicBot.src.Web
                         return null;
                 }
             }
-            catch
+            catch(Exception error)
             {
+                _logs.logMessage("Error", "system.cmd_play", error.ToString(), "system");
                 return null;
             }
         }
 
-        private string webURL(string site, string tag)
+        private async Task<string> webURL(string site, string tag)
         {
             try
             {
+                await Task.Delay(1);
+
                 string url = null;
                 switch (site)
                 {
@@ -154,10 +159,12 @@ namespace discordMusicBot.src.Web
             }
         }
 
-        private string webParse(string url)
+        private async Task<string> webParse(string url)
         {
             try
             {
+                await Task.Delay(1);
+
                 HttpWebRequest httpWebRequest = (HttpWebRequest)WebRequest.Create(url);
 
                 if (url.Contains("konachan.com"))
@@ -193,10 +200,12 @@ namespace discordMusicBot.src.Web
             }
         }
         
-        private string[] webParseDan(string rawJson)
+        private async Task<string[]> webParseDan(string rawJson)
         {
             try
-            {       
+            {
+                await Task.Delay(1);
+
                 var json = JsonConvert.DeserializeObject<List<ListDanbooruRoot>>(rawJson);
 
                 if (json.Count >= 1)
@@ -270,10 +279,12 @@ namespace discordMusicBot.src.Web
             public List<object> frames { get; set; }
         }
 
-        private string[] webParseKonachan(string rawJson)
+        private async Task<string[]> webParseKonachan(string rawJson)
         {
             try
             {
+                await Task.Delay(1);
+
                 var json = JsonConvert.DeserializeObject<List<ListKonachan>>(rawJson);
                 
                 if (json.Count >= 1)
@@ -348,10 +359,11 @@ namespace discordMusicBot.src.Web
             public int last_commented_at { get; set; }
         }
 
-        private string[] webParseYandere(string rawJson)
+        private async Task<string[]> webParseYandere(string rawJson)
         {
             try
             {
+                await Task.Delay(1);
                 var json = JsonConvert.DeserializeObject<List<ListYandere>>(rawJson);
 
                 if (json.Count >= 1)

@@ -23,6 +23,7 @@ namespace discordMusicBot.src.audio
 
             try
             {
+                await Task.Delay(1);
                 var youtube = YouTube.Default;
                 var video = youtube.GetAllVideos(url);
 
@@ -72,10 +73,12 @@ namespace discordMusicBot.src.audio
 
         }
 
-        public string ConvertAACToWAV(string songTitle, string cacheDir)
+        public async Task<string> ConvertAACToWAV(string songTitle, string cacheDir)
         {
             try
             {
+                await Task.Delay(1);
+
                 // im going to add this in an atempt to have easier playback though naudio
                 // https://stackoverflow.com/questions/13486747/convert-aac-to-wav
 
@@ -105,6 +108,8 @@ namespace discordMusicBot.src.audio
         {
             try
             {
+                await Task.Delay(1);
+
                 var youtube = YouTube.Default;
                 var video = youtube.GetAllVideos(url);
                 //var videoList = video.ToList();

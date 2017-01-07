@@ -11,10 +11,12 @@ namespace discordMusicBot.src.sys
     {
         public configuration _config;
 
-        private bool returnConfigLogLevel(string level)
+        private async Task<bool> returnConfigLogLevel(string level)
         {
             try
             {
+                await Task.Delay(1);
+
                 _config = configuration.LoadFile();
 
                 switch (_config.logLevel)
@@ -53,25 +55,25 @@ namespace discordMusicBot.src.sys
             {
                 await Task.Delay(1);
                 //check what the user wants returned
-                bool configLevel = returnConfigLogLevel(level);
+                bool configLevel = await returnConfigLogLevel(level);
 
                 if(configLevel == true)
-                    logFile(level, source, msg, user);
+                    await logFile(level, source, msg, user);
 
             }
-            catch
+            catch(Exception error)
             {
-
+                Console.WriteLine(error.ToString());
             }            
         }
 
-        private async void logFile(string level, string source, string msg, string user)
+        private async Task<bool> logFile(string level, string source, string msg, string user)
         {
             try
             {
                 await Task.Delay(1);
 
-                checkLogSize();
+                await checkLogSize();
 
                 //if we dont find the logs.txt make it
                 if (!File.Exists("logs.txt"))
@@ -85,18 +87,23 @@ namespace discordMusicBot.src.sys
 
                 //also write to the console so the admin can see it and I can when debugging.
                 Console.WriteLine($"{DateTime.Now} - {level} - {source} - {user} - {msg}");
+
+                return true;
             }
             catch(Exception error)
             {
-                
+                Console.WriteLine(error);
+                return false;
             }
 
         }
 
-        private void checkLogSize()
+        private async Task<bool> checkLogSize()
         {
             try
             {
+                await Task.Delay(1);
+
                 string filePath = Directory.GetCurrentDirectory() + "\\logs.txt";
 
                 long length = new System.IO.FileInfo(filePath).Length;
@@ -110,10 +117,13 @@ namespace discordMusicBot.src.sys
                     logMessage("Info", "logs.checkLogSize", "The log file was 1mb, archiving it and making a fresh file.", "system");
                 }
 
-            }
-            catch
-            {
+                return true;
 
+            }
+            catch(Exception error)
+            {
+                Console.WriteLine(error);
+                return false;
             }
         }
     }

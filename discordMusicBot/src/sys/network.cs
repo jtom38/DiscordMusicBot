@@ -11,10 +11,12 @@ namespace discordMusicBot.src.sys
     {
         logs _logs = new logs();
 
-        public long cmd_ping(string hostName)
+        public async Task<long> cmd_ping(string hostName)
         {
             try
             {
+                await Task.Delay(1);
+
                 Ping pingRequest = new Ping();
 
                 var t = pingRequest.Send(hostName);

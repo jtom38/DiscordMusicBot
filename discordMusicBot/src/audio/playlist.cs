@@ -66,9 +66,9 @@ namespace discordMusicBot.src.audio
 
                 File.WriteAllText(playlistFile, json);
             }
-            catch (Exception e)
+            catch (Exception error)
             {
-                Console.WriteLine("Error saving playlist.json.  Error: " + e);
+                _logs.logMessage("Error", "playlist.savePlaylist", error.ToString(), "system");
             }
         }
 
@@ -87,9 +87,9 @@ namespace discordMusicBot.src.audio
                     savePlaylist();
                 }
             }
-            catch (Exception e)
+            catch (Exception error)
             {
-                Console.WriteLine("Error reading playlist.json.  Error: " + e);
+                _logs.logMessage("Error", "playlist.loadPlaylist", error.ToString(), "system");
             }
         }
 
@@ -105,9 +105,9 @@ namespace discordMusicBot.src.audio
 
                 File.WriteAllText(blacklistFile, json);
             }
-            catch(Exception e)
+            catch(Exception error)
             {
-                Console.WriteLine("Error saving blacklist.json. Error: " + e);
+                _logs.logMessage("Error", "playlist.saveBlacklist", error.ToString(), "system");
             }
 
         }
@@ -127,9 +127,9 @@ namespace discordMusicBot.src.audio
                     saveBlacklist();
                 }
             }
-            catch(Exception e)
+            catch(Exception error)
             {
-                Console.WriteLine("Error reading blacklist.json.  Error: " + e);
+                _logs.logMessage("Error", "playlist.loadBlacklist", error.ToString(), "system");
             }
         }
 
@@ -190,41 +190,34 @@ namespace discordMusicBot.src.audio
                     //given the loop is always active lets make another loop that we can pause when needed
                     while (playlistActive == true)
                     {
-                        try
-                        {
-                            //reset the nowplaying vars given a new song is being picked
-                            npUrl = null;
-                            npTitle = null;
-                            npUser = null;
-                            npSource = null;
-                            npLike = null;
-                            npSkip = null;
-                            npFileName = null;
-                            npDeleteAfterPlaying = false;
 
-                            string filePath = null;
+                        //reset the nowplaying vars given a new song is being picked
+                        npUrl = null;
+                        npTitle = null;
+                        npUser = null;
+                        npSource = null;
+                        npLike = null;
+                        npSkip = null;
+                        npFileName = null;
+                        npDeleteAfterPlaying = false;
 
-                            //check to see if someone has something queued up in submmitted
-                            if (listSubmitted.Count >= 1)
-                                await pickTrackFromSubmitted();
-                            else if (listSubmitted.Count == 0) //if nothing is found go back to the listAutoQueue
-                                await getAutoQueueTrackInfo();
+                        string filePath = null;
 
-                            filePath = await getFileNameToPlay(); // get the file name that we are going to pass to the player
+                        //check to see if someone has something queued up in submmitted
+                        if (listSubmitted.Count >= 1)
+                            await pickTrackFromSubmitted();
+                        else if (listSubmitted.Count == 0) //if nothing is found go back to the listAutoQueue
+                            await getAutoQueueTrackInfo();
 
-                            _client.SetGame(npTitle); //update the track that is currently playing
+                        filePath = await getFileNameToPlay(); // get the file name that we are going to pass to the player
 
-                            _logs.logMessage("Info", "playlist.playAutoQueue", $"Track:'{npTitle}' was sent to the audio player.", "system");
+                        _client.SetGame(npTitle); //update the track that is currently playing
 
-                            await _player.SendAudio(filePath, voiceChannel, _client); //send the file and functions over to the audio player to send to the server
+                        _logs.logMessage("Info", "playlist.playAutoQueue", $"Track:'{npTitle}' was sent to the audio player.", "system");
 
-                            await removeTrackPlayed(filePath); //if a user submitted the song remove it from the disk
-                        }
-                        catch
-                        {
-                            //putting this here to try to catch and keep the loop active.  Not sure if it will fix anything though.
-                        }
+                        await _player.SendAudio(filePath, voiceChannel, _client); //send the file and functions over to the audio player to send to the server
 
+                        await removeTrackPlayed(filePath); //if a user submitted the song remove it from the disk
 
                     }
                 }
@@ -310,7 +303,7 @@ namespace discordMusicBot.src.audio
             }
         }
 
-        private async void moveAutoQueueTrackPlayedToBackOfQueue()
+        private async Task<bool> moveAutoQueueTrackPlayedToBackOfQueue()
         {
             try
             {
@@ -338,10 +331,12 @@ namespace discordMusicBot.src.audio
                 });
 
                 _logs.logMessage("Debug", "playlist.moveAutoQueueTrackPlayedToBackOfQueue", $"URL: {url} was moved to the back of the queue.", "system");
+                return true;
             }
             catch (Exception error)
             {
                 _logs.logMessage("Error", "playlist.moveAutoQueueTrackPlayedToBackOfQueue", error.ToString(), "system");
+                return false;
             }
         }
 
@@ -474,9 +469,10 @@ namespace discordMusicBot.src.audio
                     return false;
                 }
             }
-            catch
+            catch(Exception error)
             {
                 // something broke removing a track
+                _logs.logMessage("Error", "playlist.removeTrackSubmitted", error.ToString(), "system");
                 return false;
             }
             
@@ -508,8 +504,9 @@ namespace discordMusicBot.src.audio
 
                 return false;
             }
-            catch
+            catch(Exception error)
             {
+                _logs.logMessage("Error", "playlist.checkBlacklist", error.ToString(), "system");
                 return false;
             }
 
@@ -542,6 +539,7 @@ namespace discordMusicBot.src.audio
             }
             catch (Exception error)
             {
+                _logs.logMessage("Error", "playlist.checkNumberOfTracksByUserSubmitted", error.ToString(), "system");
                 return -1;
             }
         } 
@@ -565,7 +563,7 @@ namespace discordMusicBot.src.audio
                 }
                 else if(npSource == "Library")
                 {
-                    moveAutoQueueTrackPlayedToBackOfQueue();
+                    await moveAutoQueueTrackPlayedToBackOfQueue();
                 }
                 await Task.Delay(1);
                 return true;
@@ -626,10 +624,10 @@ namespace discordMusicBot.src.audio
                 }
 
             }
-            catch(Exception e)
+            catch(Exception error)
             {
                 //got a error
-                Console.WriteLine($"Error with playlist.cmd_play.  Dump: {e}");
+                _logs.logMessage("Error", "playlist.cmd_play", error.ToString(), "system");
                 return null;
             }           
         }
@@ -678,10 +676,10 @@ namespace discordMusicBot.src.audio
 
                 return "true";
             }
-            catch(Exception e)
+            catch(Exception error)
             {
                 //something broke
-                Console.WriteLine("playlist.cmd_shuffle Error: " + e);
+                _logs.logMessage("Error", "playlist.cmd_shuffle", error.ToString(), "system");
                 return "error";
             }
         }
@@ -886,7 +884,7 @@ namespace discordMusicBot.src.audio
 
                     if(skips.Count() == 2)
                     {
-                        removeTrackSubmitted(npUrl);
+                        await removeTrackSubmitted(npUrl);
                         return -1;
                     }
 
@@ -927,6 +925,7 @@ namespace discordMusicBot.src.audio
             }
             catch(Exception error)
             {
+                _logs.logMessage("Error", "playlist.cmd_downVote", error.ToString(), "system");
                 await Task.Delay(1);
                 return 0;
             }
@@ -979,7 +978,7 @@ namespace discordMusicBot.src.audio
             }
             catch(Exception error)
             {
-
+                _logs.logMessage("Error", "playlist.cmd_searchLibrary", error.ToString(), "system");
                 return null;
             }
         }

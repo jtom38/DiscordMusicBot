@@ -77,10 +77,12 @@ namespace discordMusicBot.src.sys
         /// </summary>
         /// <param name="url"></param>
         /// <returns></returns>
-        public string cmd_plRemove(string url)
+        public async Task<string> cmd_plRemove(string url)
         {
             try
             {
+                await Task.Delay(1);
+
                 int urlResult = playlist.listLibrary.FindIndex(x => x.url == url);
                 if (urlResult >= 0)
                 {
@@ -96,10 +98,10 @@ namespace discordMusicBot.src.sys
                     return "noMatch";
                 }
             }
-            catch (Exception e)
+            catch (Exception error)
             {
                 //something went wrong or we didnt find a value in the list.. chances are no value found.
-                Console.WriteLine("Error: cmd_plRemove genereted a error.\rError message\r" + e);
+                _logs.logMessage("Error", "system.cmd_plRemove", error.ToString(), "system");
                 return "error";
             }
 
@@ -113,27 +115,35 @@ namespace discordMusicBot.src.sys
         /// <returns></returns>
         public async Task<string> cmd_blAdd(string user, string url)
         {
-
-            int urlResult = playlist.listBlacklist.FindIndex(x => x.url == url);
-
-            if (urlResult == -1)
+            try
             {
-                string[] title = await _downloader.returnYoutubeTitle(url);
+                int urlResult = playlist.listBlacklist.FindIndex(x => x.url == url);
 
-                playlist.listBlacklist.Add(new ListPlaylist
+                if (urlResult == -1)
                 {
-                    title = title[0],
-                    user = user,
-                    url = url
-                });
+                    string[] title = await _downloader.returnYoutubeTitle(url);
 
-                _playlist.saveBlacklist();
-                return title[0];
+                    playlist.listBlacklist.Add(new ListPlaylist
+                    {
+                        title = title[0],
+                        user = user,
+                        url = url
+                    });
+
+                    _playlist.saveBlacklist();
+                    return title[0];
+                }
+                else
+                {
+                    return "dupe";
+                }
             }
-            else
+            catch(Exception error)
             {
-                return "dupe";
+                _logs.logMessage("Error", "system.cmd_blAdd", error.ToString(), "system");
+                return "error";
             }
+
         }
 
         /// <summary>
@@ -141,10 +151,12 @@ namespace discordMusicBot.src.sys
         /// </summary>
         /// <param name="url"></param>
         /// <returns></returns>
-        public string cmd_blRemove(string url)
+        public async Task<string> cmd_blRemove(string url)
         {
             try
             {
+                await Task.Delay(1);
+
                 int urlResult = playlist.listBlacklist.FindIndex(x => x.url == url);
                 if (urlResult >= 0)
                 {
@@ -160,10 +172,10 @@ namespace discordMusicBot.src.sys
                     return "noMatch";
                 }
             }
-            catch (Exception e)
+            catch (Exception error)
             {
                 //something went wrong or we didnt find a value in the list.. chances are no value found.
-                Console.WriteLine("Error: cmd_blRemove genereted a error.\rError message\r" + e);
+                _logs.logMessage("Error", "system.cmd_blRemove", error.ToString(), "system");
                 return "error";
             }
         }
@@ -174,10 +186,12 @@ namespace discordMusicBot.src.sys
         /// returns false if it failed
         /// </summary>
         /// <returns></returns>
-        public bool cmd_plExport()
+        public async Task<bool> cmd_plExport()
         {
             try
             {
+                await Task.Delay(1);
+
                 string loc = Directory.GetCurrentDirectory() + "\\configs\\playlist_export.json";
                 string json = JsonConvert.SerializeObject(playlist.listLibrary, Formatting.Indented);
 
@@ -202,10 +216,12 @@ namespace discordMusicBot.src.sys
         /// returns false if failed.
         /// </summary>
         /// <returns></returns>
-        public bool cmd_blExport()
+        public async Task<bool> cmd_blExport()
         {
             try
             {
+                await Task.Delay(1);
+
                 string loc = Directory.GetCurrentDirectory() + "\\configs\\blacklist_export.json";
                 string json = JsonConvert.SerializeObject(playlist.listBlacklist, Formatting.Indented);
 

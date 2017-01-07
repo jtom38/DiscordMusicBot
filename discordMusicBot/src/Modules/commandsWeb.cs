@@ -46,11 +46,11 @@ namespace discordMusicBot.src.Modules
                             if(e.GetArg("tag") == "")
                             {
                                 //request a random tag from what we have so far in the urban.json file.. to be built
-                                result = _urban.cmd_urbanFlow(null);
+                                result = await _urban.cmd_urbanFlow(null);
                             }
                             else
                             {
-                                result = _urban.cmd_urbanFlow(e.GetArg("tag"));
+                                result = await _urban.cmd_urbanFlow(e.GetArg("tag"));
                             }
 
 
@@ -120,7 +120,7 @@ namespace discordMusicBot.src.Modules
                                 case "dabooru":
                                 case "dan":
                                 case "d":
-                                    result = _danbooru.webRequestStart("danbooru", e.GetArg("tag"));
+                                    result = await _danbooru.webRequestStart("danbooru", e.GetArg("tag"));
 
                                     if(result != null)
                                     {
@@ -135,7 +135,7 @@ namespace discordMusicBot.src.Modules
                                 case "kona":
                                 case "k":
                                     {
-                                        result = _danbooru.webRequestStart("konachan", e.GetArg("tag"));
+                                        result = await _danbooru.webRequestStart("konachan", e.GetArg("tag"));
 
                                         if (result != null)
                                         {
@@ -151,7 +151,7 @@ namespace discordMusicBot.src.Modules
                                 case "yan":
                                 case "y":
                                     {
-                                        result = _danbooru.webRequestStart("yandere", e.GetArg("tag"));
+                                        result = await _danbooru.webRequestStart("yandere", e.GetArg("tag"));
 
                                         if (result != null)
                                         {
@@ -166,7 +166,7 @@ namespace discordMusicBot.src.Modules
                                 case "rule34":
                                 case "r34":
                                 case "r":
-                                    result = _rule34.rule34QuerrySite(e.GetArg("tag"));
+                                    result = await _rule34.rule34QuerrySite(e.GetArg("tag"));
 
                                     if( result != null)
                                     {
@@ -178,7 +178,7 @@ namespace discordMusicBot.src.Modules
                                     }
                                     break;
                                 default:
-                                    result = _rule34.rule34QuerrySite(e.GetArg("site"));
+                                    result = await _rule34.rule34QuerrySite(e.GetArg("site"));
                                     
                                     if (result != null)
                                     {

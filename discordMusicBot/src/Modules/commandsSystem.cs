@@ -272,7 +272,7 @@ namespace discordMusicBot.src.Modules
                         {
                             var t = e.Server.Region;
 
-                            long ping = _network.cmd_ping(t.Hostname);
+                            long ping = await _network.cmd_ping(t.Hostname);
                             if (ping != -1)
                             {
                                 await e.Channel.SendMessage($"{e.User.Name},\rDatacenter: {t.Name}\rPing: {ping}ms");
@@ -304,7 +304,7 @@ namespace discordMusicBot.src.Modules
                             {
                                 case "discord":
                                 case "d":
-                                    string[] status = _discordStatus.getCurrentStatus();
+                                    string[] status = await _discordStatus.getCurrentStatus();
 
                                     
                                     
@@ -316,7 +316,7 @@ namespace discordMusicBot.src.Modules
                                 case "ping":
                                 case "p":
                                     var t = e.Server.Region;
-                                    long ping = _network.cmd_ping(t.Hostname);
+                                    long ping = await _network.cmd_ping(t.Hostname);
 
                                     await e.Channel.SendMessage($"Data Center: {t.Name}\r\tPing: {ping}");
                                     break;
@@ -437,7 +437,7 @@ namespace discordMusicBot.src.Modules
                                         {
                                             case "playlist":
                                             case "pl":
-                                                bool plExport = _system.cmd_plExport();
+                                                bool plExport = await _system.cmd_plExport();
 
                                                 if (plExport == true)
                                                 {
@@ -455,7 +455,7 @@ namespace discordMusicBot.src.Modules
                                                 break;
                                             case "blacklist":
                                             case "bl":
-                                                bool blExport = _system.cmd_blExport();
+                                                bool blExport = await _system.cmd_blExport();
 
                                                 if (blExport == true)
                                                 {

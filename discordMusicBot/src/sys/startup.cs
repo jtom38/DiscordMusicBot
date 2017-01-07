@@ -43,7 +43,7 @@ namespace discordMusicBot.src.sys
             }
             catch (Exception error)
             {
-                _logs.logMessage("Error", "program.makeCacheFolder", error.ToString(), "system");
+                _logs.logMessage("Error", "startup.makeCacheFolder", error.ToString(), "system");
             }
         }
 
@@ -60,7 +60,7 @@ namespace discordMusicBot.src.sys
             }
             catch (Exception error)
             {
-                _logs.logMessage("Error", "program.makeCacheUploadedFolder", error.ToString(), "system");
+                _logs.logMessage("Error", "startup.makeCacheUploadedFolder", error.ToString(), "system");
             }
         }
 
@@ -77,20 +77,28 @@ namespace discordMusicBot.src.sys
             }
             catch (Exception error)
             {
-                _logs.logMessage("Error", "program.makeCacheCloudFolder", error.ToString(), "system");
+                _logs.logMessage("Error", "startup.makeCacheCloudFolder", error.ToString(), "system");
             }
         }
 
         private void makeConfigFolder()
         {
-            if (Directory.Exists("configs"))
+            try
             {
-                return;
+                if (Directory.Exists("configs"))
+                {
+                    return;
+                }
+                else
+                {
+                    Directory.CreateDirectory("configs");
+                }
             }
-            else
+            catch(Exception error)
             {
-                Directory.CreateDirectory("configs");
+                _logs.logMessage("Error", "startup.makeCacheCloudFolder", error.ToString(), "system");
             }
+
         }
 
         private void checkConfigFile()

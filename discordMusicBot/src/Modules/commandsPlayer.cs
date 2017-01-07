@@ -132,7 +132,7 @@ namespace discordMusicBot.src.Modules
                     {
                         try
                         {
-                            bool result = _player.cmd_skip();
+                            bool result = await _player.cmd_skip();
 
                             if (result == true)
                             {
@@ -158,7 +158,7 @@ namespace discordMusicBot.src.Modules
                     {
                         try
                         {
-                            bool result = _player.cmd_stop();
+                            bool result = await _player.cmd_stop();
 
                             if (result == true)
                             {

@@ -8,11 +8,14 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
+using discordMusicBot.src.sys;
 
 namespace discordMusicBot.src.Web
 {
     class rule34
     {
+        logs _logs = new logs();
+
         public class ListRule34
         {
             public int id { get; set; }
@@ -33,10 +36,12 @@ namespace discordMusicBot.src.Web
             public string author { get; set; }
         }
 
-        public string[] rule34QuerrySite(string tag)
+        public async Task<string[]> rule34QuerrySite(string tag)
         {
             try
             {
+                await Task.Delay(1);
+
                 string url = null;
                 
                 if (tag != "")
@@ -110,7 +115,7 @@ namespace discordMusicBot.src.Web
             }
             catch(Exception error)
             {
-                Console.WriteLine(error);
+                _logs.logMessage("Error", "rule34.rule34QuerrySite", error.ToString(), "system");
                 return null;
             }
 

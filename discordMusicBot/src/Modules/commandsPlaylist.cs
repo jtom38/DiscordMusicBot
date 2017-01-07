@@ -192,7 +192,7 @@ namespace discordMusicBot.src.Modules
                                     break;
                                 case "remove":
                                 case "r":
-                                    string url = _system.cmd_plRemove(e.GetArg("url"));
+                                    string url = await _system.cmd_plRemove(e.GetArg("url"));
 
                                     if (url == "match")
                                     {
@@ -255,7 +255,7 @@ namespace discordMusicBot.src.Modules
                                 case "remove":
                                 case "r":
                                     //parse the url and get the infomation then append to the blacklist.json
-                                    string url = _system.cmd_blRemove(e.GetArg("url"));
+                                    string url = await _system.cmd_blRemove(e.GetArg("url"));
 
                                     if (url == "match")
                                     {

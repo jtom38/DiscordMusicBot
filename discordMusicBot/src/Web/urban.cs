@@ -45,10 +45,12 @@ namespace discordMusicBot.src.Web
 
         public static List<listUrbanDictionaryTags> urbanTags = new List<listUrbanDictionaryTags>();
 
-        public void saveUrbanTags()
+        public async Task<bool> saveUrbanTags()
         {
             try
             {
+                await Task.Delay(1);
+
                 string loc = Directory.GetCurrentDirectory() + "\\configs\\urbanTags.json";
                 string json = JsonConvert.SerializeObject(urbanTags);
 
@@ -56,14 +58,16 @@ namespace discordMusicBot.src.Web
                     File.Create(loc).Close();
 
                 File.WriteAllText(loc, json);
+                return true;
             }
             catch (Exception error)
             {
                 _logs.logMessage("Error", "urban.saveUrbanTags", error.ToString(), "system");
+                return false;
             }
         }
 
-        public void loadUrbanTags()
+        public async Task<bool> loadUrbanTags()
         {
             try
             {
@@ -75,16 +79,19 @@ namespace discordMusicBot.src.Web
                 }
                 else
                 {
-                    saveUrbanTags();
+                    await saveUrbanTags();
                 }
+
+                return true;
             }
             catch (Exception error)
             {
                 _logs.logMessage("Error", "urban.loadUrbanTags", error.ToString(), "system");
+                return false;
             }
         }
 
-        public string[] cmd_urbanFlow(string term)
+        public async Task<string[]> cmd_urbanFlow(string term)
         {
             try
             {
@@ -93,15 +100,15 @@ namespace discordMusicBot.src.Web
                 if(term == null)
                 {
                     // we are going to pick a random term
-                    string returnedTerm = pickRandomDefinition();
+                    string returnedTerm = await pickRandomDefinition();
 
-                    returnedDefinition = cmd_pickTermDefinition(returnedTerm);
+                    returnedDefinition = await cmd_pickTermDefinition(returnedTerm);
 
                     return returnedDefinition;
                 }
                 else
                 {
-                    returnedDefinition = cmd_pickTermDefinition(term);
+                    returnedDefinition = await cmd_pickTermDefinition(term);
 
                     return returnedDefinition;
                 }
@@ -113,10 +120,12 @@ namespace discordMusicBot.src.Web
             }
         }
 
-        public string[] cmd_pickTermDefinition(string term)
+        public async Task<string[]> cmd_pickTermDefinition(string term)
         {
             try
             {
+                await Task.Delay(1);
+
                 string ParseValue = $"http://api.urbandictionary.com/v0/define?term={term}";
                 //string ParseValue = $"http://www.urbandictionary.com/random.php";
 
@@ -159,7 +168,7 @@ namespace discordMusicBot.src.Web
 
                             string[] result = { t.list[counter].definition, t.list[counter].example, term, tags };
 
-                            urbanUpdateTags(t.tags, term);
+                            await urbanUpdateTags(t.tags, term);
 
                             return result;
                         }
@@ -176,14 +185,14 @@ namespace discordMusicBot.src.Web
 
         }
 
-        private void urbanUpdateTags(string[] tags, string term)
+        private async Task<bool> urbanUpdateTags(string[] tags, string term)
         {
             try
             {
                 //load the file into memory 
                 if(urbanTags.Count == 0)
                 {
-                    loadUrbanTags();
+                    await loadUrbanTags();
                 }
 
                 List<string> t = new List<string>();
@@ -220,17 +229,20 @@ namespace discordMusicBot.src.Web
                 }
 
                 //all the new items where added to the list now save
-                saveUrbanTags();
+                await saveUrbanTags();
+
+                return true;
                 
             }
             catch(Exception error)
             {
                 _logs.logMessage("Error", "urban.cmd_urbanDic", error.ToString(), "system");
+                return false;
             }
             
         }
 
-        private string pickRandomDefinition()
+        private async Task<string> pickRandomDefinition()
         {
             try
             {
@@ -240,12 +252,12 @@ namespace discordMusicBot.src.Web
                 //check to see if anything is in urbanTags
                 if (urbanTags.Count == 0)
                 {
-                    loadUrbanTags();
+                    await loadUrbanTags();
 
                     //if we STILL have 0 throw out 'cheesy ragu'
                     if (urbanTags.Count == 0)
                     {
-                        cmd_pickTermDefinition("cheesy ragu");
+                        await cmd_pickTermDefinition("cheesy ragu");
                     }
 
                     //get a random term from the urbanTags and pass it

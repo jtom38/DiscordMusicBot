@@ -93,7 +93,8 @@ namespace discordMusicBot.src.audio
             }
             catch (Exception error)
             {
-                Console.WriteLine("Something went wrong. :(");
+                _logs.logMessage("Error", "player.sendAudio", error.ToString(), "system");
+                //Console.WriteLine("Something went wrong. :(");
             }
         }
 
@@ -133,10 +134,11 @@ namespace discordMusicBot.src.audio
         ///     return True if it worked
         ///     return false if it failed
         /// </returns>
-        public bool cmd_skip()
+        public async Task<bool> cmd_skip()
         {
             try
             {
+                await Task.Delay(1);
                 if (playingSong == true)
                 {
                     playingSong = false;
@@ -161,10 +163,11 @@ namespace discordMusicBot.src.audio
         ///     True = Value was changed to stop the loop
         ///     False = The loop wasnt going already
         /// </returns>
-        public bool cmd_stop()
+        public async Task<bool> cmd_stop()
         {
             try
             {
+                await Task.Delay(1);
                 if (playlist.playlistActive == true)
                 {
 
@@ -197,11 +200,12 @@ namespace discordMusicBot.src.audio
         ///     True = turned back on
         ///     False = Either it was on already or error generated
         /// </returns>
-        public bool cmd_resume()
+        public async Task<bool> cmd_resume()
         {
             //the autoplayer is turned off
             try
             {
+                await Task.Delay(1);
                 if (playlist.playlistActive == false)
                 {
                     //turn it back on.

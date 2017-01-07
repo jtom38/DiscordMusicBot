@@ -85,13 +85,13 @@ namespace discordMusicBot.src.Web
 
         logs _logs = new logs();
 
-        public string[] getCurrentStatus()
+        public async Task<string[]> getCurrentStatus()
         {
             try
             {
 
-                string rawJSON = requestJsonData();
-                string[] parsedJSON = parseJsonData(rawJSON);
+                string rawJSON = await requestJsonData();
+                string[] parsedJSON = await parseJsonData(rawJSON);
 
                 return parsedJSON;
                 
@@ -103,10 +103,12 @@ namespace discordMusicBot.src.Web
             }
         }
 
-        private string requestJsonData()
+        private async Task<string> requestJsonData()
         {
             try
             {
+                await Task.Delay(1);
+
                 string url = "https://srhpyqt94yxb.statuspage.io/api/v2/summary.json";
 
                 HttpWebRequest httpWebRequest = (HttpWebRequest)WebRequest.Create(url);
@@ -135,10 +137,12 @@ namespace discordMusicBot.src.Web
             }
         }
 
-        private string[] parseJsonData(string rawJson)
+        private async Task<string[]> parseJsonData(string rawJson)
         {
             try
             {
+                await Task.Delay(1);
+
                 var t = JsonConvert.DeserializeObject<ListDiscordStatusRootObject>(rawJson);
 
                 //check for any incidents and highlight whats going on
@@ -157,7 +161,7 @@ namespace discordMusicBot.src.Web
                 int voiceInt = t.components.FindIndex(x => x.name == "Voice");
 
                 //clean up the text
-                removeSpcialCharacters(t.components[apiInt].status);
+                await removeSpcialCharacters(t.components[apiInt].status);
 
                 string apiStatus = string.Format("{0,-10} {1,20}", "API:", $"{t.components[apiInt].status}");
                 string gatewayStatus = string.Format("{0,-10} {1,14}", $"Gateway:", $"{t.components[gatewayInt].status}");
@@ -175,11 +179,13 @@ namespace discordMusicBot.src.Web
 
         }
 
-        private string removeSpcialCharacters(string value)
+        private async Task<string> removeSpcialCharacters(string value)
         {
             try
             {
-                if(value == "operational")
+                await Task.Delay(1);
+
+                if (value == "operational")
                 {
                     value.Remove(0, 1);
                     value = "O" + value;
