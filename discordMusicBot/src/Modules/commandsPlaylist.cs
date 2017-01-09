@@ -82,7 +82,7 @@ namespace discordMusicBot.src.Modules
                                     bool npRemoveResult = await _playlist.cmd_npRemove();
                                     if (npRemoveResult == true)
                                     {
-                                        _player.cmd_skip();
+                                        await _player.cmd_skip();
                                         await e.Channel.SendMessage($"{e.User.Name}, the current playing track has been removed from the Library as requested.");
                                         _logs.logMessage("Info", "commandsPlaylist.np remove", $"URL: {playlist.npUrl} was removed from the Library", e.User.Name);
 

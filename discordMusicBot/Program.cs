@@ -30,9 +30,6 @@ namespace discordMusicBot
     {
         static void Main(string[] args) => new Program().Start();
 
-        public static bool restartFlag = false;
-
-        private IAudioClient _voice;    //being used so the event can disconnect the bot from the room when she is left alone
         private DiscordClient _client;
         private configuration _config;
 
@@ -40,14 +37,7 @@ namespace discordMusicBot
         playlist _playlist = new playlist();
         logs _logs = new logs();
         startup _startup = new startup();
-
-        public void loopRestart()
-        {
-            while(restartFlag == false)
-            {
-                Start();
-            }
-        }
+        system _system = new system();
 
         public void Start()
         {
@@ -96,34 +86,33 @@ namespace discordMusicBot
             //this is used to force the bot the dc from the room if she is left alone.
             _client.UserUpdated += async (s, e) =>
             {
-
-                //gives us more infomation for like what room the bot is in
-                var bot = e.Server.FindUsers(_client.CurrentUser.Name).FirstOrDefault().VoiceChannel;
-
                 try
                 {
+                    //gives us more infomation for like what room the bot is in
+                    
+                    var bot = e.Server.FindUsers(_client.CurrentUser.Name).FirstOrDefault().VoiceChannel;
                     List<User> userCount = bot.Users.ToList();
 
-                    if (userCount.Count <= 1)
+                    //the player is active and the bot is alone
+                    if (playlist.playlistActive == true &&
+                        userCount.Count == 1)
                     {
+                        
+                        player.playingSong = false; // sends flag to stop playing the current track
+
+                        //playlist.libraryLoop = false; // closes the loops all together
+                        playlist.playlistActive = false; //sends flag to stop the loop to keep playing songs
+
                         _client.SetGame(null);
-                        _player.cmd_stop();
 
-                        //double checking to make sure she isnt in a room.  
-                        //Event shouldnt have flagged but reguardless double checking
-                        if (bot.ToString() != null) 
-                        {
-                            await bot.LeaveAudio();
-                        }
-
-                        //Console.WriteLine("Bot is left alone.  Music is stopping.");
+                        await bot.LeaveAudio();
                     }
+
                 }
                 catch
                 {
                     //this will catch if the bot isnt summoned given bot.user.tolist will pull a null
                 }
-
             };
 
             //turns the bot on and connects to discord.

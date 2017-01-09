@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Net.NetworkInformation;
+using Discord;
 using discordMusicBot.src.audio;
 
 namespace discordMusicBot.src.sys

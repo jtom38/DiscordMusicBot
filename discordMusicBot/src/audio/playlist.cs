@@ -30,19 +30,19 @@ namespace discordMusicBot.src.audio
         public static List<ListPlaylist> listBlacklist = new List<ListPlaylist>();
         public static List<ListPlaylist> listSubmitted = new List<ListPlaylist>();
                
-        public static string npTitle { get; set; }
-        public static string npUser { get; set; }
-        public static string npUrl { get; set; }
-        public static string npSource { get; set; }
-        public static string[] npLike { get; set; }
-        public static string[] npSkip { get; set; }
-        public static string npFileName { get; set; }
+        public static string npTitle = null;
+        public static string npUser = null;
+        public static string npUrl = null;
+        public static string npSource = null;
+        public static string[] npLike = null;
+        public static string[] npSkip = null;
+        public static string npFileName = null;
         public static bool npDeleteAfterPlaying = false;
 
         static string playlistFile = Directory.GetCurrentDirectory() + "\\configs\\playlist.json";
         static string blacklistFile = Directory.GetCurrentDirectory() + "\\configs\\blacklist.json";
 
-        public static bool libraryLoop = true;
+        //public static bool libraryLoop = true;
         public static bool playlistActive = true;
 
         private DiscordClient _client;
@@ -53,6 +53,7 @@ namespace discordMusicBot.src.audio
         youtube _downloader = new youtube();
         player _player = new player();
         logs _logs = new logs();
+        
 
         public void savePlaylist()
         {
@@ -185,8 +186,8 @@ namespace discordMusicBot.src.audio
             try
             {
                 //library loop is used to keep this loop active
-                while (libraryLoop == true)
-                {
+                //while (libraryLoop == true)
+                //{
                     //given the loop is always active lets make another loop that we can pause when needed
                     while (playlistActive == true)
                     {
@@ -220,7 +221,7 @@ namespace discordMusicBot.src.audio
                         await removeTrackPlayed(filePath); //if a user submitted the song remove it from the disk
 
                     }
-                }
+                //}
             }
             catch (Exception error)
             {
@@ -456,6 +457,7 @@ namespace discordMusicBot.src.audio
         {
             try
             {
+                await Task.Delay(1);
                 var urlResult = listSubmitted.FindIndex(x => x.url == url);
                 if(urlResult != -1)
                 {
@@ -489,14 +491,16 @@ namespace discordMusicBot.src.audio
         /// </returns>
         private async Task<bool> checkBlacklist(string title, string url)
         {
-            //check to make sure it wasnt in the blacklist
-            //var titleResult = listBlacklist.Find(x => x.title == title);
-            var urlResult = listBlacklist.Find(x => x.url == url);
-
-            //if not null, we found a match on the name or the url
-            //using try catch given when it parses a null value it hard errors, this catches it and returns the value
             try
             {
+                await Task.Delay(1);
+                //check to make sure it wasnt in the blacklist
+
+
+                //if not null, we found a match on the name or the url
+                //using try catch given when it parses a null value it hard errors, this catches it and returns the value
+                var urlResult = listBlacklist.Find(x => x.url == url);
+
                 if (urlResult.url != null)
                 {
                     return true;
@@ -525,6 +529,8 @@ namespace discordMusicBot.src.audio
         {
             try
             {
+                await Task.Delay(1);
+
                 var Result = listSubmitted.Count(x => x.user == user);
 
                 if (Result >= _config.maxTrackSubmitted)
@@ -554,7 +560,7 @@ namespace discordMusicBot.src.audio
             {
                 if(npSource == "Submitted")
                 {
-                    removeTrackSubmitted(npUrl);
+                    await removeTrackSubmitted(npUrl);
 
                     if (npDeleteAfterPlaying == true)
                     {
@@ -637,18 +643,19 @@ namespace discordMusicBot.src.audio
         /// </summary>
         public async Task<string> cmd_shuffle()
         {
-            //Take the listSubmitted and shuffle it
-
-            if(listSubmitted.Count == 0)
-            {
-                return "empty";
-            }
-
-            Random rng = new Random();
-            List<ListPlaylist> temp = new List<ListPlaylist>();
-
             try
             {
+                await Task.Delay(1);
+                //Take the listSubmitted and shuffle it
+
+                if (listSubmitted.Count == 0)
+                {
+                    return "empty";
+                }
+
+                Random rng = new Random();
+                List<ListPlaylist> temp = new List<ListPlaylist>();
+
                 //loop though all entries of the listSubmitted and shuffle them to a new list
                 for (int i = 0; i < listSubmitted.Count; i++)
                 {

@@ -186,7 +186,7 @@ namespace discordMusicBot.src.Modules
                     {
                         try
                         {
-                            _player.cmd_resume();
+                            await _player.cmd_resume();
 
                             await e.Channel.SendMessage($"Activating the playlist again.");
                             _logs.logMessage("Info", "commandsPlayer.resume", "", e.User.Name);
@@ -207,9 +207,16 @@ namespace discordMusicBot.src.Modules
                         {
                             Channel voiceChan = e.User.VoiceChannel;
                             await voiceChan.JoinAudio();
-                            //await _playlist.startAutoPlayList(voiceChan, _client);
+
+                            //if (playlist.libraryLoop == false)
+                                //playlist.libraryLoop = true;
+
+                            if (playlist.playlistActive == false)
+                                playlist.playlistActive = true;
+
                             await _playlist.playAutoQueue(voiceChan, _client);
-                            _logs.logMessage("Error", "commandsPlayer.summon", $"User has summoned the bot to room {voiceChan.ToString()}", e.User.Name);
+
+                            _logs.logMessage("Info", "commandsPlayer.summon", $"User has summoned the bot to room {voiceChan.ToString()}", e.User.Name);
                         }
                         catch(Exception error)
                         {

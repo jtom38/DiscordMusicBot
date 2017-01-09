@@ -626,6 +626,9 @@ namespace discordMusicBot.src.Modules
                                     }
 
                                     break;
+                                default:
+                                    await e.Channel.SendMessage($"Available Commands for !admin\r!admin setSmut\r!admin setPrefix\r!admin setGroup\r!admin export\r!admin maxSubmitted\r!admin serverIDs");
+                                    break;
                             }
                         }
                         catch (Exception error)
