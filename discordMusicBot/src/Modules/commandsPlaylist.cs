@@ -83,7 +83,7 @@ namespace discordMusicBot.src.Modules
                                     if (npRemoveResult == true)
                                     {
                                         await _player.cmd_skip();
-                                        await e.Channel.SendMessage($"{e.User.Name}, the current playing track has been removed from the Library as requested.");
+                                        await e.Channel.SendMessage($"{e.User.Name},\rThe current playing track has been removed from the Library as requested.");
                                         _logs.logMessage("Info", "commandsPlaylist.np remove", $"URL: {playlist.npUrl} was removed from the Library", e.User.Name);
 
                                     }
@@ -170,7 +170,7 @@ namespace discordMusicBot.src.Modules
                         {
                             if (e.GetArg("url") == "")
                             {
-                                await e.Channel.SendMessage($"@{e.User.Name}, Unable to adjust the playlist if you dont give me a url.");
+                                await e.Channel.SendMessage($"@{e.User.Name},\rUnable to adjust the playlist if you dont give me a url.");
                                 return;
                             }
 
@@ -286,6 +286,7 @@ namespace discordMusicBot.src.Modules
                     .Description("Adds a url to the blacklist file.\rPermissions: Mods")
                     .Parameter("flag", ParameterType.Optional)
                     .MinPermissions((int)PermissionLevel.GroupMods)
+                    .Hide()
                     .Do(async e =>
                     {
                         try

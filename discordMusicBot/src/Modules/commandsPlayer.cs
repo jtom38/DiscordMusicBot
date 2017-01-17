@@ -158,11 +158,23 @@ namespace discordMusicBot.src.Modules
                     {
                         try
                         {
-                            bool result = await _player.cmd_stop();
+                            Channel voice = null;
+                            var bot = e.Server.FindUsers(_client.CurrentUser.Name).GetEnumerator();
+                            while (bot.MoveNext())
+                            {
+                                if(bot.Current.Name == _client.CurrentUser.Name)//looking for the bot account
+                                {
+                                    voice = bot.Current.VoiceChannel;
+                                }
+                            }
+                            
+                            bool result = await _player.cmd_stop(_client, voice);
 
                             if (result == true)
                             {
                                 _client.SetGame(null);
+                                
+                                //await e.Server.GetAudioClient;
                                 await e.Channel.SendMessage($"Music will be stopping.");
                                 _logs.logMessage("Info", "commandsPlayer.stop", "Player was requested to stop.", e.User.Name);
 
@@ -188,6 +200,8 @@ namespace discordMusicBot.src.Modules
                         {
                             await _player.cmd_resume();
 
+                            await _playlist.playAutoQueue(e.User.VoiceChannel, _client);
+
                             await e.Channel.SendMessage($"Activating the playlist again.");
                             _logs.logMessage("Info", "commandsPlayer.resume", "", e.User.Name);
                         }
@@ -205,18 +219,19 @@ namespace discordMusicBot.src.Modules
                     {                       
                         try
                         {
-                            Channel voiceChan = e.User.VoiceChannel;
-                            await voiceChan.JoinAudio();
+                            //check to see if the bot is already in the room
+                            //e.Server.FindUsers(_client.CurrentUser.Name).
+                            //var bot = e.Server.FindUsers(_client.CurrentUser.Name);
+                            //bot.GetEnumerator[0]
+                            if (player.playingSong == false) // if the flag was set to not be okaying a song turn it on
+                                player.playingSong = true;
 
-                            //if (playlist.libraryLoop == false)
-                                //playlist.libraryLoop = true;
-
-                            if (playlist.playlistActive == false)
+                            if (playlist.playlistActive == false) //if the loop to keep playing tracks is off turn it on
                                 playlist.playlistActive = true;
 
-                            await _playlist.playAutoQueue(voiceChan, _client);
+                            _logs.logMessage("Info", "commandsPlayer.summon", $"User has summoned the bot to room {e.User.VoiceChannel}", e.User.Name);
 
-                            _logs.logMessage("Info", "commandsPlayer.summon", $"User has summoned the bot to room {voiceChan.ToString()}", e.User.Name);
+                            await _playlist.playAutoQueue(e.User.VoiceChannel, _client);
                         }
                         catch(Exception error)
                         {

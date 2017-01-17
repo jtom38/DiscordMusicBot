@@ -45,13 +45,13 @@ namespace discordMusicBot.src.audio
         /// <returns></returns>
         public async Task SendAudio(string filepath, Channel voiceChannel, DiscordClient _client)
         {
-
-            //try to find a way to tell if she is already in 1. connect to a voice room and 2 in your voice room
-            _nAudio = await _client.GetService<AudioService>().Join(voiceChannel);
-
-            playingSong = true;
             try
             {
+                //try to find a way to tell if she is already in 1. connect to a voice room and 2 in your voice room
+                _nAudio = await _client.GetService<AudioService>().Join(voiceChannel);
+
+                playingSong = true;
+
 
                 var channelCount = _client.GetService<AudioService>().Config.Channels; // Get the number of AudioChannels our AudioService has been configured to use.
                 var OutFormat = new WaveFormat(48000, 16, channelCount); // Create a new Output Format, using the spec that Discord will accept, and with the number of channels that our client supports.
@@ -82,7 +82,9 @@ namespace discordMusicBot.src.audio
                             }
 
                             _nAudio.Send(adjustedBuffer, 0, blockSize); // Send the buffer to Discord
+                            
                         }
+                        
                     }
                     catch (Exception error)
                     {
@@ -163,7 +165,7 @@ namespace discordMusicBot.src.audio
         ///     True = Value was changed to stop the loop
         ///     False = The loop wasnt going already
         /// </returns>
-        public async Task<bool> cmd_stop()
+        public async Task<bool> cmd_stop(DiscordClient _client, Channel voiceRoom)
         {
             try
             {
@@ -176,6 +178,9 @@ namespace discordMusicBot.src.audio
 
                     //forces the current track playing to send the stop command.
                     playingSong = false;
+
+                    _nAudio = await _client.GetService<AudioService>().Join(voiceRoom);
+                    _nAudio.Clear();
 
                     return true;
                 }

@@ -37,9 +37,9 @@ namespace discordMusicBot.src.Modules
 
             manager.CreateCommands("", group =>
             {
-                _client.GetService<CommandService>().CreateCommand("rm")
+                _client.GetService<CommandService>().CreateCommand("removeMessages")
                     .Alias("rm")
-                    .Description("Removes messages from a text channel.\rExample: !rm 100\rPermissions: Everyone")
+                    .Description("Removes messages from a text channel.\rExample: !removeMessages 100\rPermissions: Everyone")
                     .Parameter("count", ParameterType.Optional)
                     .MinPermissions((int)PermissionLevel.GroupUsers)
                     .Do(async e =>

@@ -185,43 +185,40 @@ namespace discordMusicBot.src.audio
         {
             try
             {
-                //library loop is used to keep this loop active
-                //while (libraryLoop == true)
-                //{
-                    //given the loop is always active lets make another loop that we can pause when needed
-                    while (playlistActive == true)
-                    {
+                
+                //given the loop is always active lets make another loop that we can pause when needed
+                while (playlistActive == true)
+                {
 
-                        //reset the nowplaying vars given a new song is being picked
-                        npUrl = null;
-                        npTitle = null;
-                        npUser = null;
-                        npSource = null;
-                        npLike = null;
-                        npSkip = null;
-                        npFileName = null;
-                        npDeleteAfterPlaying = false;
+                    //reset the nowplaying vars given a new song is being picked
+                    npUrl = null;
+                    npTitle = null;
+                    npUser = null;
+                    npSource = null;
+                    npLike = null;
+                    npSkip = null;
+                    npFileName = null;
+                    npDeleteAfterPlaying = false;
 
-                        string filePath = null;
+                    string filePath = null;
 
-                        //check to see if someone has something queued up in submmitted
-                        if (listSubmitted.Count >= 1)
-                            await pickTrackFromSubmitted();
-                        else if (listSubmitted.Count == 0) //if nothing is found go back to the listAutoQueue
-                            await getAutoQueueTrackInfo();
+                    //check to see if someone has something queued up in submmitted
+                    if (listSubmitted.Count >= 1)
+                        await pickTrackFromSubmitted();
+                    else if (listSubmitted.Count == 0) //if nothing is found go back to the listAutoQueue
+                        await getAutoQueueTrackInfo();
 
-                        filePath = await getFileNameToPlay(); // get the file name that we are going to pass to the player
+                    filePath = await getFileNameToPlay(); // get the file name that we are going to pass to the player
 
-                        _client.SetGame(npTitle); //update the track that is currently playing
+                    _client.SetGame(npTitle); //update the track that is currently playing
 
-                        _logs.logMessage("Info", "playlist.playAutoQueue", $"Track:'{npTitle}' was sent to the audio player.", "system");
+                    _logs.logMessage("Info", "playlist.playAutoQueue", $"Track:'{npTitle}' was sent to the audio player.", "system");
 
-                        await _player.SendAudio(filePath, voiceChannel, _client); //send the file and functions over to the audio player to send to the server
+                    await _player.SendAudio(filePath, voiceChannel, _client); //send the file and functions over to the audio player to send to the server
 
-                        await removeTrackPlayed(filePath); //if a user submitted the song remove it from the disk
+                    await removeTrackPlayed(filePath); //if a user submitted the song remove it from the disk
 
-                    }
-                //}
+                }
             }
             catch (Exception error)
             {

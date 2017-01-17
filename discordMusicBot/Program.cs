@@ -89,8 +89,8 @@ namespace discordMusicBot
                 try
                 {
                     //gives us more infomation for like what room the bot is in
-                    
-                    var bot = e.Server.FindUsers(_client.CurrentUser.Name).FirstOrDefault().VoiceChannel;
+
+                    var bot = e.Server.FindUsers(_client.CurrentUser.Name).FirstOrDefault().VoiceChannel;                    
                     List<User> userCount = bot.Users.ToList();
 
                     //the player is active and the bot is alone
@@ -98,16 +98,11 @@ namespace discordMusicBot
                         userCount.Count == 1)
                     {
                         
-                        player.playingSong = false; // sends flag to stop playing the current track
-
-                        //playlist.libraryLoop = false; // closes the loops all together
-                        playlist.playlistActive = false; //sends flag to stop the loop to keep playing songs
-
                         _client.SetGame(null);
 
+                        await _player.cmd_stop(_client, bot); //this will force the player.playingSong and playlist.playlistActive vars to false
                         await bot.LeaveAudio();
                     }
-
                 }
                 catch
                 {
@@ -270,4 +265,3 @@ namespace discordMusicBot
 
     }
 }
-
