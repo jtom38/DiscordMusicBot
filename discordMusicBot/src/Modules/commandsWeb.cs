@@ -27,36 +27,113 @@ namespace discordMusicBot.src.Modules
             _service = service;
         }
 
-        [Command("UrbanDictionary"), 
-            Summary("Query's UrbanDictionary.com for a random definition."),
-            Alias("ud")]
+        [Command("UrbanDictionary"), Summary("Query's UrbanDictionary.com for a random definition."), Alias("ud")]
         public async Task UrbanDictionaryAsync(string tag = null)
         {
             try
             {
                 string[] result = null;
-                if (tag == null)
+
+                result = await _urban.cmd_urbanFlow(tag);
+                
+                if(result[0] == "No Value")
                 {
-                    result = await _urban.cmd_urbanFlow(null);
+                    var builder = new EmbedBuilder()
+                    {
+                        //unit error = uint.Parse(colors.Error)
+                        Color = new Color(colors.Error[0], colors.Error[1], colors.Error[2]),
+                        Description = $"**Term**: '{result[1]}'\r**Error**: Unable to find any infomation on this tag."
+                    };
+
+                    await ReplyAsync("", false, builder.Build());
                 }
                 else
                 {
-                    result = await _urban.cmd_urbanFlow(tag);
+                    var builder = new EmbedBuilder()
+                    {
+                        Color = new Color(colors.Success[0], colors.Success[1], colors.Success[2]),
+                        Description = $"**Term**:\t'{result[2]}'\r**Definition**:\t{result[0]}\r**Example**:\t{result[1]}\r**Tags**:\t{result[3]}"
+                    };
+
+                    await ReplyAsync("", false, builder.Build());
                 }
 
-                var builder = new EmbedBuilder()
-                {
-                    Color = new Color(114, 137, 218),
-                    Description = $"UrbanDictionary Restult for '{result[2]}'\r\r**Definition**: {result[0]}\r\r**Example**: {result[1]}\r\r**Tags**: {result[3]}"
-                };
-
-                await ReplyAsync("", false, builder.Build());
             }
             catch
             {
 
             }
 
+        }
+
+        [Command("smut"), Summary("Query's sites for smut related pictures.")]
+        public async Task smutAsync(string site = null, string tag = null)
+        {
+            try
+            {
+                string[] result = null;
+
+                switch (site)
+                {
+                    case "dabooru":
+                    case "dan":
+                    case "d":
+                        {
+                            result = await _danbooru.webRequestStart("danbooru", tag);
+                        }
+                        break;
+                    case "konachan":
+                    case "kona":
+                    case "k":
+                        {
+                            result = await _danbooru.webRequestStart("konachan", tag);
+                        }
+                        break;
+                    case "yandere":
+                    case "yan":
+                    case "y":
+                        {
+                            result = await _danbooru.webRequestStart("yandere", tag);
+                        }
+                        break;
+                    case "rule34":
+                    case "r34":
+                    case "r":
+                        {
+                            result = await _rule34.rule34QuerrySite(tag);
+                        }
+                        break;
+                    default:
+                        result = await _rule34.rule34QuerrySite(site);
+                        break;
+                }
+
+                if (result != null)
+                {
+                    var builder = new EmbedBuilder()
+                    {
+                        Color = new Color(colors.Success[0], colors.Success[1], colors.Success[2]),
+                        Title = $"{result[1]} with tag: {result[3]}",
+                        ImageUrl = result[0]
+                    };
+
+                    await ReplyAsync("", false, builder.Build());
+                }
+                else
+                {
+                    var builder = new EmbedBuilder()
+                    {
+                        Color = new Color(colors.Error[0], colors.Error[1], colors.Error[2]),
+                        Description = $"**Site**: '{result[1]}'\r**Error**: Unable to find any infomation on this tag."
+                    };
+
+                    await ReplyAsync("", false, builder.Build());
+                }
+            }
+            catch
+            {
+
+            }
         }
 
     }

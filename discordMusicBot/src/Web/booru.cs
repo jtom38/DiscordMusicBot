@@ -98,13 +98,13 @@ namespace discordMusicBot.src.Web
                 switch (site) //figure out what site we hit
                 {
                     case "danbooru":
-                        returnResult = await webParseDan(returnJson);
+                        returnResult = await webParseDan(returnJson, tag);
                         return returnResult;
                     case "konachan":
-                        returnResult = await webParseKonachan(returnJson);
+                        returnResult = await webParseKonachan(returnJson, tag);
                         return returnResult;
                     case "yandere":
-                        returnResult = await webParseYandere(returnJson);
+                        returnResult = await webParseYandere(returnJson, tag);
                         return returnResult;
                     case "rule34":
                         return returnResult;
@@ -145,7 +145,7 @@ namespace discordMusicBot.src.Web
                         return null;
                 }
 
-                if(tag == "")
+                if(tag != null)
                 {
                     url = url + $"&tags={tag}";
                 }
@@ -200,7 +200,7 @@ namespace discordMusicBot.src.Web
             }
         }
         
-        private async Task<string[]> webParseDan(string rawJson)
+        private async Task<string[]> webParseDan(string rawJson,string tag)
         {
             try
             {
@@ -220,7 +220,7 @@ namespace discordMusicBot.src.Web
                         {
                             string url = "https://danbooru.donmai.us" + json[counter].file_url;
 
-                            string[] returnResult = { url, "Danbooru", json[counter].tag_string };
+                            string[] returnResult = { url, "Danbooru", json[counter].tag_string, tag };
                             return returnResult;
                         }
                     }
@@ -279,7 +279,7 @@ namespace discordMusicBot.src.Web
             public List<object> frames { get; set; }
         }
 
-        private async Task<string[]> webParseKonachan(string rawJson)
+        private async Task<string[]> webParseKonachan(string rawJson, string tag)
         {
             try
             {
@@ -297,7 +297,7 @@ namespace discordMusicBot.src.Web
                         int counter = rng.Next(0, json.Count);
                         if (json[counter].file_url != "")
                         {
-                            string[] returnResult = { "https:"+json[counter].jpeg_url, "Konachan", json[counter].tags };
+                            string[] returnResult = { "https:"+json[counter].jpeg_url, "Konachan", json[counter].tags, tag };
                             return returnResult;
                         }
                     }
@@ -359,7 +359,7 @@ namespace discordMusicBot.src.Web
             public int last_commented_at { get; set; }
         }
 
-        private async Task<string[]> webParseYandere(string rawJson)
+        private async Task<string[]> webParseYandere(string rawJson,string tag)
         {
             try
             {
@@ -376,7 +376,7 @@ namespace discordMusicBot.src.Web
                         int counter = rng.Next(0, json.Count);
                         if (json[counter].file_url != "")
                         {
-                            string[] returnResult = { json[counter].jpeg_url, "Yandere", json[counter].tags };
+                            string[] returnResult = { json[counter].jpeg_url, "Yandere", json[counter].tags, tag };
                             return returnResult;
                         }
                     }

@@ -172,6 +172,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="src\Modules\commandsHelp.cs" />
+    <Compile Include="src\sys\Colors.cs" />
     <Compile Include="src\sys\logs.cs" />
     <Compile Include="src\Modules\commandsPlayer.cs" />
     <Compile Include="src\Modules\commandsPlaylist.cs" />

@@ -44,7 +44,7 @@ namespace discordMusicBot.src.Web
 
                 string url = null;
                 
-                if (tag != "")
+                if (tag != null)
                 {
                     url = $"https://rule34.xxx//index.php?page=dapi&s=post&q=index&tags={tag}";
                 }
@@ -100,8 +100,17 @@ namespace discordMusicBot.src.Web
                             {
                                 if (xmls[counter].file_url != "")
                                 {
-                                        string[] returnResult = { "https:" + xmls[counter].file_url, "rule34", xmls[counter].tags };
+                                    if(tag != null)
+                                    {
+                                        string[] returnResult = { "https:" + xmls[counter].file_url, "rule34", xmls[counter].tags, tag };
                                         return returnResult;
+                                    }
+                                    else
+                                    {
+                                        string[] returnResult = { "https:" + xmls[counter].file_url, "rule34", xmls[counter].tags, "*" };
+                                        return returnResult;
+                                    }
+
                                 }
                             }
                         }

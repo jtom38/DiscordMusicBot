@@ -151,7 +151,7 @@ namespace discordMusicBot.src.Web
 
                         if(t.list.Count == 0)
                         {
-                            string[] noResult = { "No Value" };
+                            string[] noResult = { "No Value", term };
                             return noResult;
                         }
                         else
