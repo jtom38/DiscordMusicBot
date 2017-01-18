@@ -43,62 +43,8 @@ namespace discordMusicBot.src.audio
         ///     _client
         /// </param>
         /// <returns></returns>
-        public async Task SendAudio(string filepath, Channel voiceChannel, DiscordClient _client)
-        {
-            try
-            {
-                //try to find a way to tell if she is already in 1. connect to a voice room and 2 in your voice room
-                _nAudio = await _client.GetService<AudioService>().Join(voiceChannel);
+        // need channel and discordClient
 
-                playingSong = true;
-
-
-                var channelCount = _client.GetService<AudioService>().Config.Channels; // Get the number of AudioChannels our AudioService has been configured to use.
-                var OutFormat = new WaveFormat(48000, 16, channelCount); // Create a new Output Format, using the spec that Discord will accept, and with the number of channels that our client supports.
-
-                using (var MP3Reader = new MediaFoundationReader(filepath)) // Create a new Disposable MP3FileReader, to read audio from the filePath parameter
-                using (var resampler = new MediaFoundationResampler(MP3Reader, OutFormat)) // Create a Disposable Resampler, which will convert the read MP3 data to PCM, using our Output Format
-                {
-                    resampler.ResamplerQuality = 60; // Set the quality of the resampler to 60, the highest quality
-                    int blockSize = OutFormat.AverageBytesPerSecond / 50; // Establish the size of our AudioBuffer
-                    byte[] buffer = new byte[blockSize];
-                    int byteCount;
-                    // Add in the "&& playingSong" so that it only plays while true. For our cheesy skip command.
-                    // AGAIN WARNING YOU NEED opus.dll libsodium.dll
-                    // If you do not have these, this will not work.
-                    try
-                    {
-                        while ((byteCount = resampler.Read(buffer, 0, blockSize)) > 0 && playingSong) // Read audio into our buffer, and keep a loop open while data is present
-                        {
-
-                            //adjust volume
-                            byte[] adjustedBuffer = ScaleVolumeSafeAllocateBuffers(buffer, volume);
-
-                            if (byteCount < blockSize)
-                            {
-                                // Incomplete Frame
-                                for (int i = byteCount; i < blockSize; i++)
-                                    buffer[i] = 0;
-                            }
-
-                            _nAudio.Send(adjustedBuffer, 0, blockSize); // Send the buffer to Discord
-                            
-                        }
-                        
-                    }
-                    catch (Exception error)
-                    {
-                        //await _client.GetService<AudioService>().Join(voiceChannel);
-                        Console.WriteLine(error.ToString());
-                    }
-                }
-            }
-            catch (Exception error)
-            {
-                _logs.logMessage("Error", "player.sendAudio", error.ToString(), "system");
-                //Console.WriteLine("Something went wrong. :(");
-            }
-        }
 
         public static byte[] ScaleVolumeSafeAllocateBuffers(byte[] audioSamples, float volume)
         {
@@ -165,7 +111,8 @@ namespace discordMusicBot.src.audio
         ///     True = Value was changed to stop the loop
         ///     False = The loop wasnt going already
         /// </returns>
-        public async Task<bool> cmd_stop(DiscordClient _client, Channel voiceRoom)
+        // needs discordClient and Channel
+        public async Task<bool> cmd_stop()
         {
             try
             {
@@ -179,8 +126,8 @@ namespace discordMusicBot.src.audio
                     //forces the current track playing to send the stop command.
                     playingSong = false;
 
-                    _nAudio = await _client.GetService<AudioService>().Join(voiceRoom);
-                    _nAudio.Clear();
+                    //_nAudio = await _client.GetService<AudioService>().Join(voiceRoom);
+                    //_nAudio.Clear();
 
                     return true;
                 }

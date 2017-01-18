@@ -8,7 +8,7 @@ using System.Net;
 using Newtonsoft.Json;
 using discordMusicBot.src.sys;
 using Discord;
-using Discord.Modules;
+
 using System.Diagnostics;
 
 namespace discordMusicBot.src.audio
@@ -45,9 +45,6 @@ namespace discordMusicBot.src.audio
         //public static bool libraryLoop = true;
         public static bool playlistActive = true;
 
-        private DiscordClient _client;
-        private ModuleManager _manager;
-        //private AudioExtensions _audio;
 
         configuration _config = new configuration();
         youtube _downloader = new youtube();
@@ -181,7 +178,7 @@ namespace discordMusicBot.src.audio
 
         }
 
-        public async Task playAutoQueue(Channel voiceChannel, DiscordClient _client)
+        public async Task playAutoQueue() //need to pass channel and DiscordClient
         {
             try
             {
@@ -210,11 +207,12 @@ namespace discordMusicBot.src.audio
 
                     filePath = await getFileNameToPlay(); // get the file name that we are going to pass to the player
 
-                    _client.SetGame(npTitle); //update the track that is currently playing
+                    //_client.SetGame(npTitle); //update the track that is currently playing
 
                     _logs.logMessage("Info", "playlist.playAutoQueue", $"Track:'{npTitle}' was sent to the audio player.", "system");
 
-                    await _player.SendAudio(filePath, voiceChannel, _client); //send the file and functions over to the audio player to send to the server
+                    //Add voiceChannel and Client
+                    //await _player.SendAudio(filePath); //send the file and functions over to the audio player to send to the server
 
                     await removeTrackPlayed(filePath); //if a user submitted the song remove it from the disk
 
