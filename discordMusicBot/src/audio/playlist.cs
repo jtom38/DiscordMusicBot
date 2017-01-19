@@ -45,13 +45,11 @@ namespace discordMusicBot.src.audio
         //public static bool libraryLoop = true;
         public static bool playlistActive = true;
 
-
         configuration _config = new configuration();
         youtube _downloader = new youtube();
         player _player = new player();
         logs _logs = new logs();
         
-
         public void savePlaylist()
         {
             try

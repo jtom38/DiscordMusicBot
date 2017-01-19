@@ -131,7 +131,7 @@ namespace discordMusicBot.src.sys
                 _config = configuration.LoadFile();
                 if (_config.Token != "")
                 {
-                    Console.WriteLine("Token has been found in config.json");
+                    Console.WriteLine("[Startup] Token has been found in config.json");
                 }
                 else
                 {
@@ -157,7 +157,7 @@ namespace discordMusicBot.src.sys
 
                 if (Int64.Parse(_config.Owner.ToString()) != 0)
                 {
-                    Console.WriteLine("Owner ID has been found in config.json");
+                    Console.WriteLine("[Startup] Owner ID has been found in config.json");
                 }
                 else
                 {
@@ -178,7 +178,7 @@ namespace discordMusicBot.src.sys
 
         private void checkCommandPrefix()
         {
-            Console.WriteLine("Current commandPrefix = " + _config.Prefix);
+            Console.WriteLine("[Startup] Current commandPrefix = " + _config.Prefix);
         }
 
         private void setLogLevel()
@@ -193,16 +193,16 @@ namespace discordMusicBot.src.sys
                     switch (_config.logLevel)
                     {
                         case 0: //off
-                            Console.WriteLine($"Logging: Off");
+                            Console.WriteLine($"[Startup] Logging: Off");
                             break;
                         case 1: //debug
-                            Console.WriteLine($"Logging: Debug");
+                            Console.WriteLine($"[Startup] Logging: Debug");
                             break;
                         case 2: //info
-                            Console.WriteLine($"Logging: Infomation");
+                            Console.WriteLine($"[Startup] Logging: Infomation");
                             break;
                         case 3: //error
-                            Console.WriteLine($"LOgging: Errors");
+                            Console.WriteLine($"[Startup] Logging: Errors");
                             break;
                     }
 

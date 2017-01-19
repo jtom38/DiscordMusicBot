@@ -19,11 +19,6 @@ namespace discordMusicBot.src.sys
         /// Your bot's login token. 
         /// </summary>
         public string Token { get; set; }
-        /// <summary> 
-        /// The ID of the room the bot should bind to on startup
-        /// </summary>
-        public ulong[] BindToChannels { get; set; }
-        public ulong defaultRoomID { get; set; }
         /// <summary>
         ///     idDefaultGroup = id for @everyone
         /// </summary>

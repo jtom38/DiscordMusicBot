@@ -66,7 +66,7 @@ namespace discordMusicBot.src.Modules
 
         }
 
-        [Command("smut"), Summary("Query's sites for smut related pictures.")]
+        [Command("smut"), Summary("Query's sites for smut related pictures."), Remarks("Query's sites for smut related pictures.")]
         public async Task smutAsync(string site = null, string tag = null)
         {
             try

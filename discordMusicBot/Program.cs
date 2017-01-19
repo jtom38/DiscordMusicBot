@@ -21,11 +21,13 @@ namespace discordMusicBot
         private DiscordSocketClient _client;
         private CommandHandler _commands;
         private configuration _config;
-        private startup _startup;
+        startup _startup = new startup();
 
         public async Task Start()
         {
             //_startup.startupCheck(); // chances are this will fail
+
+            _startup.startupCheck();
 
             // Create a new instance of DiscordSocketClient.
             _client = new DiscordSocketClient(new DiscordSocketConfig()
