@@ -14,10 +14,6 @@ using Discord.WebSocket;
 
 namespace discordMusicBot.src.Modules
 {
-    public interface IMessageChannel : IChannel, ISnowflakeEntity, IEntity<ulong>
-    {
-        Task DeleteMessagesAsync(IEnumerable<IMessage> messages, RequestOptions options = null);
-    }
 
     public class commandsSystem : ModuleBase<SocketCommandContext>
     {
@@ -37,10 +33,8 @@ namespace discordMusicBot.src.Modules
         logs _logs = new logs();
         discordStatus _discordStatus = new discordStatus();
 
-        
-
         [Command("RemoveMessage")]
-        [Remarks("Query's UrbanDictionary.com for a random definition.")]
+        [Remarks("Removes lines of messages from the current text channel.")]
         [Alias("rm")]
         public async Task RemoveMessageAsync(int counter = 0)
         {
@@ -190,5 +184,73 @@ namespace discordMusicBot.src.Modules
 
             }
         }
+
+        [Command("Shutdown")]
+        [Remarks("Forces the bot to shutdown.")]
+        public async Task HaltAsync()
+        {
+            try
+            {
+                if(Context.Guild.AudioClient != null) //if its null the AudioClient wasnt loaded/used so the bot isnt in a voice room.
+                    await Context.Guild.AudioClient.DisconnectAsync();
+
+                Environment.Exit(0);
+            }
+            catch (Exception error)
+            {
+                //_logs.logMessage("Error", "commandsSystem.halt", error.ToString(), e.User.Name);
+            }
+        }
+
+        [Command("Restart")]
+        [Remarks("Forces the bot to restart the application.")]
+        public async Task RestartAsync()
+        {
+            try
+            {
+                //dump the current game playing
+                await Context.Client.SetGameAsync(null);
+
+                //send a message out on the restart
+                var builder = new EmbedBuilder()
+                {
+                    Color = new Color(colors.Success[0], colors.Success[1], colors.Success[2]),
+                    Title = $"{configuration.LoadFile().Prefix}Restart",
+                    Description = $"{Context.User.Username},\rPlease wait as I reboot."
+                };
+                await ReplyAsync("", false, builder.Build());
+
+
+                //check to see if she is in a voice room, if so disconnect 
+                if (Context.Guild.AudioClient != null) //if its null the AudioClient wasnt loaded/used so the bot isnt in a voice room.
+                    await Context.Guild.AudioClient.DisconnectAsync();
+
+                //await _logs.logMessageAsync("Info", _config.Prefix + "restart", "Process was restarted by user", Context.User.Username);
+
+                var fileName = Assembly.GetExecutingAssembly().Location;
+                System.Diagnostics.Process.Start(fileName);
+                Environment.Exit(0);
+
+            }
+            catch (Exception error)
+            {
+                await _logs.logMessageAsync("Error", "commandsSystem.restart", error.ToString(), Context.User.Username);
+            }
+        }
+
+        [Command("ping")]
+        [Remarks("Returns the current ping value of the bot.")]
+        public async Task PingAsync()
+        {
+            try
+            {
+
+            }
+            catch
+            {
+
+            }
+        }
+
     }
 }

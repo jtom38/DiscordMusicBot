@@ -22,17 +22,16 @@ namespace discordMusicBot
         private CommandHandler _commands;
         private configuration _config;
         startup _startup = new startup();
+        logs _logs = new logs();
 
         public async Task Start()
         {
-            //_startup.startupCheck(); // chances are this will fail
-
             _startup.startupCheck();
 
             // Create a new instance of DiscordSocketClient.
             _client = new DiscordSocketClient(new DiscordSocketConfig()
             {
-                LogLevel = LogSeverity.Verbose                  // Specify console verbose information level.
+                LogLevel = LogSeverity.Info                 // Specify console verbose information level.
             });
 
             _client.Log += (l)                               // Register the console log event.
@@ -46,6 +45,8 @@ namespace discordMusicBot
 
             _commands = new CommandHandler();               // Initialize the command handler service
             await _commands.Install(_client);
+
+            await _client.SetGameAsync($"Type {configuration.LoadFile().Prefix}help for help");
 
             await Task.Delay(-1);                            // Prevent the console window from closing.
         }

@@ -49,8 +49,6 @@ namespace discordMusicBot.src.sys
             Prefix = '$';
             Owner = new ulong { };
             Token = "";
-            BindToChannels = new ulong[] { 0 };
-            defaultRoomID = 0;
             volume = .10f;
             idDefaultGroup = new ulong { };
             idModsGroup = new ulong { };

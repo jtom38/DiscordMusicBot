@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace discordMusicBot.src.sys
@@ -82,11 +79,11 @@ namespace discordMusicBot.src.sys
                 //write our event to the logs.txt file
                 using (StreamWriter txtLog = new StreamWriter("logs.txt", true))
                 {
-                    txtLog.WriteLine($"{DateTime.Now} - {level} - {source} - {user} - {msg}");
+                    txtLog.WriteLine($"[{level}] - {source} - {user} - {msg} - {DateTime.Now}");
                 }
 
                 //also write to the console so the admin can see it and I can when debugging.
-                Console.WriteLine($"{DateTime.Now} - {level} - {source} - {user} - {msg}");
+                Console.WriteLine($"[{level}] - {source} - {user} - {msg} - {DateTime.Now}");
 
                 return true;
             }
@@ -124,6 +121,29 @@ namespace discordMusicBot.src.sys
             {
                 Console.WriteLine(error);
                 return false;
+            }
+        }
+
+        public async Task logMessageAsync(string level, string source, string msg, string user)
+        {
+            try
+            {
+                await Task.Delay(1);
+                //check what the user wants returned
+                bool configLevel = await returnConfigLogLevel(level);
+
+                if (configLevel == true)
+                {
+                    bool fileCheck = await checkLogSize();
+                    if(configLevel == true)
+                    {
+                        await logFile(level, source, msg, user);
+                    }
+                }
+            }
+            catch
+            {
+
             }
         }
     }
