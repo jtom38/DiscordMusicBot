@@ -1,27 +1,24 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using discordMusicBot.src.sys;
 using discordMusicBot.src.audio;
 using discordMusicBot.src.Web;
 using Discord;
 using Discord.Commands;
-using System.IO;
 using System.Reflection;
 using Discord.WebSocket;
 
 namespace discordMusicBot.src.Modules
 {
 
-    public class commandsSystem : ModuleBase<SocketCommandContext>
+    public class cmdSystem : ModuleBase<SocketCommandContext>
     {
         private DiscordSocketClient _client;
         private CommandService _service;
         private configuration _config;
 
-        public commandsSystem(CommandService service)           // Create a constructor for the commandservice dependency
+        public cmdSystem(CommandService service)           // Create a constructor for the commandservice dependency
         {
             _service = service;
         }
@@ -32,6 +29,76 @@ namespace discordMusicBot.src.Modules
         network _network = new network();
         logs _logs = new logs();
         discordStatus _discordStatus = new discordStatus();
+
+        [Command("help")]
+        public async Task HelpAsync(string command = null)
+        {
+            if (command == null)
+            {
+                char prefix = configuration.LoadFile().Prefix;
+                var builder = new EmbedBuilder()
+                {
+                    Color = new Color(114, 137, 218),
+                    Description = "These are the commands you can use"
+                };
+
+                foreach (var module in _service.Modules)
+                {
+                    string description = null;
+                    foreach (var cmd in module.Commands)
+                    {
+                        var result = await cmd.CheckPreconditionsAsync(Context);
+                        if (result.IsSuccess)
+                            description += $"{prefix}{cmd.Aliases.First()}\n";
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(description))
+                    {
+                        builder.AddField(x =>
+                        {
+                            x.Name = module.Name;
+                            x.Value = description;
+                            x.IsInline = false;
+                        });
+                    }
+                }
+
+                await ReplyAsync("", false, builder.Build());
+            }
+            else
+            {
+                var result = _service.Search(Context, command);
+
+                if (!result.IsSuccess)
+                {
+                    await ReplyAsync($"Sorry, I couldn't find a command like **{command}**.");
+                    return;
+                }
+
+                char prefix = configuration.LoadFile().Prefix;
+                var builder = new EmbedBuilder()
+                {
+                    Color = new Color(114, 137, 218),
+                    Description = $"Here are some commands like **{command}**"
+                };
+
+                foreach (var match in result.Commands)
+                {
+                    var cmd = match.Command;
+
+                    builder.AddField(x =>
+                    {
+                        x.Name = string.Join(", ", cmd.Aliases);
+                        x.Value = $"Parameters: {string.Join(", ", cmd.Parameters.Select(p => p.Name))}\n" +
+                                  $"Remarks: {cmd.Remarks}";
+                        x.IsInline = false;
+                    });
+                }
+
+                await ReplyAsync("", false, builder.Build());
+            }
+
+        }
 
         [Command("RemoveMessage")]
         [Remarks("Removes lines of messages from the current text channel.")]
@@ -234,7 +301,7 @@ namespace discordMusicBot.src.Modules
             }
             catch (Exception error)
             {
-                await _logs.logMessageAsync("Error", "commandsSystem.restart", error.ToString(), Context.User.Username);
+                //await _logs.logMessageAsync("Error", "commandsSystem.restart", error.ToString(), Context.User.Username);
             }
         }
 
@@ -245,6 +312,13 @@ namespace discordMusicBot.src.Modules
             try
             {
 
+                var builder = new EmbedBuilder()
+                {
+                    Color = new Color(colors.Success[0], colors.Success[1], colors.Success[2]),
+                    Title = $"**{configuration.LoadFile().Prefix}Ping**",
+                    Description = $"{Context.User.Username},\r**Datacenter**: {Context.Guild.VoiceRegionId}\r**Ping**: {Context.Guild.Discord.Latency}"
+                };
+                await ReplyAsync("", false, builder.Build());
             }
             catch
             {
