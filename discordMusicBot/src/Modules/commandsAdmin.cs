@@ -208,6 +208,92 @@ namespace discordMusicBot.src.Modules
 
         }
 
+        [Command("ConfigureGroupEveryone")]
+        [Remarks("Configures what role ID gets Basic Permissions")]
+        [Alias("cge")]
+        public async Task ConfigureGroupEveryoneAsync(ulong UserValue)
+        {
+            try
+            {
+                _config = configuration.LoadFile();
+                _config.idDefaultGroup = UserValue;
+                _config.SaveFile();
+
+                var builder = new EmbedBuilder()
+                {
+                    Color = new Color(colors.Success[0], colors.Success[1], colors.Success[2]),
+                    Title = $"{configuration.LoadFile().Prefix}ConfigureGroupEveryone",
+                    Description = $"{Context.User.Username},\rPermissions have been updated."
+                };
+
+                await ReplyAsync("", false, builder.Build());
+
+                //_logs.logMessage("Info", "commandsSystem.admin.setGroup default", $"Default role updated to {e.GetArg("id")}", e.User.Name);
+
+            }
+            catch
+            {
+
+            }
+        }
+
+        [Command("ConfigureGroupMods")]
+        [Remarks("Configure what Role ID gets Mod Permissions")]
+        [Alias("cgm")]
+        public async Task ConfigureGroupModsAsync(ulong UserValue)
+        {
+            try
+            {
+                _config = configuration.LoadFile();
+                _config.idModsGroup = UserValue;
+                _config.SaveFile();
+
+                var builder = new EmbedBuilder()
+                {
+                    Color = new Color(colors.Success[0], colors.Success[1], colors.Success[2]),
+                    Title = $"{configuration.LoadFile().Prefix}ConfigureGroupMods",
+                    Description = $"{Context.User.Username},\rPermissions have been updated."
+                };
+
+                await ReplyAsync("", false, builder.Build());
+
+                //_logs.logMessage("Info", "commandsSystem.admin.setGroup default", $"Default role updated to {e.GetArg("id")}", e.User.Name);
+
+            }
+            catch
+            {
+
+            }
+        }
+
+        [Command("ConfigureGroupAdmins")]
+        [Remarks("Configure what Role ID gets Mod Permissions")]
+        [Alias("cgm")]
+        public async Task ConfigureGroupAdminsAsync(ulong UserValue)
+        {
+            try
+            {
+                _config = configuration.LoadFile();
+                _config.idAdminGroup = UserValue;
+                _config.SaveFile();
+
+                var builder = new EmbedBuilder()
+                {
+                    Color = new Color(colors.Success[0], colors.Success[1], colors.Success[2]),
+                    Title = $"{configuration.LoadFile().Prefix}ConfigureGroupAdmins",
+                    Description = $"{Context.User.Username},\rPermissions have been updated."
+                };
+
+                await ReplyAsync("", false, builder.Build());
+
+                //_logs.logMessage("Info", "commandsSystem.admin.setGroup default", $"Default role updated to {e.GetArg("id")}", e.User.Name);
+
+            }
+            catch
+            {
+
+            }
+        }
     }
 
 
