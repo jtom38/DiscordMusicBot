@@ -1,7 +1,6 @@
 ﻿using Discord.Commands;
 using Discord.WebSocket;
 using discordMusicBot.src.sys;
-//using Example.Types;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -13,6 +12,7 @@ namespace discordMusicBot
         private DiscordSocketClient _client;
         private CommandService _cmds;
         private configuration _config;
+
 
         public async Task Install(DiscordSocketClient c)
         {

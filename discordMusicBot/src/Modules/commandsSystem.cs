@@ -103,11 +103,11 @@ namespace discordMusicBot.src.Modules
         [Command("RemoveMessage")]
         [Remarks("Removes lines of messages from the current text channel.")]
         [Alias("rm")]
-        public async Task RemoveMessageAsync(int counter = 0)
+        public async Task RemoveMessageAsync(int UserValue = 0)
         {
             try
             {
-                if (counter == 0)
+                if (UserValue == 0)
                 {
                     //await e.Channel.SendMessage($"{e.User.Name}, Please give me the number of lines you want to remove.");
                     var builder = new EmbedBuilder()
@@ -124,37 +124,27 @@ namespace discordMusicBot.src.Modules
 
                 int deleteCounter = 100;
 
-                while (counter > 0)
+                while (UserValue > 0)
                 {
-                    if (counter >= 100)
+                    if (UserValue >= 100)
                     {
                         deleteCounter = 100;
                     }
                     else
                     {
-                        deleteCounter = counter;
+                        deleteCounter = UserValue;
                     }
 
-                    //IReadOnlyCollection<SocketMessage> msg = Context.Channel.GetCachedMessages(deleteCounter);
+                    await Context.Message.DeleteAsync();
 
-                    var msg =  Context.Message.Channel.GetMessagesAsync(100);
-                    var msg1 = Context.Channel.GetCachedMessages(100);
-                    var t = Context.Client.GetApplicationInfoAsync();
-
-                    //tell server to download messages to memory
-                    //Message[] messagesToDelete = await e.Channel.DownloadMessages(deleteCounter);
-
-                    //tell bot to delete them from server
-                    //await e.Channel.DeleteMessages(messagesToDelete);
-
-                    counter = counter - 100;
+                    UserValue = UserValue - 100;
                 }
 
-                //_logs.logMessage("Info", "commandsSystem.rm", $"User requested {e.GetArg("count")} lines to be removed from {e.Channel.Name}", e.User.Name);
+                await _logs.logMessageAsync("Info", $"{configuration.LoadFile().Prefix}RemoveMessage", $"User requested {UserValue} lines to be removed from {Context.Channel.Name}", Context.User.Username);
             }        
             catch(Exception error)
             {
-                //_logs.logMessage("Error", "commandsSystem.rm", error.ToString(), e.User.Name);
+                await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}RemoveMessage", error.ToString(), Context.User.Username);
             }
         }
 
@@ -218,7 +208,7 @@ namespace discordMusicBot.src.Modules
 
                         await ReplyAsync("", false, builder.Build());
 
-                        //_logs.logMessage("Info", "commandsSyste.Volume", $"Volume was changed to {newVol}%", e.User.Name);
+                        await _logs.logMessageAsync("Info", $"{configuration.LoadFile().Prefix}Volume", $"Volume was changed to {newVol}%", Context.User.Username);
                     }
                 }
                 else if (userValue >= 101)
@@ -246,9 +236,9 @@ namespace discordMusicBot.src.Modules
                     await ReplyAsync("", false, builder.Build());
                 }
             }
-            catch
+            catch(Exception error)
             {
-
+                await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}Volume", error.ToString(), Context.User.Username);
             }
         }
 
@@ -261,11 +251,13 @@ namespace discordMusicBot.src.Modules
                 if(Context.Guild.AudioClient != null) //if its null the AudioClient wasnt loaded/used so the bot isnt in a voice room.
                     await Context.Guild.AudioClient.DisconnectAsync();
 
+                await _logs.logMessageAsync("Info", $"{configuration.LoadFile().Prefix}Shutdown", "User has requested the program to halt.", Context.User.Username);
+
                 Environment.Exit(0);
             }
             catch (Exception error)
             {
-                //_logs.logMessage("Error", "commandsSystem.halt", error.ToString(), e.User.Name);
+                await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}Shudown", error.ToString(), Context.User.Username);
             }
         }
 
@@ -292,7 +284,7 @@ namespace discordMusicBot.src.Modules
                 if (Context.Guild.AudioClient != null) //if its null the AudioClient wasnt loaded/used so the bot isnt in a voice room.
                     await Context.Guild.AudioClient.DisconnectAsync();
 
-                //await _logs.logMessageAsync("Info", _config.Prefix + "restart", "Process was restarted by user", Context.User.Username);
+                await _logs.logMessageAsync("Info", $"{configuration.LoadFile().Prefix}Restart", "User has requested the program to restart.", Context.User.Username);
 
                 var fileName = Assembly.GetExecutingAssembly().Location;
                 System.Diagnostics.Process.Start(fileName);
@@ -301,7 +293,7 @@ namespace discordMusicBot.src.Modules
             }
             catch (Exception error)
             {
-                //await _logs.logMessageAsync("Error", "commandsSystem.restart", error.ToString(), Context.User.Username);
+                await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}Restart", error.ToString(), Context.User.Username);
             }
         }
 
@@ -319,10 +311,12 @@ namespace discordMusicBot.src.Modules
                     Description = $"{Context.User.Username},\r**Datacenter**: {Context.Guild.VoiceRegionId}\r**Ping**: {Context.Guild.Discord.Latency}"
                 };
                 await ReplyAsync("", false, builder.Build());
-            }
-            catch
-            {
 
+                await _logs.logMessageAsync("Info", $"{configuration.LoadFile().Prefix}Ping", $"Datacenter: {Context.Guild.VoiceRegionId} Ping: {Context.Guild.Discord.Latency}", Context.User.Username);
+            }
+            catch(Exception error)
+            {
+                await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}Ping", error.ToString(), Context.User.Username);
             }
         }
 
