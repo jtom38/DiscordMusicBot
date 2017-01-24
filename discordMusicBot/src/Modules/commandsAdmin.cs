@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using discordMusicBot.src.sys;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,9 +17,38 @@ namespace discordMusicBot.src.Modules
         private CommandService _service;
         private configuration _config;
 
+        system _system = new system();
+
         public cmdAdmin(CommandService service)           // Create a constructor for the commandservice dependency
         {
             _service = service;
+        }
+
+        [Command("ConfigureSmutRoom")]
+        [Remarks("Defines where what text channel the command can be used.")]
+        public async Task ConfigureSmutRoomAsync(ulong TextChannelID)
+        {
+            try
+            {
+                _config = configuration.LoadFile();
+                _config.smutTextChannel = TextChannelID;
+                _config.SaveFile();
+
+                var builder = new EmbedBuilder()
+                {
+                    Color = new Color(colors.Success[0], colors.Success[1], colors.Success[2]),
+                    Title = $"{configuration.LoadFile().Prefix}ConfigurePrefix",
+                    Description = $"{Context.User.Username},\rConfiguration Updated\rSmut is now only allowed in room: {TextChannelID}."
+                };
+
+                await ReplyAsync("", false, builder.Build());
+
+                //logs.logMessage("Info", "commandsSystem.admin.setSmut", $"Smut Text Channel updated to {e.GetArg("id")}", e.User.Name);
+            }
+            catch
+            {
+
+            }
         }
 
         [Command("ConfigurePrefix")]
@@ -72,16 +102,113 @@ namespace discordMusicBot.src.Modules
             }
         }
 
-    }
-
-    [Group("ConfigSmut")]
-    public class ConfigSmut : ModuleBase
-    {
-        [Command("SmutID")]
-        [Remarks("Defines where what text channel the command can be used.")]
-        public async Task SetSmutAsync(string mode)
+        [Command("ExportPlayList")]
+        [Remarks("Exports requested file to the user via a PM.")]
+        [Alias("epl")]
+        public async Task ExportPlaylistAsync()
         {
+            try
+            {
+                bool plExport = await _system.cmd_plExport();
+
+                if (plExport == true)
+                {
+                    string filePath = Directory.GetCurrentDirectory() + "\\configs\\playlist_export.json";
+
+                    var pm = await Context.User.CreateDMChannelAsync();                   
+                    await pm.SendFileAsync(filePath, "Here is the file you requested");
+                    await pm.CloseAsync();
+
+                    File.Delete(Directory.GetCurrentDirectory() + "\\configs\\playlist_export.json");
+
+                    //_logs.logMessage("Info", "commandsSystem.Export Playlist", "User requested the playlist file.", e.User.Name);
+                }
+                else
+                {
+                    //await e.Channel.SendMessage("Error generating file.\rPlease inform the server owner for more infomation.");
+                }
+            }
+            catch
+            {
+
+            }
+        }
+
+        [Command("ExportBlackList")]
+        [Remarks("Exports requested file to the user via a PM.")]
+        [Alias("ebl")]
+        public async Task ExportBlacklistAsync()
+        {
+            try
+            {
+                bool blExport = await _system.cmd_blExport();
+
+                if (blExport == true)
+                {
+                    string filePath = Directory.GetCurrentDirectory() + "\\configs\\blacklist_export.json";
+
+                    var pm = await Context.User.CreateDMChannelAsync();
+                    await pm.SendFileAsync(filePath, "Here is the file you requested");
+                    await pm.CloseAsync();
+
+                    File.Delete(Directory.GetCurrentDirectory() + "\\configs\\blacklist_export.json");
+
+                    //_logs.logMessage("Info", "commandsSystem.Export Playlist", "User requested the playlist file.", e.User.Name);
+                }
+                else
+                {
+                    //await e.Channel.SendMessage("Error generating file.\rPlease inform the server owner for more infomation.");
+                }
+            }
+            catch
+            {
+
+            }
+        }
+
+        [Command("ExportLogs")]
+        [Remarks("Exports requested file to the user via a PM.")]
+        [Alias("el")]
+        public async Task ExportLogAsync()
+        {
+            try
+            {
+                string filePath = Directory.GetCurrentDirectory() + "\\logs.txt";
+
+                var pm = await Context.User.CreateDMChannelAsync();
+                await pm.SendFileAsync(filePath, "Here is the file you requested");
+                await pm.CloseAsync();
+
+                //_logs.logMessage("Info", "commandsSystem.Export Playlist", "User requested the playlist file.", e.User.Name);
+            }
+            catch
+            {
+
+            }
 
         }
+
+        [Command("ExportConfig")]
+        [Remarks("Exports requested file to the user via a PM.")]
+        [Alias("ec")]
+        public async Task ExportConfigAsync()
+        {
+            try
+            {
+                string filePath = Directory.GetCurrentDirectory() + "\\configs\\config.json";
+
+                var pm = await Context.User.CreateDMChannelAsync();
+                await pm.SendFileAsync(filePath, "Here is the file you requested");
+                await pm.CloseAsync();
+            }
+            catch
+            {
+
+            }
+
+        }
+
     }
+
+
 }

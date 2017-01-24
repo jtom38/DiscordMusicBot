@@ -22,11 +22,13 @@ namespace discordMusicBot
         private CommandHandler _commands;
         private configuration _config;
         startup _startup = new startup();
+        playlist _playlist = new playlist();
         logs _logs = new logs();
 
         public async Task Start()
         {
             _startup.startupCheck();
+            _playlist.shuffleLibrary();
 
             // Create a new instance of DiscordSocketClient.
             _client = new DiscordSocketClient(new DiscordSocketConfig()
