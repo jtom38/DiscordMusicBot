@@ -29,6 +29,7 @@ namespace discordMusicBot.src.Modules
         network _network = new network();
         logs _logs = new logs();
         discordStatus _discordStatus = new discordStatus();
+        embed _embed = new embed();
 
         [Command("help")]
         public async Task HelpAsync(string command = null)
@@ -109,16 +110,9 @@ namespace discordMusicBot.src.Modules
             {
                 if (UserValue == 0)
                 {
-                    //await e.Channel.SendMessage($"{e.User.Name}, Please give me the number of lines you want to remove.");
-                    var builder = new EmbedBuilder()
-                    {
-                        //unit error = uint.Parse(colors.Error)
-                        Color = new Color(colors.Error[0], colors.Error[1], colors.Error[2]),
-                        Title = $"{configuration.LoadFile().Prefix}RemoveMessage",
-                        Description = $"{Context.User.Username},\rUnable to remove messages.  No number value was given."
-                    };
-
+                    var builder = await _embed.ErrorEmbedAsync("RemoveMessage", "Unable to remove messages.  No number value was given.", Context.User.Username);
                     await ReplyAsync("", false, builder.Build());
+
                     return;
                 }
 
@@ -144,6 +138,8 @@ namespace discordMusicBot.src.Modules
             }        
             catch(Exception error)
             {
+                var builder = await _embed.ErrorEmbedAsync("RemoveMessage", "**Error**\rPlease check the log file for the error dump.", Context.User.Username);
+                await ReplyAsync("", false, builder.Build());
                 await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}RemoveMessage", error.ToString(), Context.User.Username);
             }
         }
@@ -157,16 +153,9 @@ namespace discordMusicBot.src.Modules
             {
                 if (userValue == 0)
                 {
-
-                    var builder = new EmbedBuilder()
-                    {
-                        //unit error = uint.Parse(colors.Error)
-                        Color = new Color(colors.Error[0], colors.Error[1], colors.Error[2]),
-                        Title = $"{configuration.LoadFile().Prefix}Volume",
-                        Description = $"{Context.User.Username},\rPlease give me the percent value you want me to change to.\rExample: {configuration.LoadFile().Prefix}Volume 50"
-                    };
-
+                    var builder = await _embed.ErrorEmbedAsync("Volume", "Please give me the percent value you want me to change to.", Context.User.Username);
                     await ReplyAsync("", false, builder.Build());
+
                     return;
                 }
 
@@ -198,41 +187,20 @@ namespace discordMusicBot.src.Modules
 
                         player.volume = newVol; //send the updated value to the var so we dont have to load the config file everytime in the loop.
 
-                        var builder = new EmbedBuilder()
-                        {
-                            //unit error = uint.Parse(colors.Error)
-                            Color = new Color(colors.Success[0], colors.Success[1], colors.Success[2]),
-                            Title = $"{configuration.LoadFile().Prefix}Volume",
-                            Description = $"{Context.User.Username},\rI have updated the volume to {userValue}%."
-                        };
-
+                        var builder = await _embed.ErrorEmbedAsync("Volume", $"Configuration Updated\rVolume is now set to: {userValue}%.", Context.User.Username);
                         await ReplyAsync("", false, builder.Build());
 
-                        await _logs.logMessageAsync("Info", $"{configuration.LoadFile().Prefix}Volume", $"Volume was changed to {newVol}%", Context.User.Username);
+                        await _logs.logMessageAsync("Info", $"{configuration.LoadFile().Prefix}Volume", $"Configuration Updated: Volume is now set to: {userValue}%.", Context.User.Username);
                     }
                 }
                 else if (userValue >= 101)
                 {
-                    var builder = new EmbedBuilder()
-                    {
-                        //unit error = uint.Parse(colors.Error)
-                        Color = new Color(colors.Error[0], colors.Error[1], colors.Error[2]),
-                        Title = $"{configuration.LoadFile().Prefix}Volume",
-                        Description = $"{Context.User.Username},\rThe value you gave was higher then 100%, sorry."
-                    };
-
+                    var builder = await _embed.SucessEmbedAsync("Volume", $"**Error**\rThe value you gave was higher then 100%, sorry.", Context.User.Username);
                     await ReplyAsync("", false, builder.Build());
                 }
                 else if (userValue <= 0)
                 {
-                    var builder = new EmbedBuilder()
-                    {
-                        //unit error = uint.Parse(colors.Error)
-                        Color = new Color(colors.Error[0], colors.Error[1], colors.Error[2]),
-                        Title = $"{configuration.LoadFile().Prefix}Volume",
-                        Description = $"{Context.User.Username},\rThe value can't go below 1, sorry."
-                    };
-
+                    var builder = await _embed.ErrorEmbedAsync("Volume", $"**Error**\rThe value cannot beset below 1%, sorry.", Context.User.Username);
                     await ReplyAsync("", false, builder.Build());
                 }
             }
@@ -250,6 +218,9 @@ namespace discordMusicBot.src.Modules
             {
                 if(Context.Guild.AudioClient != null) //if its null the AudioClient wasnt loaded/used so the bot isnt in a voice room.
                     await Context.Guild.AudioClient.DisconnectAsync();
+
+                var builder = await _embed.SucessEmbedAsync("Shutdown", $"Shutting down\r:wave: :zzz:", Context.User.Username);
+                await ReplyAsync("", false, builder.Build());
 
                 await _logs.logMessageAsync("Info", $"{configuration.LoadFile().Prefix}Shutdown", "User has requested the program to halt.", Context.User.Username);
 
@@ -271,14 +242,8 @@ namespace discordMusicBot.src.Modules
                 await Context.Client.SetGameAsync(null);
 
                 //send a message out on the restart
-                var builder = new EmbedBuilder()
-                {
-                    Color = new Color(colors.Success[0], colors.Success[1], colors.Success[2]),
-                    Title = $"{configuration.LoadFile().Prefix}Restart",
-                    Description = $"{Context.User.Username},\rPlease wait as I reboot."
-                };
+                var builder = await _embed.SucessEmbedAsync("Restart", $"Please wait as I restart.", Context.User.Username);
                 await ReplyAsync("", false, builder.Build());
-
 
                 //check to see if she is in a voice room, if so disconnect 
                 if (Context.Guild.AudioClient != null) //if its null the AudioClient wasnt loaded/used so the bot isnt in a voice room.
@@ -303,13 +268,7 @@ namespace discordMusicBot.src.Modules
         {
             try
             {
-
-                var builder = new EmbedBuilder()
-                {
-                    Color = new Color(colors.Success[0], colors.Success[1], colors.Success[2]),
-                    Title = $"**{configuration.LoadFile().Prefix}Ping**",
-                    Description = $"{Context.User.Username},\r**Datacenter**: {Context.Guild.VoiceRegionId}\r**Ping**: {Context.Guild.Discord.Latency}"
-                };
+                var builder = await _embed.SucessEmbedAsync("Ping", $"**Datacenter**: {Context.Guild.VoiceRegionId}\r**Ping**: {Context.Guild.Discord.Latency}", Context.User.Username);
                 await ReplyAsync("", false, builder.Build());
 
                 await _logs.logMessageAsync("Info", $"{configuration.LoadFile().Prefix}Ping", $"Datacenter: {Context.Guild.VoiceRegionId} Ping: {Context.Guild.Discord.Latency}", Context.User.Username);

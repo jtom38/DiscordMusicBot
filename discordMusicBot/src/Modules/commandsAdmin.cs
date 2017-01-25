@@ -19,6 +19,7 @@ namespace discordMusicBot.src.Modules
 
         system _system = new system();
         logs _logs = new logs();
+        embed _embed = new embed();
 
         public cmdAdmin(CommandService service)           // Create a constructor for the commandservice dependency
         {
@@ -36,13 +37,7 @@ namespace discordMusicBot.src.Modules
                 _config.idDefaultGroup = UserValue;
                 _config.SaveFile();
 
-                var builder = new EmbedBuilder()
-                {
-                    Color = new Color(colors.Success[0], colors.Success[1], colors.Success[2]),
-                    Title = $"{configuration.LoadFile().Prefix}ConfigureGroupEveryone",
-                    Description = $"{Context.User.Username},\rPermissions have been updated."
-                };
-
+                var builder = await _embed.SucessEmbedAsync("ConfigureGroupEveryone", $"Configuration Updated\r Everyone group is now linked to role: {UserValue}", Context.User.Username);
                 await ReplyAsync("", false, builder.Build());
 
                 await _logs.logMessageAsync("Info", $"{configuration.LoadFile().Prefix}ConfigureGroupEveryone", $"User updated idDefaultGroup = {UserValue}", Context.User.Username);
@@ -50,12 +45,9 @@ namespace discordMusicBot.src.Modules
             }
             catch(Exception error)
             {
-                var builder = new EmbedBuilder()
-                {
-                    Color = new Color(colors.Error[0], colors.Error[1], colors.Error[2]),
-                    Title = $"{configuration.LoadFile().Prefix}ConfigureGroupEveryone",
-                    Description = $"{Context.User.Username},\r."
-                };
+                var builder = await _embed.ErrorEmbedAsync("ConfigureGroupEveryone", error.ToString(), Context.User.Username);
+
+                await ReplyAsync("", false, builder.Build());
 
                 await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}ConfigureGroupEveryone", error.ToString(), Context.User.Username);
             }
@@ -72,21 +64,19 @@ namespace discordMusicBot.src.Modules
                 _config.idModsGroup = UserValue;
                 _config.SaveFile();
 
-                var builder = new EmbedBuilder()
-                {
-                    Color = new Color(colors.Success[0], colors.Success[1], colors.Success[2]),
-                    Title = $"{configuration.LoadFile().Prefix}ConfigureGroupMods",
-                    Description = $"{Context.User.Username},\rPermissions have been updated."
-                };
+                var builder = await _embed.SucessEmbedAsync("ConfigureGroupMods", $"Configuration Updated\rMods group now linked to role: {UserValue}", Context.User.Username);
+                await ReplyAsync("", false, builder.Build());
+
+                await _logs.logMessageAsync("Info", $"{configuration.LoadFile().Prefix}ConfigureGroupMods", $"Configuration Updated: Mods group now linked to role: {UserValue}", Context.User.Username);
+
+            }
+            catch(Exception error)
+            {
+                var builder = await _embed.ErrorEmbedAsync("ConfigureGroupMods", error.ToString(), Context.User.Username);
 
                 await ReplyAsync("", false, builder.Build());
 
-                //_logs.logMessage("Info", "commandsSystem.admin.setGroup default", $"Default role updated to {e.GetArg("id")}", e.User.Name);
-
-            }
-            catch
-            {
-
+                await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}ConfigureGroupMods", error.ToString(), Context.User.Username);
             }
         }
 
@@ -101,21 +91,18 @@ namespace discordMusicBot.src.Modules
                 _config.idAdminGroup = UserValue;
                 _config.SaveFile();
 
-                var builder = new EmbedBuilder()
-                {
-                    Color = new Color(colors.Success[0], colors.Success[1], colors.Success[2]),
-                    Title = $"{configuration.LoadFile().Prefix}ConfigureGroupAdmins",
-                    Description = $"{Context.User.Username},\rPermissions have been updated."
-                };
-
+                var builder = await _embed.SucessEmbedAsync("ConfigureGroupAdmins", $"Configuration Updated\rAdmins group is now linked to role: {UserValue}", Context.User.Username);
                 await ReplyAsync("", false, builder.Build());
 
-                //_logs.logMessage("Info", "commandsSystem.admin.setGroup default", $"Default role updated to {e.GetArg("id")}", e.User.Name);
+                await _logs.logMessageAsync("Info", $"{configuration.LoadFile().Prefix}ConfigureGroupAdmins", $"Configuration Updated: Admins group is now linked to role: {UserValue}", Context.User.Username);
 
             }
-            catch
+            catch(Exception error)
             {
+                var builder = await _embed.ErrorEmbedAsync("ConfigureGroupAdmins", error.ToString(), Context.User.Username);
+                await ReplyAsync("", false, builder.Build());
 
+                await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}ConfigureGroupAdmins", error.ToString(), Context.User.Username);
             }
         }
 
@@ -141,22 +128,17 @@ namespace discordMusicBot.src.Modules
                     t = UserValue.ToString();
                 }
 
-                var builder = new EmbedBuilder()
-                {
-                    Color = new Color(colors.Success[0], colors.Success[1], colors.Success[2]),
-                    Title = $"{configuration.LoadFile().Prefix}ConfigureMaxSubmitted",
-                    Description = $"{Context.User.Username},\rNumber of Max Submitted Tracks = {t}"
-                };
-
+                var builder = await _embed.SucessEmbedAsync("ConfigureMaxSubmitted", $"Configuration Updated\rNumber of Max Submitted Tracks = {t}.", Context.User.Username);
                 await ReplyAsync("", false, builder.Build());
 
-                //await e.Channel.SendMessage($"{e.User.Name},\rI have disabled this function for you.");
-                //_logs.logMessage("Info", "commandsSystem.admin.maxSubmitted", $"Max number of submitted tracks is now disabled", e.User.Name);
-
+                await _logs.logMessageAsync("Info", $"{configuration.LoadFile().Prefix}ConfigureMaxSubmitted", $"Configuration Updated: Number of Max Submitted Tracks = {t}.", Context.User.Username);
             }
-            catch
+            catch(Exception error)
             {
+                var builder = await _embed.ErrorEmbedAsync("ConfigureMaxSubmitted", error.ToString(), Context.User.Username);
+                await ReplyAsync("", false, builder.Build());
 
+                await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}ConfigureMaxSubmitted", error.ToString(), Context.User.Username);
             }
         }
 
@@ -171,13 +153,7 @@ namespace discordMusicBot.src.Modules
                     UserValue == "/" ||
                     UserValue == "@")
                 {
-                    var builder = new EmbedBuilder()
-                    {
-                        Color = new Color(colors.Error[0], colors.Error[1], colors.Error[2]),
-                        Title = $"{configuration.LoadFile().Prefix}ConfigurePrefix",
-                        Description = $"{Context.User.Username},\rPlease pick another command character that is not one of the following.\r'#' '/' '@'"
-                    };
-
+                    var builder = await _embed.ErrorEmbedAsync("ConfigurePrefix", "Please pick another command character that is not one of the following.\r'#' '/' '@'", Context.User.Username);
                     await ReplyAsync("", false, builder.Build());
                     return;
                 }
@@ -193,21 +169,18 @@ namespace discordMusicBot.src.Modules
                     _config.Prefix = UserValue[0];
                     _config.SaveFile();
 
-                    var builder = new EmbedBuilder()
-                    {
-                        Color = new Color(colors.Success[0], colors.Success[1], colors.Success[2]),
-                        Title = $"{configuration.LoadFile().Prefix}ConfigurePrefix",
-                        Description = $"{Context.User.Username},\rCharacter prefix has been changed to {UserValue} and will be active on next restart."
-                    };
-
+                    var builder = await _embed.SucessEmbedAsync("ConfigurePrefix", $"Configuration Updated\rPrefix is now: {UserValue}.", Context.User.Username);
                     await ReplyAsync("", false, builder.Build());
 
-                    //_logs.logMessage("Info", "commandsSystem.admin.setPrefix", $"Commands prefix was changed to {e.GetArg("value")}.", e.User.Name);
+                    await _logs.logMessageAsync("Info", $"{configuration.LoadFile().Prefix}ConfigurePrefix", $"Configuration Updated: Prefix is now: {UserValue}", Context.User.Username);
                 }
             }
-            catch
+            catch(Exception error)
             {
+                var builder = await _embed.ErrorEmbedAsync("ConfigurePrefix", error.ToString(), Context.User.Username);
+                await ReplyAsync("", false, builder.Build());
 
+                await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}ConfigurePrefix", error.ToString(), Context.User.Username);
             }
         }
 
@@ -221,20 +194,17 @@ namespace discordMusicBot.src.Modules
                 _config.smutTextChannel = TextChannelID;
                 _config.SaveFile();
 
-                var builder = new EmbedBuilder()
-                {
-                    Color = new Color(colors.Success[0], colors.Success[1], colors.Success[2]),
-                    Title = $"{configuration.LoadFile().Prefix}ConfigurePrefix",
-                    Description = $"{Context.User.Username},\rConfiguration Updated\rSmut is now only allowed in room: {TextChannelID}."
-                };
-
+                var builder = await _embed.SucessEmbedAsync("ConfigureSmutRoom", $"Configuration Updated\rSmut is now only allowed in room: {TextChannelID}.", Context.User.Username);
                 await ReplyAsync("", false, builder.Build());
 
-                //logs.logMessage("Info", "commandsSystem.admin.setSmut", $"Smut Text Channel updated to {e.GetArg("id")}", e.User.Name);
+                await _logs.logMessageAsync("Info", $"{configuration.LoadFile().Prefix}ConfigureSmutRoom", $"Configuration Updated: Smut is now only allowed in room: {TextChannelID}.", Context.User.Username);
             }
-            catch
+            catch(Exception error)
             {
+                var builder = await _embed.ErrorEmbedAsync("ConfigureSmutRoom", error.ToString(), Context.User.Username);
+                await ReplyAsync("", false, builder.Build());
 
+                await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}ConfigureSmutRoom", error.ToString(), Context.User.Username);
             }
         }
 
@@ -257,16 +227,19 @@ namespace discordMusicBot.src.Modules
 
                     File.Delete(Directory.GetCurrentDirectory() + "\\configs\\playlist_export.json");
 
-                    //_logs.logMessage("Info", "commandsSystem.Export Playlist", "User requested the playlist file.", e.User.Name);
+                    await _logs.logMessageAsync("Info", $"{configuration.LoadFile().Prefix}ExportPlaylist", "User requested the playlist file.", Context.User.Username);
                 }
                 else
                 {
-                    //await e.Channel.SendMessage("Error generating file.\rPlease inform the server owner for more infomation.");
+                    var builder = await _embed.ErrorEmbedAsync("ExportPlaylist", "Failed to generate the file.  Check the log for the dump.", Context.User.Username);
+                    await ReplyAsync("", false, builder.Build());
                 }
             }
-            catch
+            catch(Exception error)
             {
-
+                var builder = await _embed.ErrorEmbedAsync("ExportBlackList", error.ToString(), Context.User.Username);
+                await ReplyAsync("", false, builder.Build());
+                await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}ExportPlaylist", error.ToString(), Context.User.Username);
             }
         }
 
@@ -289,16 +262,18 @@ namespace discordMusicBot.src.Modules
 
                     File.Delete(Directory.GetCurrentDirectory() + "\\configs\\blacklist_export.json");
 
-                    //_logs.logMessage("Info", "commandsSystem.Export Playlist", "User requested the playlist file.", e.User.Name);
+                    await _logs.logMessageAsync("Info", $"{configuration.LoadFile().Prefix}ExportBlacklist", "User requested the Blacklist file.", Context.User.Username);
                 }
                 else
                 {
-                    //await e.Channel.SendMessage("Error generating file.\rPlease inform the server owner for more infomation.");
+                    
                 }
             }
-            catch
+            catch(Exception error)
             {
-
+                var builder = await _embed.ErrorEmbedAsync("ExportBlackList", error.ToString(), Context.User.Username);
+                await ReplyAsync("", false, builder.Build());
+                await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}ExportBlacklist", error.ToString(), Context.User.Username);
             }
         }
 
@@ -315,11 +290,13 @@ namespace discordMusicBot.src.Modules
                 await pm.SendFileAsync(filePath, "Here is the file you requested");
                 await pm.CloseAsync();
 
-                //_logs.logMessage("Info", "commandsSystem.Export Playlist", "User requested the playlist file.", e.User.Name);
+                await _logs.logMessageAsync("Info", $"{configuration.LoadFile().Prefix}ExportLogs", "User requested the Log file.", Context.User.Username);
             }
-            catch
+            catch(Exception error)
             {
-
+                var builder = await _embed.ErrorEmbedAsync("ExportLogs", error.ToString(), Context.User.Username);
+                await ReplyAsync("", false, builder.Build());
+                await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}ExportLogs", error.ToString(), Context.User.Username);
             }
 
         }
@@ -336,10 +313,14 @@ namespace discordMusicBot.src.Modules
                 var pm = await Context.User.CreateDMChannelAsync();
                 await pm.SendFileAsync(filePath, "Here is the file you requested");
                 await pm.CloseAsync();
-            }
-            catch
-            {
 
+                await _logs.logMessageAsync("Info", $"{configuration.LoadFile().Prefix}ExportConfig", "User requested the Log file.", Context.User.Username);
+            }
+            catch(Exception error)
+            {
+                var builder = await _embed.ErrorEmbedAsync("ExportConfig", error.ToString(), Context.User.Username);
+                await ReplyAsync("", false, builder.Build());
+                await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}ExportConfig", error.ToString(), Context.User.Username);
             }
 
         }
@@ -352,7 +333,6 @@ namespace discordMusicBot.src.Modules
             try
             {
                 //extract the roles and id's from the server
-                //List<Role> serverRolesList = e.Server.Roles.ToList();
                 List<SocketRole> serverRolesList = Context.Guild.Roles.ToList();
 
                 string result = null;
@@ -363,25 +343,19 @@ namespace discordMusicBot.src.Modules
 
                 var pm = await Context.User.CreateDMChannelAsync();
 
-                var builder = new EmbedBuilder()
-                {
-                    Color = new Color(colors.Error[0], colors.Error[1], colors.Error[2]),
-                    Title = $"{configuration.LoadFile().Prefix}ServerIDS",
-                    Description = $"{result}"
-                };
-
-                //await ReplyAsync("", false, builder.Build());
+                var builder = await _embed.SucessEmbedAsync("ServerIDs", $"{result}", Context.User.Username);
+                await ReplyAsync("", false, builder.Build());
 
                 await pm.SendMessageAsync("", false, builder.Build());
                 await pm.CloseAsync();
 
-                //await userPM.SendMessage($"```\r{result}\r```");
-
-                //_logs.logMessage("Info", "commandsSystem.admin.serverIds", "User requested the server role IDs.", e.User.Name);
+                await _logs.logMessageAsync("Info", $"{configuration.LoadFile().Prefix}ServerIDs", $"User has requested the Role IDs.", Context.User.Username);
             }
             catch (Exception error)
             {
-                //_logs.logMessage("Error", "commandsSystem.admin.serverIds", error.ToString(), e.User.Name);
+                var builder = await _embed.ErrorEmbedAsync("ServerIDs", error.ToString(), Context.User.Username);
+                await ReplyAsync("", false, builder.Build());
+                await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}ServerIDs", error.ToString(), Context.User.Username);
             }
         }
 

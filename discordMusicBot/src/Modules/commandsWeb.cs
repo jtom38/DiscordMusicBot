@@ -21,6 +21,7 @@ namespace discordMusicBot.src.Modules
         rule34 _rule34 = new rule34();
         booru _danbooru = new booru();
         logs _logs = new logs();
+        embed _embed = new embed();
 
         public commandsWeb(CommandService service)
         {
@@ -38,23 +39,12 @@ namespace discordMusicBot.src.Modules
                 
                 if(result[0] == "No Value")
                 {
-                    var builder = new EmbedBuilder()
-                    {
-                        //unit error = uint.Parse(colors.Error)
-                        Color = new Color(colors.Error[0], colors.Error[1], colors.Error[2]),
-                        Description = $"**Term**: '{result[1]}'\r**Error**: Unable to find any infomation on this tag."
-                    };
-
+                    var builder = await _embed.ErrorEmbedAsync("UrbanDictionary", $"**Term**: '{result[1]}'\r**Error**: Unable to find any infomation on this tag.", Context.User.Username);
                     await ReplyAsync("", false, builder.Build());
                 }
                 else
                 {
-                    var builder = new EmbedBuilder()
-                    {
-                        Color = new Color(colors.Success[0], colors.Success[1], colors.Success[2]),
-                        Description = $"**Term**:\t'{result[2]}'\r**Definition**:\t{result[0]}\r**Example**:\t{result[1]}\r**Tags**:\t{result[3]}"
-                    };
-
+                    var builder = await _embed.SucessEmbedAsync("UrbanDictionary", $"**Term**:\t'{result[2]}'\r**Definition**:\t{result[0]}\r**Example**:\t{result[1]}\r**Tags**:\t{result[3]}", Context.User.Username);
                     await ReplyAsync("", false, builder.Build());
                 }
 
@@ -71,6 +61,11 @@ namespace discordMusicBot.src.Modules
         {
             try
             {
+                //check to see if we need to spend smut to a spific room
+                if(configuration.LoadFile().smutTextChannel != 0)
+                {
+                    //we need to check to make sure the room is correct
+                }
                 string[] result = null;
 
                 switch (site)
@@ -110,29 +105,21 @@ namespace discordMusicBot.src.Modules
 
                 if (result != null)
                 {
-                    var builder = new EmbedBuilder()
-                    {
-                        Color = new Color(colors.Success[0], colors.Success[1], colors.Success[2]),
-                        Title = $"{result[1]} with tag: {result[3]}",
-                        ImageUrl = result[0]
-                    };
-
+                    var builder = await _embed.SucessEmbedAsync("Smut", $"{result[1]} with tag: {result[3]}", Context.User.Username, result[0]);
                     await ReplyAsync("", false, builder.Build());
                 }
                 else
                 {
-                    var builder = new EmbedBuilder()
-                    {
-                        Color = new Color(colors.Error[0], colors.Error[1], colors.Error[2]),
-                        Description = $"**Site**: '{result[1]}'\r**Error**: Unable to find any infomation on this tag."
-                    };
-
+                    var builder = await _embed.SucessEmbedAsync("Smut", $"**Site**: '{result[1]}'\r**Error**: Unable to find any infomation on this tag.", Context.User.Username);
                     await ReplyAsync("", false, builder.Build());
                 }
             }
-            catch
+            catch(Exception error)
             {
+                var builder = await _embed.ErrorEmbedAsync("Smut", error.ToString());
+                await ReplyAsync("", false, builder.Build());
 
+                await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}Smut", error.ToString(), Context.User.Username);
             }
         }
 
