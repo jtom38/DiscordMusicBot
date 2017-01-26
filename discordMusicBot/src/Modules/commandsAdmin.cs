@@ -142,6 +142,28 @@ namespace discordMusicBot.src.Modules
             }
         }
 
+        [Command("ConfigureMusicRoom")]
+        [Remarks("Defines what text channel music commands can be used")]
+        [Alias("cmr")]
+        public async Task ConfigureMusicRoom(ulong UserValue)
+        {
+            try
+            {
+                _config = configuration.LoadFile();
+                _config.musicTextChannel = UserValue;
+                _config.SaveFile();
+
+                var builder = await _embed.SucessEmbedAsync("ConfigureMusicRoom", $"Configuration Updated\rMusic commands can now be only used in: {UserValue}.", Context.User.Username);
+                await ReplyAsync("", false, builder.Build());
+
+                await _logs.logMessageAsync("Info", $"{configuration.LoadFile().Prefix}ConfigureMusicRoom", $"Configuration Updated: Smut is now only allowed in room: {UserValue}.", Context.User.Username);
+            }
+            catch
+            {
+
+            }
+        }
+
         [Command("ConfigurePrefix")]
         [Remarks("Sets the prefix that the bot will respond to.")]
         [Alias("prefix", "cp")]

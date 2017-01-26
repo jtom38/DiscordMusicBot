@@ -62,57 +62,77 @@ namespace discordMusicBot.src.Modules
             try
             {
                 //check to see if we need to spend smut to a spific room
+                bool sendSmut = false;
                 if(configuration.LoadFile().smutTextChannel != 0)
                 {
                     //we need to check to make sure the room is correct
+                    if(Context.Channel.Id == configuration.LoadFile().smutTextChannel)
+                    {
+                        sendSmut = true;
+                    }
                 }
-                string[] result = null;
-
-                switch (site)
+                else
                 {
-                    case "dabooru":
-                    case "dan":
-                    case "d":
-                        {
-                            result = await _danbooru.webRequestStart("danbooru", tag);
-                        }
-                        break;
-                    case "konachan":
-                    case "kona":
-                    case "k":
-                        {
-                            result = await _danbooru.webRequestStart("konachan", tag);
-                        }
-                        break;
-                    case "yandere":
-                    case "yan":
-                    case "y":
-                        {
-                            result = await _danbooru.webRequestStart("yandere", tag);
-                        }
-                        break;
-                    case "rule34":
-                    case "r34":
-                    case "r":
-                        {
-                            result = await _rule34.rule34QuerrySite(tag);
-                        }
-                        break;
-                    default:
-                        result = await _rule34.rule34QuerrySite(site);
-                        break;
+                    sendSmut = true;
                 }
 
-                if (result != null)
+                if(sendSmut == false)
                 {
-                    var builder = await _embed.SucessEmbedAsync("Smut", $"{result[1]} with tag: {result[3]}", Context.User.Username, result[0]);
+                    //send a error and fail out
+                    var builder = await _embed.ErrorEmbedAsync("Smut", $"Please select the correct room and try again.", Context.User.Username);
                     await ReplyAsync("", false, builder.Build());
                 }
                 else
                 {
-                    var builder = await _embed.SucessEmbedAsync("Smut", $"**Site**: '{result[1]}'\r**Error**: Unable to find any infomation on this tag.", Context.User.Username);
-                    await ReplyAsync("", false, builder.Build());
+                    string[] result = null;
+
+                    switch (site)
+                    {
+                        case "dabooru":
+                        case "dan":
+                        case "d":
+                            {
+                                result = await _danbooru.webRequestStart("danbooru", tag);
+                            }
+                            break;
+                        case "konachan":
+                        case "kona":
+                        case "k":
+                            {
+                                result = await _danbooru.webRequestStart("konachan", tag);
+                            }
+                            break;
+                        case "yandere":
+                        case "yan":
+                        case "y":
+                            {
+                                result = await _danbooru.webRequestStart("yandere", tag);
+                            }
+                            break;
+                        case "rule34":
+                        case "r34":
+                        case "r":
+                            {
+                                result = await _rule34.rule34QuerrySite(tag);
+                            }
+                            break;
+                        default:
+                            result = await _rule34.rule34QuerrySite(site);
+                            break;
+                    }
+
+                    if (result != null)
+                    {
+                        var builder = await _embed.SucessEmbedAsync("Smut", $"{result[1]} with tag: {result[3]}", Context.User.Username, result[0]);
+                        await ReplyAsync("", false, builder.Build());
+                    }
+                    else
+                    {
+                        var builder = await _embed.ErrorEmbedAsync("Smut", $"**Site**: '{result[1]}'\r**Error**: Unable to find any infomation on this tag.", Context.User.Username);
+                        await ReplyAsync("", false, builder.Build());
+                    }
                 }
+
             }
             catch(Exception error)
             {

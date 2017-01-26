@@ -11,26 +11,32 @@ namespace discordMusicBot.src.sys
         /// Your bot's command prefix. Please don't pick `!`. 
         /// </summary>
         public char Prefix { get; set; }
+
         /// <summary> 
         /// Ids of users who will have owner access to the bot. 
         /// </summary>
         public ulong Owner { get; set; }
+
         /// <summary> 
         /// Your bot's login token. 
         /// </summary>
         public string Token { get; set; }
+
         /// <summary>
         ///     idDefaultGroup = id for @everyone
         /// </summary>
         public ulong idDefaultGroup { get; set; }
+
         /// <summary>
         ///     idModsGroup = id for bot mods,  Custom group
         /// </summary>
         public ulong idModsGroup { get; set; }
+
         /// <summary>
         ///     idAdminGroup = id for bot admins/owners, Custom group.
         /// </summary>
         public ulong idAdminGroup { get; set; }
+
         /// <summary>
         /// Used to set the level and write logs according to what the user wants.
         /// </summary>
@@ -39,10 +45,16 @@ namespace discordMusicBot.src.sys
         public int maxTrackSubmitted { get; set; }
 
         public float volume { get; set; }
+
         /// <summary>
         /// If this is not set smut can be sent to any text channel
         /// </summary>
         public ulong smutTextChannel { get; set; }
+
+        /// <summary>
+        /// Defines what room music commands can be used in
+        /// </summary>
+        public ulong musicTextChannel { get; set; }
 
         public configuration()
         {
@@ -56,6 +68,7 @@ namespace discordMusicBot.src.sys
             logLevel = -1;
             maxTrackSubmitted = 5;
             smutTextChannel = new ulong { };
+            musicTextChannel = new ulong { };
         }
 
         /// <summary> Save the current configuration object to a file. </summary>
