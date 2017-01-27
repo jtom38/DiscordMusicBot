@@ -110,7 +110,7 @@ namespace discordMusicBot.src.Modules
             {
                 if (UserValue == 0)
                 {
-                    var builder = await _embed.ErrorEmbedAsync("RemoveMessage", "Unable to remove messages.  No number value was given.", Context.User.Username);
+                    var builder = await _embed.ErrorEmbedAsync("RemoveMessage", "Unable to remove messages.  No number value was given.");
                     await ReplyAsync("", false, builder.Build());
 
                     return;
@@ -138,7 +138,7 @@ namespace discordMusicBot.src.Modules
             }        
             catch(Exception error)
             {
-                var builder = await _embed.ErrorEmbedAsync("RemoveMessage", "**Error**\rPlease check the log file for the error dump.", Context.User.Username);
+                var builder = await _embed.ErrorEmbedAsync("RemoveMessage");
                 await ReplyAsync("", false, builder.Build());
                 await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}RemoveMessage", error.ToString(), Context.User.Username);
             }
@@ -153,7 +153,7 @@ namespace discordMusicBot.src.Modules
             {
                 if (userValue == 0)
                 {
-                    var builder = await _embed.ErrorEmbedAsync("Volume", "Please give me the percent value you want me to change to.", Context.User.Username);
+                    var builder = await _embed.ErrorEmbedAsync("Volume", "Please give me the percent value you want me to change to.");
                     await ReplyAsync("", false, builder.Build());
 
                     return;
@@ -187,7 +187,7 @@ namespace discordMusicBot.src.Modules
 
                         player.volume = newVol; //send the updated value to the var so we dont have to load the config file everytime in the loop.
 
-                        var builder = await _embed.ErrorEmbedAsync("Volume", $"Configuration Updated\rVolume is now set to: {userValue}%.", Context.User.Username);
+                        var builder = await _embed.ErrorEmbedAsync("Volume", $"Configuration Updated\rVolume is now set to: {userValue}%.");
                         await ReplyAsync("", false, builder.Build());
 
                         await _logs.logMessageAsync("Info", $"{configuration.LoadFile().Prefix}Volume", $"Configuration Updated: Volume is now set to: {userValue}%.", Context.User.Username);
@@ -200,12 +200,14 @@ namespace discordMusicBot.src.Modules
                 }
                 else if (userValue <= 0)
                 {
-                    var builder = await _embed.ErrorEmbedAsync("Volume", $"**Error**\rThe value cannot beset below 1%, sorry.", Context.User.Username);
+                    var builder = await _embed.ErrorEmbedAsync("Volume");
                     await ReplyAsync("", false, builder.Build());
                 }
             }
             catch(Exception error)
             {
+                var builder = await _embed.ErrorEmbedAsync("Volume");
+                await ReplyAsync("", false, builder.Build());
                 await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}Volume", error.ToString(), Context.User.Username);
             }
         }
@@ -228,6 +230,8 @@ namespace discordMusicBot.src.Modules
             }
             catch (Exception error)
             {
+                var builder = await _embed.ErrorEmbedAsync("Shutdown");
+                await ReplyAsync("", false, builder.Build());
                 await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}Shudown", error.ToString(), Context.User.Username);
             }
         }
@@ -258,6 +262,8 @@ namespace discordMusicBot.src.Modules
             }
             catch (Exception error)
             {
+                var builder = await _embed.ErrorEmbedAsync("Restart");
+                await ReplyAsync("", false, builder.Build());
                 await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}Restart", error.ToString(), Context.User.Username);
             }
         }
@@ -275,6 +281,8 @@ namespace discordMusicBot.src.Modules
             }
             catch(Exception error)
             {
+                var builder = await _embed.ErrorEmbedAsync("Ping");
+                await ReplyAsync("", false, builder.Build());
                 await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}Ping", error.ToString(), Context.User.Username);
             }
         }

@@ -45,8 +45,7 @@ namespace discordMusicBot.src.Modules
             }
             catch(Exception error)
             {
-                var builder = await _embed.ErrorEmbedAsync("ConfigureGroupEveryone", error.ToString(), Context.User.Username);
-
+                var builder = await _embed.ErrorEmbedAsync("ConfigureGroupEveryone");
                 await ReplyAsync("", false, builder.Build());
 
                 await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}ConfigureGroupEveryone", error.ToString(), Context.User.Username);
@@ -72,8 +71,7 @@ namespace discordMusicBot.src.Modules
             }
             catch(Exception error)
             {
-                var builder = await _embed.ErrorEmbedAsync("ConfigureGroupMods", error.ToString(), Context.User.Username);
-
+                var builder = await _embed.ErrorEmbedAsync("ConfigureGroupMods");
                 await ReplyAsync("", false, builder.Build());
 
                 await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}ConfigureGroupMods", error.ToString(), Context.User.Username);
@@ -99,7 +97,7 @@ namespace discordMusicBot.src.Modules
             }
             catch(Exception error)
             {
-                var builder = await _embed.ErrorEmbedAsync("ConfigureGroupAdmins", error.ToString(), Context.User.Username);
+                var builder = await _embed.ErrorEmbedAsync("ConfigureGroupAdmins");
                 await ReplyAsync("", false, builder.Build());
 
                 await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}ConfigureGroupAdmins", error.ToString(), Context.User.Username);
@@ -135,7 +133,7 @@ namespace discordMusicBot.src.Modules
             }
             catch(Exception error)
             {
-                var builder = await _embed.ErrorEmbedAsync("ConfigureMaxSubmitted", error.ToString(), Context.User.Username);
+                var builder = await _embed.ErrorEmbedAsync("ConfigureMaxSubmitted");
                 await ReplyAsync("", false, builder.Build());
 
                 await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}ConfigureMaxSubmitted", error.ToString(), Context.User.Username);
@@ -158,9 +156,12 @@ namespace discordMusicBot.src.Modules
 
                 await _logs.logMessageAsync("Info", $"{configuration.LoadFile().Prefix}ConfigureMusicRoom", $"Configuration Updated: Smut is now only allowed in room: {UserValue}.", Context.User.Username);
             }
-            catch
+            catch(Exception error)
             {
+                var builder = await _embed.ErrorEmbedAsync("Configure");
+                await ReplyAsync("", false, builder.Build());
 
+                await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}ConfigureMaxSubmitted", error.ToString(), Context.User.Username);
             }
         }
 
@@ -175,7 +176,7 @@ namespace discordMusicBot.src.Modules
                     UserValue == "/" ||
                     UserValue == "@")
                 {
-                    var builder = await _embed.ErrorEmbedAsync("ConfigurePrefix", "Please pick another command character that is not one of the following.\r'#' '/' '@'", Context.User.Username);
+                    var builder = await _embed.ErrorEmbedAsync("ConfigurePrefix", "Please pick another command character that is not one of the following.\r'#' '/' '@'");
                     await ReplyAsync("", false, builder.Build());
                     return;
                 }
@@ -199,7 +200,7 @@ namespace discordMusicBot.src.Modules
             }
             catch(Exception error)
             {
-                var builder = await _embed.ErrorEmbedAsync("ConfigurePrefix", error.ToString(), Context.User.Username);
+                var builder = await _embed.ErrorEmbedAsync("ConfigurePrefix");
                 await ReplyAsync("", false, builder.Build());
 
                 await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}ConfigurePrefix", error.ToString(), Context.User.Username);
@@ -223,7 +224,7 @@ namespace discordMusicBot.src.Modules
             }
             catch(Exception error)
             {
-                var builder = await _embed.ErrorEmbedAsync("ConfigureSmutRoom", error.ToString(), Context.User.Username);
+                var builder = await _embed.ErrorEmbedAsync("ConfigureSmutRoom");
                 await ReplyAsync("", false, builder.Build());
 
                 await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}ConfigureSmutRoom", error.ToString(), Context.User.Username);
@@ -253,13 +254,13 @@ namespace discordMusicBot.src.Modules
                 }
                 else
                 {
-                    var builder = await _embed.ErrorEmbedAsync("ExportPlaylist", "Failed to generate the file.  Check the log for the dump.", Context.User.Username);
+                    var builder = await _embed.ErrorEmbedAsync("ExportPlaylist");
                     await ReplyAsync("", false, builder.Build());
                 }
             }
             catch(Exception error)
             {
-                var builder = await _embed.ErrorEmbedAsync("ExportBlackList", error.ToString(), Context.User.Username);
+                var builder = await _embed.ErrorEmbedAsync("ExportBlackList");
                 await ReplyAsync("", false, builder.Build());
                 await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}ExportPlaylist", error.ToString(), Context.User.Username);
             }
@@ -293,7 +294,7 @@ namespace discordMusicBot.src.Modules
             }
             catch(Exception error)
             {
-                var builder = await _embed.ErrorEmbedAsync("ExportBlackList", error.ToString(), Context.User.Username);
+                var builder = await _embed.ErrorEmbedAsync("ExportBlackList");
                 await ReplyAsync("", false, builder.Build());
                 await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}ExportBlacklist", error.ToString(), Context.User.Username);
             }
@@ -316,7 +317,7 @@ namespace discordMusicBot.src.Modules
             }
             catch(Exception error)
             {
-                var builder = await _embed.ErrorEmbedAsync("ExportLogs", error.ToString(), Context.User.Username);
+                var builder = await _embed.ErrorEmbedAsync("ExportLogs");
                 await ReplyAsync("", false, builder.Build());
                 await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}ExportLogs", error.ToString(), Context.User.Username);
             }
@@ -340,7 +341,7 @@ namespace discordMusicBot.src.Modules
             }
             catch(Exception error)
             {
-                var builder = await _embed.ErrorEmbedAsync("ExportConfig", error.ToString(), Context.User.Username);
+                var builder = await _embed.ErrorEmbedAsync("ExportConfig");
                 await ReplyAsync("", false, builder.Build());
                 await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}ExportConfig", error.ToString(), Context.User.Username);
             }
@@ -375,7 +376,7 @@ namespace discordMusicBot.src.Modules
             }
             catch (Exception error)
             {
-                var builder = await _embed.ErrorEmbedAsync("ServerIDs", error.ToString(), Context.User.Username);
+                var builder = await _embed.ErrorEmbedAsync("ServerIDs");
                 await ReplyAsync("", false, builder.Build());
                 await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}ServerIDs", error.ToString(), Context.User.Username);
             }

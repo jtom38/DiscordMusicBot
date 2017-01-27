@@ -28,32 +28,35 @@ namespace discordMusicBot.src.sys
             }            
         }
 
-        public async Task<EmbedBuilder> ErrorEmbedAsync(string Command, string msg, string Username = null)
+        public async Task<EmbedBuilder> ErrorEmbedAsync(string Command, string msg = null)
         {
             try
             {
                 await Task.Delay(1);
-
-                if(Username == null)
+                               
+                if (msg != null)
                 {
                     var builder = new EmbedBuilder()
                     {
                         Color = new Color(229, 20, 0),
                         Title = $"{configuration.LoadFile().Prefix}{Command}",
-                        Description = $"**Error**\r{msg}."
+                        Description = $"Oh no... {msg}"
                     };
                     return builder;
                 }
-                else
+
+                //This is the basic error message
+                else if(msg == null)
                 {
                     var builder = new EmbedBuilder()
                     {
                         Color = new Color(229, 20, 0),
                         Title = $"{configuration.LoadFile().Prefix}{Command}",
-                        Description = $"{Username}\r**Error**\r{msg}."
+                        Description = $"Oh no... something wrong happened. :cry:\rCheck the log for more info."
                     };
                     return builder;
-                }                
+                }
+                return null;
             }
             catch
             {

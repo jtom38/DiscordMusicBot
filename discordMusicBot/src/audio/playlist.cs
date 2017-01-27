@@ -699,8 +699,7 @@ namespace discordMusicBot.src.audio
             }
             catch(Exception error)
             {
-                _logs.logMessage("Error", "playlist.cmd_np", error.ToString(), "system");
-                await Task.Delay(1);
+                await _logs.logMessageAsync("Error", "playlist.cmd_np", error.ToString(), "system");
                 return null;
             }
 ;

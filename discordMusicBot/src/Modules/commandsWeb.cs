@@ -11,7 +11,7 @@ using Discord.Commands;
 
 namespace discordMusicBot.src.Modules
 {
-    public class commandsWeb : ModuleBase<SocketCommandContext>
+    public class cmdWeb : ModuleBase<SocketCommandContext>
     {
 
         private CommandService _service;
@@ -23,12 +23,14 @@ namespace discordMusicBot.src.Modules
         logs _logs = new logs();
         embed _embed = new embed();
 
-        public commandsWeb(CommandService service)
+        public cmdWeb(CommandService service)
         {
             _service = service;
         }
 
-        [Command("UrbanDictionary"), Summary("Query's UrbanDictionary.com for a random definition."), Alias("ud")]
+        [Command("UrbanDictionary")] 
+        [Summary("Query's UrbanDictionary.com for a random definition.")]
+        [Alias("ud")]
         public async Task UrbanDictionaryAsync(string tag = null)
         {
             try
@@ -56,7 +58,9 @@ namespace discordMusicBot.src.Modules
 
         }
 
-        [Command("smut"), Summary("Query's sites for smut related pictures."), Remarks("Query's sites for smut related pictures.")]
+        [Command("smut")]
+        [Summary("Query's sites for smut related pictures.")]
+        [Remarks("Query's sites for smut related pictures.")]
         public async Task smutAsync(string site = null, string tag = null)
         {
             try
@@ -125,6 +129,7 @@ namespace discordMusicBot.src.Modules
                     {
                         var builder = await _embed.SucessEmbedAsync("Smut", $"{result[1]} with tag: {result[3]}", Context.User.Username, result[0]);
                         await ReplyAsync("", false, builder.Build());
+                        await _logs.logMessageAsync("Info", $"{configuration.LoadFile().Prefix}Smut", $"Site: {result[1]}, Tag: {result[3]}, URL: {result[0]}", Context.User.Username);
                     }
                     else
                     {
