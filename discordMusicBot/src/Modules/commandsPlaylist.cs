@@ -24,6 +24,88 @@ namespace discordMusicBot.src.Modules
         logs _logs = new logs();
         embed _embed = new embed();
 
+        [Command("BlacklistAdd")]
+        [Remarks("Adds a URL to the Blacklist file.")]
+        [Alias("bla")]
+        public async Task BlacklistAddAsync(string URL)
+        {
+            try
+            {
+                if (URL.Contains("https://www.youtube.com"))
+                {
+                    string title = await _system.cmd_blAdd(Context.User.Username, URL);
+
+                    if (title == "dupe")
+                    {
+                        var builder = await _embed.SucessEmbedAsync("BlacklistAdd", $"I found this URL already in the list. :smile:\rNo change was made.", Context.User.Username);
+                        await ReplyAsync("", false, builder.Build());
+                    }
+                    else
+                    {
+                        var builder = await _embed.SucessEmbedAsync("BlacklistAdd", $"**Title**: {title}\rHas been added to the blacklist file.", Context.User.Username);
+                        await ReplyAsync("", false, builder.Build());
+
+                        //send the infomation back to the user letting them know we added it to the blacklist.
+                        await _logs.logMessageAsync("Info", "commandsPlaylist.blacklist add", $"Blacklist was updated. Added {title} {URL}", Context.User.Username);
+                    }
+                }
+                else
+                {
+                    //error time
+                    var builder = await _embed.ErrorEmbedAsync("BlacklistAdd", $"Please enter a valid URL.  I currently support Youtube only at this time.");
+                    await ReplyAsync("", false, builder.Build());
+                }
+            }
+            catch (Exception error)
+            {
+                var builder = await _embed.ErrorEmbedAsync("BlacklistAdd");
+                await ReplyAsync("", false, builder.Build());
+                await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}BlacklistAdd", error.ToString(), Context.User.Username);
+            }
+        }
+
+        [Command("BlacklistRemove")]
+        [Remarks("Removes a URL from the Blacklist file.")]
+        [Alias("blr")]
+        public async Task BlacklistRemoveAsync(string URL)
+        {
+            try
+            {
+                if (URL.Contains("https://www.youtube.com"))
+                {
+                    //parse the url and get the infomation then append to the blacklist.json
+                    string url = await _system.cmd_blRemove(URL);
+
+                    if (url == "match")
+                    {
+                        string[] urlTitle = await _downloader.returnYoutubeTitle(URL);
+
+                        var builder = await _embed.SucessEmbedAsync("BlacklistRemove", $"**Title**: {urlTitle[0]}\rWas removed from the blacklist.", Context.User.Username);
+                        await ReplyAsync("", false, builder.Build());
+
+                        await _logs.logMessageAsync("Info", $"{configuration.LoadFile().Prefix}BlacklistRemove", $"Blacklist was updated. Removed {urlTitle[0]} {URL}", Context.User.Username);
+                    }
+                    else
+                    {
+                        var builder = await _embed.SucessEmbedAsync("BlacklistRemove", $"Unable to find the song in the blacklist.", Context.User.Username);
+                        await ReplyAsync("", false, builder.Build());
+                    }
+                }
+                else
+                {
+                    //error time
+                    var builder = await _embed.ErrorEmbedAsync("BlacklistRemove", $"Please enter a valid URL.  I currently support Youtube only at this time.");
+                    await ReplyAsync("", false, builder.Build());
+                }
+
+            }
+            catch (Exception error)
+            {
+                var builder = await _embed.ErrorEmbedAsync("BlacklistRemove");
+                await ReplyAsync("", false, builder.Build());
+                await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}BlacklistRemove", error.ToString(), Context.User.Username);
+            }
+        }
 
         [Command("NowPlaying")]
         [Remarks("Returns the current track playing track.")]
@@ -51,7 +133,7 @@ namespace discordMusicBot.src.Modules
                 var builder = await _embed.ErrorEmbedAsync("NowPlaying");
                 await ReplyAsync("", false, builder.Build());
 
-                await _logs.logMessageAsync("Debug", $"{configuration.LoadFile().Prefix}NowPlaying", error.ToString(), Context.User.Username);
+                await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}NowPlaying", error.ToString(), Context.User.Username);
             }
         }
 
@@ -67,7 +149,7 @@ namespace discordMusicBot.src.Modules
                 {
                     await _player.cmd_skip();
 
-                    var builder = await _embed.SucessEmbedAsync("ConfigureSmutRoom", $"The current playing track has been removed from the library as requested..", Context.User.Username);
+                    var builder = await _embed.SucessEmbedAsync("ConfigureSmutRoom", $"The current playing track has been removed from the library as requested.", Context.User.Username);
                     await ReplyAsync("", false, builder.Build());
 
                     await _logs.logMessageAsync("Info", $"{configuration.LoadFile().Prefix}NowPlayingRemove", $"URL: {playlist.npUrl} was removed from the Library", Context.User.Username);
@@ -83,7 +165,7 @@ namespace discordMusicBot.src.Modules
                 var builder = await _embed.ErrorEmbedAsync("NowPlayingRemove");
                 await ReplyAsync("", false, builder.Build());
 
-                await _logs.logMessageAsync("Debug", $"{configuration.LoadFile().Prefix}NowPlayingRemove", error.ToString(), Context.User.Username);
+                await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}NowPlayingRemove", error.ToString(), Context.User.Username);
             }
         }
         
@@ -110,7 +192,7 @@ namespace discordMusicBot.src.Modules
                 var builder = await _embed.ErrorEmbedAsync("Queue");
                 await ReplyAsync("", false, builder.Build());
 
-                await _logs.logMessageAsync("Error", "commandsPlaylist.np", error.ToString(), Context.User.Username);
+                await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}Queue", error.ToString(), Context.User.Username);
             }
         }
         
@@ -135,7 +217,7 @@ namespace discordMusicBot.src.Modules
                         var builder = await _embed.SucessEmbedAsync("PlaylistAdd", $"**Title**: {title}\rHas been added to the Playlist.", Context.User.Username);
                         await ReplyAsync("", false, builder.Build());
 
-                        await _logs.logMessageAsync("Info", "commandsPlaylist.playlist add", $"Playlist was updated. Added {title} {URL}", Context.User.Username);
+                        await _logs.logMessageAsync("Info", $"{configuration.LoadFile().Prefix}PlaylistAdd", $"Playlist was updated. Added {title} {URL}", Context.User.Username);
                     }
                 }
                 else
@@ -194,44 +276,39 @@ namespace discordMusicBot.src.Modules
             }
         }
 
-        [Command("BlacklistAdd")]
-        [Remarks("Adds a URL to the Blacklist file.")]
-        [Alias("bla")]
-        public async Task BlacklistAddAsync(string URL)
+        [Command("Shuffle")]
+        [Remarks("Shuffles the items that users have submitted.")]
+        public async Task ShuffleAsync()
         {
             try
             {
-                if (URL.Contains("https://www.youtube.com"))
+                string result = await _playlist.cmd_shuffle();
+
+                if (result == "empty")
                 {
-                    string title = await _system.cmd_blAdd(Context.User.Username, URL);
-
-                    if (title == "dupe")
-                    {
-                        var builder = await _embed.SucessEmbedAsync("BlacklistAdd", $"I found this URL already in the list. :smile:\rNo change was made.", Context.User.Username);
-                        await ReplyAsync("", false, builder.Build());
-                    }
-                    else
-                    {
-                        var builder = await _embed.SucessEmbedAsync("BlacklistAdd", $"**Title**: {title}\rHas been added to the blacklist file.", Context.User.Username);
-                        await ReplyAsync("", false, builder.Build());
-
-                        //send the infomation back to the user letting them know we added it to the blacklist.
-                        await _logs.logMessageAsync("Info", "commandsPlaylist.blacklist add", $"Blacklist was updated. Added {title} {URL}", Context.User.Username);
-                    }
+                    var builder = await _embed.SucessEmbedAsync("Shuffle", $"No songs have been submitted to the queue so nothing to shuffle.", Context.User.Username);
+                    await ReplyAsync("", false, builder.Build());
                 }
-                else
+
+                if (result == "true")
                 {
-                    //error time
-                    var builder = await _embed.ErrorEmbedAsync("BlacklistRemove", $"Please enter a valid URL.  I currently support Youtube only at this time.");
+                    var builder = await _embed.SucessEmbedAsync("Shuffle", $"The queue has been shuffled!", Context.User.Username);
+                    await ReplyAsync("", false, builder.Build());
+                }
+
+                if (result == "error")
+                {
+                    var builder = await _embed.ErrorEmbedAsync("Shuffle");
                     await ReplyAsync("", false, builder.Build());
                 }
             }
             catch(Exception error)
             {
-                var builder = await _embed.ErrorEmbedAsync("BlacklistAdd");
+                var builder = await _embed.ErrorEmbedAsync("Shuffle");
                 await ReplyAsync("", false, builder.Build());
-                await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}BlacklistAdd", error.ToString(), Context.User.Username);
+                await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}Shuffle", error.ToString(), Context.User.Username);
             }
         }
+
     }
 }

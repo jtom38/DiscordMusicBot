@@ -41,7 +41,7 @@ namespace discordMusicBot.src.Modules
                 
                 if(result[0] == "No Value")
                 {
-                    var builder = await _embed.ErrorEmbedAsync("UrbanDictionary", $"**Term**: '{result[1]}'\r**Error**: Unable to find any infomation on this tag.", Context.User.Username);
+                    var builder = await _embed.ErrorEmbedAsync("UrbanDictionary", $"**Term**: '{result[1]}'\r**Error**: Unable to find any infomation on this tag.");
                     await ReplyAsync("", false, builder.Build());
                 }
                 else
@@ -59,7 +59,6 @@ namespace discordMusicBot.src.Modules
         }
 
         [Command("smut")]
-        [Summary("Query's sites for smut related pictures.")]
         [Remarks("Query's sites for smut related pictures.")]
         public async Task smutAsync(string site = null, string tag = null)
         {
@@ -83,7 +82,7 @@ namespace discordMusicBot.src.Modules
                 if(sendSmut == false)
                 {
                     //send a error and fail out
-                    var builder = await _embed.ErrorEmbedAsync("Smut", $"Please select the correct room and try again.", Context.User.Username);
+                    var builder = await _embed.ErrorEmbedAsync("Smut", $"Please select the correct room and try again.");
                     await ReplyAsync("", false, builder.Build());
                 }
                 else
@@ -133,7 +132,7 @@ namespace discordMusicBot.src.Modules
                     }
                     else
                     {
-                        var builder = await _embed.ErrorEmbedAsync("Smut", $"**Site**: '{result[1]}'\r**Error**: Unable to find any infomation on this tag.", Context.User.Username);
+                        var builder = await _embed.ErrorEmbedAsync("Smut", $"**Site**: '{result[1]}'\r**Error**: Unable to find any infomation on this tag.");
                         await ReplyAsync("", false, builder.Build());
                     }
                 }
