@@ -526,19 +526,29 @@ namespace discordMusicBot.src.audio
 
                 var Result = listSubmitted.Count(x => x.user == user);
 
-                if (Result >= _config.maxTrackSubmitted)
+                _config = configuration.LoadFile();
+                if( _config.maxTrackSubmitted != 0) //check is enabled
                 {
-                    //user has subbmitted too many songs
-                    return 1;
+                    if (Result >= _config.maxTrackSubmitted)
+                    {
+                        //user has subbmitted too many songs
+                        return 1;
+                    }
+                    else
+                    {
+                        return 0;
+                    }
                 }
                 else
                 {
                     return 0;
                 }
+
+
             }
             catch (Exception error)
             {
-                _logs.logMessage("Error", "playlist.checkNumberOfTracksByUserSubmitted", error.ToString(), "system");
+                await _logs.logMessageAsync("Error", "playlist.checkNumberOfTracksByUserSubmitted", error.ToString(), "system");
                 return -1;
             }
         } 
@@ -574,7 +584,7 @@ namespace discordMusicBot.src.audio
             }
         }
 
-        public async Task<string> cmd_play(string url, string user)
+        public async Task<string[]> cmd_play(string url, string user)
         {
             try
             {
@@ -591,7 +601,7 @@ namespace discordMusicBot.src.audio
 
                     });
 
-                    string value = $"{user},\rYour track request of {listLibrary[urlResult].title} has been submitted.\rTracks in queue: {listSubmitted.Count}";
+                    string[] value = {listLibrary[urlResult].title, listSubmitted.Count.ToString() };
                     return value;
                 }
                 else
@@ -611,7 +621,7 @@ namespace discordMusicBot.src.audio
                             user = user
                         });
 
-                        string value = $"{user},\rYour track request of {title[0]} has been submitted.\rTracks in queue: {listSubmitted.Count}";
+                        string[] value = {title[0], listSubmitted.Count.ToString() };
 
                         return value;
                     }
@@ -930,7 +940,7 @@ namespace discordMusicBot.src.audio
             }
         }
 
-        public async Task<string> cmd_searchLibrary(string mode, string query,string userName)
+        public async Task<string> cmd_searchLibrary(string mode, string query)
         {
             try
             {
