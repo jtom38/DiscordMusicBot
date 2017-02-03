@@ -17,7 +17,7 @@ namespace discordMusicBot
         public async Task Install(DiscordSocketClient c)
         {
             _client = c;                                                 // Save an instance of the discord client.
-            _cmds = new CommandService();                                // Create a new instance of the commandservice.                              
+            _cmds = new CommandService();                                // Create a new instance of the commandservice.                            
 
             await _cmds.AddModulesAsync(Assembly.GetEntryAssembly());    // Load all modules from the assembly.
 
@@ -32,6 +32,8 @@ namespace discordMusicBot
 
             var map = new DependencyMap();                      // Create a new dependecy map.
             map.Add(_cmds);
+            map.Add(new AudioService(map));
+
             var context = new SocketCommandContext(_client, msg);     // Create a new command context.
 
             int argPos = 0;                                     // Check if the message has either a string or mention prefix.

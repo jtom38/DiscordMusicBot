@@ -20,7 +20,7 @@ namespace discordMusicBot
 
         private DiscordSocketClient _client;
         private CommandHandler _commands;
-        private configuration _config;
+
         startup _startup = new startup();
         playlist _playlist = new playlist();
         logs _logs = new logs();
@@ -33,7 +33,8 @@ namespace discordMusicBot
             // Create a new instance of DiscordSocketClient.
             _client = new DiscordSocketClient(new DiscordSocketConfig()
             {
-                LogLevel = LogSeverity.Info                 // Specify console verbose information level.
+                LogLevel = LogSeverity.Info,                // Specify console verbose information level.   
+                AudioMode = Discord.Audio.AudioMode.Outgoing         
             });
 
             _client.Log += (l)                               // Register the console log event.
@@ -42,6 +43,7 @@ namespace discordMusicBot
 
             //need to add event to check for users 
 
+            //sets the token and login
             await _client.LoginAsync(TokenType.Bot, configuration.LoadFile().Token);
             await _client.ConnectAsync();
 
@@ -52,5 +54,6 @@ namespace discordMusicBot
 
             await Task.Delay(-1);                            // Prevent the console window from closing.
         }
+
     }
 }

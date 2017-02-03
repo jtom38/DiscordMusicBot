@@ -7,6 +7,7 @@ using discordMusicBot.src.sys;
 using VideoLibrary;
 using System.IO;
 using NAudio.Wave;
+using System.Diagnostics;
 
 namespace discordMusicBot.src.audio
 {
@@ -35,72 +36,83 @@ namespace discordMusicBot.src.audio
 
                 string workingDir = Directory.GetCurrentDirectory() + "\\cache\\";
 
-                string fileAAC = audio[0].FullName.Remove(audio[0].FullName.Length - 4) + ".aac"; // should remove the .mp4 from the filename and adds aac to the filename
-                                                                                                  //string fileAAC = fileName + ".aac"; // 
                 string title = audio[0].Title.Remove(audio[0].Title.Length - 10); // removes the " - youtube" part of the string
 
-                if (File.Exists(workingDir + fileAAC))
+                string fileName = audio[0].FullName.Remove(audio[0].FullName.Length - 14); // should remove the .mp4 from the filename and adds aac to the filename
+
+                string fullFileNameAAC = workingDir + fileName + ".aac";
+                string fileNameAAC = fileName + ".aac";
+
+                string FullFileNameMP3 = workingDir + fileName + ".mp3";
+                string fileNameMP3 = fileName + ".mp3";
+
+                if (File.Exists(FullFileNameMP3))
                 {
                     // do nothing
-                    _logs.logMessage("Debug", "downloader.download_audio", "URL " + url + " was already downloaded, ignoring", "system");
+                    await _logs.logMessageAsync("Debug", "downloader.download_audio", $"URL: {url} was already downloaded, ignoring", "system");
                 }
                 else
                 {
                     //download the file
                     if (audio.Count > 0)
                     {
-                        File.WriteAllBytes(workingDir + fileAAC, audio[0].GetBytes());
-                        _logs.logMessage("Info", "downloader.download_audio", $"Downloaded {url} to cache.", "system");
+                        try
+                        {
+                            File.WriteAllBytes(fullFileNameAAC, audio[0].GetBytes());
+                        }
+                        catch(Exception error)
+                        {
+                            Console.WriteLine(error.ToString());
+                        }
+                        
+                        ConvertToMp3(fullFileNameAAC, FullFileNameMP3).WaitForExit();
+
+                        File.Delete(fullFileNameAAC);
+
+                        await _logs.logMessageAsync("Info", "downloader.download_audio", $"Downloaded {url} to cache.", "system");
                     }
                 }
 
-                string[] returnVar = 
+                string[] returnVar =
                 {
                         audio[0].Title,                     //pass the title back
-                        fileAAC,                            //pass the filename, not sure if we need to retain this
-                        workingDir + fileAAC,               //pass the full path to the file to be played back
+                        FullFileNameMP3,                            //pass the filename, not sure if we need to retain this
+                        fileNameMP3,               //pass the full path to the file to be played back
                         audio[0].AudioBitrate.ToString()    //pass the bitrate so we can return the value
                 };
 
                 return returnVar;
             }
-            catch(Exception error)
+            catch (Exception error)
             {
-                
-                _logs.logMessage("Error", "youtube.download_audio", error.ToString(), "system");
+
+                await _logs.logMessageAsync("Error", "youtube.download_audio", error.ToString(), "system");
                 return null;
             }
 
         }
 
-        public async Task<string> ConvertAACToWAV(string songTitle, string cacheDir)
+        private Process ConvertToMp3(string source, string destination)
         {
             try
             {
-                await Task.Delay(1);
-
-                // im going to add this in an atempt to have easier playback though naudio
-                // https://stackoverflow.com/questions/13486747/convert-aac-to-wav
-
-                // create media foundation reader to read the AAC encoded file
-                using (MediaFoundationReader reader = new MediaFoundationReader(cacheDir + songTitle + ".aac"))
-                // resample the file to PCM with same sample rate, channels and bits per sample
-                using (ResamplerDmoStream resampledReader = new ResamplerDmoStream(reader,
-                    new WaveFormat(reader.WaveFormat.SampleRate, reader.WaveFormat.BitsPerSample, reader.WaveFormat.Channels)))
-                // create WAVe file
-                using (WaveFileWriter waveWriter = new WaveFileWriter(cacheDir + songTitle + ".wav", resampledReader.WaveFormat))
+                string currentDirectory = Directory.GetCurrentDirectory();
+                string sourceFilePath = "\"" +source+ "\"";
+                string destFilePath = "\"" + destination + "\"";
+                var ffmpeg = new ProcessStartInfo
                 {
-                    // copy samples
-                    resampledReader.CopyTo(waveWriter);
-                }
-
-                return cacheDir + songTitle + ".wav";
+                    FileName = $"{currentDirectory}\\ffmpeg.exe",
+                    Arguments = $"-loglevel error -i {sourceFilePath} -codec:a libmp3lame -qscale:a 2 {destFilePath}",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                };               
+                return Process.Start(ffmpeg);
             }
-            catch(Exception error)
+            catch
             {
-                _logs.logMessage("Error", "downloader.ConvertAACToWAV", error.ToString(), "system");
                 return null;
             }
+
         }
 
         //used in _playlist.cmd_plAdd()

@@ -1,50 +1,68 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using discordMusicBot.src.sys;
 using Discord;
-using Discord.Audio;
-using NAudio;
-using NAudio.Wave;
 using System.IO;
 using System.Diagnostics.Contracts;
+using System.Diagnostics;
+using Discord.Audio;
 
 namespace discordMusicBot.src.audio
 {
     class player
     {
-        /// <summary>
-        /// notes from the Discord API group on voice-volume... Still not sure how to use it just yet.
-        /// http://hastebin.com/umapabejis.cs
-        /// </summary>
-
         logs _logs = new logs();
-
-        //private DiscordClient _client; //load discord client info
-        private IAudioClient _nAudio; //load the discord audio client
         private configuration _config;
 
-        public static bool playingSong = true;
+        public static IAudioClient audioClient = null;
+        public static IVoiceChannel voiceRoom = null;
 
+        public static bool playingSong = true;
         public static float volume = .10f;
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="filepath">
-        ///     Full filepath needed to track
-        /// </param>
-        /// <param name="voiceChannel">
-        ///     Send the room that the bot is in
-        /// </param>
-        /// <param name="_client">
-        ///     _client
-        /// </param>
-        /// <returns></returns>
-        // need channel and discordClient
 
+        private Process CreateStream(string path)
+        {
+            try
+            {
+                string currentDirectory = Directory.GetCurrentDirectory();
+                //string newPath = path.Replace(" ", "%20");
+                string filePath = $"\"{path}\"";
+                var ffmpeg = new ProcessStartInfo
+                {
+                    FileName = $"{currentDirectory}\\ffmpeg.exe",
+                    Arguments = $"-loglevel error -i {filePath} -ac 2 -f s16le -ar 48000 pipe:1 -af 'volume=0.1B'", // -af 'volume = 0.5'
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+
+                };
+                return Process.Start(ffmpeg);
+            }
+            catch(Exception error)
+            {
+                Console.WriteLine(error.ToString());
+                return null;
+            }
+
+        }
+
+        public async Task SendAsync(string path)
+        {
+            try
+            {            
+                using (var ffmpeg = CreateStream(path))              
+                using (var output = ffmpeg.StandardOutput.BaseStream)                   
+                using (var discord = audioClient.CreatePCMStream(1920))
+                {
+                    await output.CopyToAsync(discord);
+                    await discord.FlushAsync();
+                }
+            }
+            catch(Exception error)
+            {
+                Console.WriteLine(error.ToString());
+            }
+        }
 
         public static byte[] ScaleVolumeSafeAllocateBuffers(byte[] audioSamples, float volume)
         {

@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.IO;
-using System.Net;
 using Newtonsoft.Json;
 using discordMusicBot.src.sys;
-using Discord;
 
 using System.Diagnostics;
+using Discord.WebSocket;
+using Discord.Audio;
+using Discord;
 
 namespace discordMusicBot.src.audio
 {
@@ -44,6 +44,11 @@ namespace discordMusicBot.src.audio
 
         //public static bool libraryLoop = true;
         public static bool playlistActive = true;
+
+        public static IAudioClient audioClient = null;
+        public static IVoiceChannel voiceRoom = null;
+
+        private DiscordSocketClient _client;
 
         configuration _config = new configuration();
         youtube _downloader = new youtube();
@@ -176,41 +181,31 @@ namespace discordMusicBot.src.audio
 
         }
 
-        public async Task playAutoQueue() //need to pass channel and DiscordClient
+        public async Task playAutoQueue() 
         {
             try
             {
-                
+                //var audioClient = await voiceRoom.ConnectAsync();
+
                 //given the loop is always active lets make another loop that we can pause when needed
                 while (playlistActive == true)
                 {
-
                     //reset the nowplaying vars given a new song is being picked
-                    npUrl = null;
-                    npTitle = null;
-                    npUser = null;
-                    npSource = null;
-                    npLike = null;
-                    npSkip = null;
-                    npFileName = null;
-                    npDeleteAfterPlaying = false;
-
-                    string filePath = null;
-
-                    //check to see if someone has something queued up in submmitted
-                    if (listSubmitted.Count >= 1)
+                    await RestNPValues();
+                 
+                    if (listSubmitted.Count >= 1) //check to see if someone has something queued up in submmitted
                         await pickTrackFromSubmitted();
                     else if (listSubmitted.Count == 0) //if nothing is found go back to the listAutoQueue
                         await getAutoQueueTrackInfo();
 
-                    filePath = await getFileNameToPlay(); // get the file name that we are going to pass to the player
+                    string filePath = await getFileNameToPlay(); // get the file name that we are going to pass to the player
 
-                    //_client.SetGame(npTitle); //update the track that is currently playing
+                    //await _client.SetGameAsync(npTitle); //update the track that is currently playing
 
-                    _logs.logMessage("Info", "playlist.playAutoQueue", $"Track:'{npTitle}' was sent to the audio player.", "system");
+                    await _logs.logMessageAsync("Info", "playlist.playAutoQueue", $"Track:'{npTitle}' was sent to the audio player.", "system");
 
                     //Add voiceChannel and Client
-                    //await _player.SendAudio(filePath); //send the file and functions over to the audio player to send to the server
+                    await SendAsync(filePath);
 
                     await removeTrackPlayed(filePath); //if a user submitted the song remove it from the disk
 
@@ -219,6 +214,57 @@ namespace discordMusicBot.src.audio
             catch (Exception error)
             {
                 _logs.logMessage("Error", "playlist.playAutoQueue", error.ToString(), "system");
+            }
+        }
+
+        private Process CreateStream(string path)
+        {
+            try
+            {
+                string currentDirectory = Directory.GetCurrentDirectory();
+                //string newPath = path.Replace(" ", "%20");
+                string filePath = $"\"{path}\"";
+                var ffmpeg = new ProcessStartInfo
+                {
+                    FileName = $"{currentDirectory}\\ffmpeg.exe",
+                    Arguments = $"-loglevel error -i {filePath} -ac 2 -f s16le -ar 48000 pipe:1 -af 'volume=0.1B'", // -af 'volume = 0.5'
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+
+                };
+                return Process.Start(ffmpeg);
+            }
+            catch (Exception error)
+            {
+                Console.WriteLine(error.ToString());
+                return null;
+            }
+
+        }
+
+        private async Task SendAsync(string path)
+        {
+            try
+            {
+                audioClient = await voiceRoom.ConnectAsync();
+
+                using (var ffmpeg = CreateStream(path))
+                {
+                    using (var output = ffmpeg.StandardOutput.BaseStream)
+                    {
+                        using (var discord = audioClient.CreatePCMStream(1920))
+                        {
+                            await output.CopyToAsync(discord);
+                            await discord.FlushAsync();
+                            
+                        }
+                    }
+                }
+
+            }
+            catch (Exception error)
+            {
+                Console.WriteLine(error.ToString());
             }
         }
 
@@ -252,13 +298,32 @@ namespace discordMusicBot.src.audio
             }
         }
 
+        private async Task RestNPValues()
+        {
+            try
+            {
+                await Task.Delay(1);
+                npUrl = null;
+                npTitle = null;
+                npUser = null;
+                npSource = null;
+                npLike = null;
+                npSkip = null;
+                npFileName = null;
+                npDeleteAfterPlaying = false;
+            }
+            catch
+            {
+
+            }
+        }
+
         private async Task<string> getFileNameToPlay()
         {
             try
             {
                 //pass off to download the file for cache
-                string filePath = null;
-                filePath = Directory.GetCurrentDirectory() + "\\cache\\";
+                string filePath = Directory.GetCurrentDirectory() + "\\cache\\";
 
                 if (npFileName == null)
                 {
@@ -267,22 +332,24 @@ namespace discordMusicBot.src.audio
                     npFileName = file[1];
 
                     //need to write the data to the listLibrary with the new fileName so we avoid downloading again 
-                    updateFileNameInTheLibrary();
+                    await updateFileNameInTheLibrary();
 
                     return filePath;
                 }
                 else
                 {
-                    filePath = Directory.GetCurrentDirectory() + "\\cache\\" + npFileName;
+                    filePath = filePath + npFileName;
                     if (!File.Exists(filePath)) //check to make sure the file is still on the disk.
                     {
                         //if we cant find the file for some reason, go download it again.
                         string[] file = await _downloader.download_audio(npUrl);
-                        filePath = Directory.GetCurrentDirectory() + "\\cache\\" + file[1];
+                        filePath = file[1];
                         npFileName = file[1];
 
+                        npTitle = file[0];
+
                         //need to write the data to the listLibrary with the new fileName so we avoid downloading again 
-                        updateFileNameInTheLibrary();
+                        await updateFileNameInTheLibrary();
 
                         return filePath;
                     }
@@ -292,7 +359,7 @@ namespace discordMusicBot.src.audio
             }
             catch(Exception error)
             {
-                _logs.logMessage("Error", "playlist.getFileNameToPlay", error.ToString(), "system");
+                await _logs.logMessageAsync("Error", "playlist.getFileNameToPlay", error.ToString(), "system");
                 return null;
             }
         }
@@ -334,7 +401,7 @@ namespace discordMusicBot.src.audio
             }
         }
 
-        public async void getTrackFromSubmittedQueue()
+        public async Task getTrackFromSubmittedQueue()
         {
             try
             {
@@ -358,7 +425,7 @@ namespace discordMusicBot.src.audio
             }
         }
 
-        private async void updateFileNameInTheLibrary()
+        private async Task updateFileNameInTheLibrary()
         {
             try
             {
