@@ -14,14 +14,11 @@ namespace discordMusicBot.src.Modules
         private CommandService _service;
         private configuration _config;
         private DiscordSocketClient _client;
-        private AudioService _audioService;
-
         
 
-        public cmdPlayer(CommandService service, IDependencyMap map)           // Create a constructor for the commandservice dependency
+        public cmdPlayer(CommandService service)           // Create a constructor for the commandservice dependency
         {
             _service = service;
-            _audioService = map.Get<AudioService>();
         }
 
         playlist _playlist = new playlist();
@@ -190,43 +187,7 @@ namespace discordMusicBot.src.Modules
             }
         }
 
-        [Command("Summon", RunMode = RunMode.Async)]
-        [Remarks("Summons the bot to a voice room.")]
-        public async Task SummonAsync(IVoiceChannel voiceRoom = null)
-        {
-            try
-            {
-                //check to see if the bot is already in the room
-                if (player.playingSong == false) // if the flag was set to not be okaying a song turn it on
-                    player.playingSong = true;
 
-                if (playlist.playlistActive == false) //if the loop to keep playing tracks is off turn it on
-                    playlist.playlistActive = true;
-
-                // Get the audio channel                
-                playlist.voiceRoom = playlist.voiceRoom ?? (Context.Message.Author as IGuildUser)?.VoiceChannel;
-                if (playlist.voiceRoom == null)
-                {
-                    await _embed.ErrorEmbedAsync("Summon", "User must be in a voice channel, or a voice channel must be passed as an argument.");
-                    return;
-                }
-
-                // For the next step with transmitting audio, you would want to pass this Audio Client in to a service.
-                //var audioClient = await voiceRoom.ConnectAsync();
-                //playlist.audioClient = await playlist.voiceRoom.ConnectAsync();
-
-                //var botID = Context.Client.CurrentUser.Id;
-                
-                await _playlist.playAutoQueue();
-
-
-                await _logs.logMessageAsync("Info", $"{configuration.LoadFile().Prefix}Summon", $"User has summoned the bot to room {Context.Guild.CurrentUser.VoiceChannel}", Context.User.Username);
-            }
-            catch (Exception error)
-            {
-                await _logs.logMessageAsync("Error", $"{configuration.LoadFile().Prefix}Summon", error.ToString(), Context.User.Username);
-            }
-        }
     }
 
 }

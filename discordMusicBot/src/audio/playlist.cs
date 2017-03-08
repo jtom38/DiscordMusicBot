@@ -10,6 +10,7 @@ using System.Diagnostics;
 using Discord.WebSocket;
 using Discord.Audio;
 using Discord;
+using discordMusicBot.src.Services;
 
 namespace discordMusicBot.src.audio
 {
@@ -30,15 +31,6 @@ namespace discordMusicBot.src.audio
         public static List<ListPlaylist> listBlacklist = new List<ListPlaylist>();
         public static List<ListPlaylist> listSubmitted = new List<ListPlaylist>();
                
-        public static string npTitle = null;
-        public static string npUser = null;
-        public static string npUrl = null;
-        public static string npSource = null;
-        public static string[] npLike = null;
-        public static string[] npSkip = null;
-        public static string npFileName = null;
-        public static bool npDeleteAfterPlaying = false;
-
         static string playlistFile = Directory.GetCurrentDirectory() + "\\configs\\playlist.json";
         static string blacklistFile = Directory.GetCurrentDirectory() + "\\configs\\blacklist.json";
 
@@ -53,7 +45,9 @@ namespace discordMusicBot.src.audio
         configuration _config = new configuration();
         youtube _downloader = new youtube();
         player _player = new player();
+        //AudioService _audioService = new AudioService();
         logs _logs = new logs();
+
         
         public void savePlaylist()
         {
@@ -181,225 +175,7 @@ namespace discordMusicBot.src.audio
 
         }
 
-        public async Task playAutoQueue() 
-        {
-            try
-            {
-                //var audioClient = await voiceRoom.ConnectAsync();
 
-                //given the loop is always active lets make another loop that we can pause when needed
-                while (playlistActive == true)
-                {
-                    //reset the nowplaying vars given a new song is being picked
-                    await RestNPValues();
-                 
-                    if (listSubmitted.Count >= 1) //check to see if someone has something queued up in submmitted
-                        await pickTrackFromSubmitted();
-                    else if (listSubmitted.Count == 0) //if nothing is found go back to the listAutoQueue
-                        await getAutoQueueTrackInfo();
-
-                    string filePath = await getFileNameToPlay(); // get the file name that we are going to pass to the player
-
-                    //await _client.SetGameAsync(npTitle); //update the track that is currently playing
-
-                    await _logs.logMessageAsync("Info", "playlist.playAutoQueue", $"Track:'{npTitle}' was sent to the audio player.", "system");
-
-                    //Add voiceChannel and Client
-                    await SendAsync(filePath);
-
-                    await removeTrackPlayed(filePath); //if a user submitted the song remove it from the disk
-
-                }
-            }
-            catch (Exception error)
-            {
-                _logs.logMessage("Error", "playlist.playAutoQueue", error.ToString(), "system");
-            }
-        }
-
-        private Process CreateStream(string path)
-        {
-            try
-            {
-                string currentDirectory = Directory.GetCurrentDirectory();
-                //string newPath = path.Replace(" ", "%20");
-                string filePath = $"\"{path}\"";
-                var ffmpeg = new ProcessStartInfo
-                {
-                    FileName = $"{currentDirectory}\\ffmpeg.exe",
-                    Arguments = $"-loglevel error -i {filePath} -ac 2 -f s16le -ar 48000 pipe:1 -af 'volume=0.1B'", // -af 'volume = 0.5'
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-
-                };
-                return Process.Start(ffmpeg);
-            }
-            catch (Exception error)
-            {
-                Console.WriteLine(error.ToString());
-                return null;
-            }
-
-        }
-
-        private async Task SendAsync(string path)
-        {
-            try
-            {
-                audioClient = await voiceRoom.ConnectAsync();
-
-                using (var ffmpeg = CreateStream(path))
-                {
-                    using (var output = ffmpeg.StandardOutput.BaseStream)
-                    {
-                        using (var discord = audioClient.CreatePCMStream(1920))
-                        {
-                            await output.CopyToAsync(discord);
-                            await discord.FlushAsync();
-                            
-                        }
-                    }
-                }
-
-            }
-            catch (Exception error)
-            {
-                Console.WriteLine(error.ToString());
-            }
-        }
-
-        private async Task<bool> getAutoQueueTrackInfo()
-        {
-            try
-            {
-                if(listAutoQueue.Count >= 1)
-                {
-                    //push the current track in line to the nowplaying vars
-                    npTitle = listAutoQueue[0].title;
-                    npUrl = listAutoQueue[0].url;
-                    npUser = listAutoQueue[0].user;
-                    npSource = "Library";
-                    npSkip = listAutoQueue[0].skips;
-                    npLike = listAutoQueue[0].like;
-                    npFileName = listAutoQueue[0].filename;
-
-                    _logs.logMessage("Debug", "playlist.getAutoQueueTrackInfo", $"URL: {npUrl} was picked to be played.", "system");
-                    await Task.Delay(1);
-                    return true;
-                }
-                await Task.Delay(1);
-                return false;
-            }
-            catch (Exception error)
-            {
-                _logs.logMessage("Error", "playlist.getAutoQueueTrackInfo", error.ToString(), "system");
-                await Task.Delay(1);
-                return false;
-            }
-        }
-
-        private async Task RestNPValues()
-        {
-            try
-            {
-                await Task.Delay(1);
-                npUrl = null;
-                npTitle = null;
-                npUser = null;
-                npSource = null;
-                npLike = null;
-                npSkip = null;
-                npFileName = null;
-                npDeleteAfterPlaying = false;
-            }
-            catch
-            {
-
-            }
-        }
-
-        private async Task<string> getFileNameToPlay()
-        {
-            try
-            {
-                //pass off to download the file for cache
-                string filePath = Directory.GetCurrentDirectory() + "\\cache\\";
-
-                if (npFileName == null)
-                {
-                    string[] file = await _downloader.download_audio(npUrl);
-                    filePath = filePath + file[1];
-                    npFileName = file[1];
-
-                    //need to write the data to the listLibrary with the new fileName so we avoid downloading again 
-                    await updateFileNameInTheLibrary();
-
-                    return filePath;
-                }
-                else
-                {
-                    filePath = filePath + npFileName;
-                    if (!File.Exists(filePath)) //check to make sure the file is still on the disk.
-                    {
-                        //if we cant find the file for some reason, go download it again.
-                        string[] file = await _downloader.download_audio(npUrl);
-                        filePath = file[1];
-                        npFileName = file[1];
-
-                        npTitle = file[0];
-
-                        //need to write the data to the listLibrary with the new fileName so we avoid downloading again 
-                        await updateFileNameInTheLibrary();
-
-                        return filePath;
-                    }
-
-                    return filePath;
-                }
-            }
-            catch(Exception error)
-            {
-                await _logs.logMessageAsync("Error", "playlist.getFileNameToPlay", error.ToString(), "system");
-                return null;
-            }
-        }
-
-        private async Task<bool> moveAutoQueueTrackPlayedToBackOfQueue()
-        {
-            try
-            {
-                await Task.Delay(1);
-                //get infomation for line 0 in memory
-                string title = listAutoQueue[0].title;
-                string url = listAutoQueue[0].url;
-                string user = listAutoQueue[0].user;
-                string[] skip = listAutoQueue[0].skips;
-                string[] like = listAutoQueue[0].like;
-                string fileName = listAutoQueue[0].filename;
-
-                //remove from line 0
-                listAutoQueue.RemoveAt(0);
-
-                //push to back of queue
-                listAutoQueue.Add(new ListPlaylist
-                {
-                    title = title,
-                    url = url,
-                    user = user,
-                    skips = skip,
-                    like = like,
-                    filename = fileName
-                });
-
-                _logs.logMessage("Debug", "playlist.moveAutoQueueTrackPlayedToBackOfQueue", $"URL: {url} was moved to the back of the queue.", "system");
-                return true;
-            }
-            catch (Exception error)
-            {
-                _logs.logMessage("Error", "playlist.moveAutoQueueTrackPlayedToBackOfQueue", error.ToString(), "system");
-                return false;
-            }
-        }
 
         public async Task getTrackFromSubmittedQueue()
         {
@@ -409,14 +185,14 @@ namespace discordMusicBot.src.audio
                 
                 if(listSubmitted.Count >= 1)
                 {
-                    npTitle = listSubmitted[0].title;
-                    npUrl = listSubmitted[0].url;
-                    npUser = listSubmitted[0].user;
-                    npSource = "Submitted";
-                    npSkip = listSubmitted[0].skips;
-                    npLike = listSubmitted[0].like;
+                    AudioService.npTitle = listSubmitted[0].title;
+                    AudioService.npUrl = listSubmitted[0].url;
+                    AudioService.npUser = listSubmitted[0].user;
+                    AudioService.npSource = "Submitted";
+                    AudioService.npSkip = listSubmitted[0].skips;
+                    AudioService.npLike = listSubmitted[0].like;
 
-                    _logs.logMessage("Debug", "playlist.getTrackFromSubmittedQueue", $"Url: {npUrl} was picked from the submitted queue.", "system");
+                    _logs.logMessage("Debug", "playlist.getTrackFromSubmittedQueue", $"Url: {AudioService.npUrl} was picked from the submitted queue.", "system");
                 }               
             }
             catch (Exception error)
@@ -425,120 +201,7 @@ namespace discordMusicBot.src.audio
             }
         }
 
-        private async Task updateFileNameInTheLibrary()
-        {
-            try
-            {
-                await Task.Delay(1);
 
-                // take the title stored in memory and find the record in
-                var Result = listLibrary.FindIndex(x => x.title == npTitle);
-
-                if(Result != -1)
-                {
-                    if(listLibrary[Result].filename == null)
-                    {
-                        listLibrary[Result].filename = npFileName;
-                        savePlaylist();
-                    }
-                    
-                }
-                else
-                {
-                    _logs.logMessage("Error", "playlist.updateFileNameInTheLibrary", $"Unable to update {npTitle}.  Unable to find the index number for the requested title.", "system");
-                }
-                
-            }
-            catch(Exception error)
-            {
-                _logs.logMessage("Error", "playlist.updateFileNameInTheLibrary", error.ToString(), "system");
-            }
-        }
-        
-        /// <summary>
-        /// Used to find values if a user submited a song to be played
-        /// takes prority over library tracks
-        /// </summary>
-        /// <returns></returns>
-        private async Task<bool> pickTrackFromSubmitted()
-        {
-            try
-            {
-                // extract the values
-                if (listSubmitted.Count >= 1)
-                {
-                    int t = listLibrary.FindIndex(x => x.url == listSubmitted[0].url);
-                    if(t != -1)
-                    {
-                        //Track was found in the Library
-                        npFileName = listSubmitted[0].filename;
-                        npDeleteAfterPlaying = false;
-                    }
-                    else
-                    {
-                        //Not found in the library
-                        npFileName = null;
-                        npDeleteAfterPlaying = true;
-                    }
-
-                    npTitle = listSubmitted[0].title;
-                    npUrl = listSubmitted[0].url;
-                    npUser = listSubmitted[0].user;
-                    npSource = "Submitted";
-                    npLike = listSubmitted[0].like;
-                    npSkip = listSubmitted[0].skips;
-
-                    _logs.logMessage("Debug", "playlist.pickTrackFromSubmitted", $"Title: {npTitle} was picked from listSubmitted.", "System");
-                    await Task.Delay(1);
-                    return true;
-                }
-                else
-                {
-                    //shouldnt hit this ever
-                    _logs.logMessage("Debug", "playlist.pickTrackFromSubmitted", "Function was hit even though nothing was in queue", "System");
-                    await Task.Delay(1);
-                    return false;
-                }
-            }
-            catch(Exception error)
-            {
-                _logs.logMessage("Error", "playlist.pickTrackFromSubmitted", error.ToString(), "System");
-                await Task.Delay(1);
-                return false;
-            }     
-        }
-
-        /// <summary>
-        /// Used to remove the url submitted from the listSubmitted queue.
-        /// </summary>
-        /// <param name="url"></param>
-        /// <returns></returns>
-        public async Task<bool> removeTrackSubmitted(string url)
-        {
-            try
-            {
-                await Task.Delay(1);
-                var urlResult = listSubmitted.FindIndex(x => x.url == url);
-                if(urlResult != -1)
-                {
-                    //remove the track from the list
-                    listSubmitted.RemoveAt(urlResult);
-                    return true;
-                }
-                else
-                {
-                    // shouldnt even hit this but you know do nothing
-                    return false;
-                }
-            }
-            catch(Exception error)
-            {
-                // something broke removing a track
-                _logs.logMessage("Error", "playlist.removeTrackSubmitted", error.ToString(), "system");
-                return false;
-            }
-            
-        }
 
         /// <summary>
         ///     Checkes to see if the values passed was found on the blacklist
@@ -619,37 +282,6 @@ namespace discordMusicBot.src.audio
                 return -1;
             }
         } 
-
-        /// <summary>
-        /// Figures out what to do with the track now that it has been played.
-        /// </summary>
-        /// <param name="filePath"></param>
-        private async Task<bool> removeTrackPlayed(string filePath)
-        {
-            try
-            {
-                if(npSource == "Submitted")
-                {
-                    await removeTrackSubmitted(npUrl);
-
-                    if (npDeleteAfterPlaying == true)
-                    {
-                        File.Delete(filePath);
-                    }
-                }
-                else if(npSource == "Library")
-                {
-                    await moveAutoQueueTrackPlayedToBackOfQueue();
-                }
-                await Task.Delay(1);
-                return true;
-            }
-            catch(Exception error)
-            {
-                _logs.logMessage("Error", "playlist.removeTrackPlayed", error.ToString(), "system");
-                return false;
-            }
-        }
 
         public async Task<string[]> cmd_play(string url, string user)
         {
@@ -769,7 +401,7 @@ namespace discordMusicBot.src.audio
         {
             try
             {
-                string[] value = { npTitle, npUrl, npUser, npSource };
+                string[] value = { AudioService.npTitle, AudioService.npUrl, AudioService.npUser, AudioService.npSource };
                 await Task.Delay(1);
                 return value;
 
@@ -790,9 +422,9 @@ namespace discordMusicBot.src.audio
             try
             {
                 //get the info from the vars
-                if (npUrl != null)
+                if (AudioService.npUrl != null)
                 {
-                    var urlResult = listLibrary.FindIndex(x => x.url == npUrl);
+                    var urlResult = listLibrary.FindIndex(x => x.url == AudioService.npUrl);
 
                     if (urlResult != -1)
                     {
@@ -877,7 +509,7 @@ namespace discordMusicBot.src.audio
             try
             {
                 //figure out where the track is currently in the queue so we can update the record
-                var result = listLibrary.FindIndex(x => x.url == npUrl);
+                var result = listLibrary.FindIndex(x => x.url == AudioService.npUrl);
 
                 //get the infomation on likes in memory
                 string[] likes = listLibrary[result].like;
@@ -942,7 +574,7 @@ namespace discordMusicBot.src.audio
             try
             {
                 //figure out where the track is currently in the queue so we can update the record
-                var result = listLibrary.FindIndex(x => x.url == npUrl);
+                var result = listLibrary.FindIndex(x => x.url == AudioService.npUrl);
 
                 //get the infomation on likes in memory
                 string[] skips = listLibrary[result].skips;
@@ -960,7 +592,7 @@ namespace discordMusicBot.src.audio
 
                     if(skips.Count() == 2)
                     {
-                        await removeTrackSubmitted(npUrl);
+                        //await removeTrackSubmitted(AudioService.npUrl);
                         return -1;
                     }
 

@@ -14,84 +14,9 @@ namespace discordMusicBot.src.audio
         logs _logs = new logs();
         private configuration _config;
 
-        public static IAudioClient audioClient = null;
-        public static IVoiceChannel voiceRoom = null;
-
         public static bool playingSong = true;
         public static float volume = .10f;
 
-
-        private Process CreateStream(string path)
-        {
-            try
-            {
-                string currentDirectory = Directory.GetCurrentDirectory();
-                //string newPath = path.Replace(" ", "%20");
-                string filePath = $"\"{path}\"";
-                var ffmpeg = new ProcessStartInfo
-                {
-                    FileName = $"{currentDirectory}\\ffmpeg.exe",
-                    Arguments = $"-loglevel error -i {filePath} -ac 2 -f s16le -ar 48000 pipe:1 -af 'volume=0.1B'", // -af 'volume = 0.5'
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-
-                };
-                return Process.Start(ffmpeg);
-            }
-            catch(Exception error)
-            {
-                Console.WriteLine(error.ToString());
-                return null;
-            }
-
-        }
-
-        public async Task SendAsync(string path)
-        {
-            try
-            {            
-                using (var ffmpeg = CreateStream(path))              
-                using (var output = ffmpeg.StandardOutput.BaseStream)                   
-                using (var discord = audioClient.CreatePCMStream(1920))
-                {
-                    await output.CopyToAsync(discord);
-                    await discord.FlushAsync();
-                }
-            }
-            catch(Exception error)
-            {
-                Console.WriteLine(error.ToString());
-            }
-        }
-
-        public static byte[] ScaleVolumeSafeAllocateBuffers(byte[] audioSamples, float volume)
-        {
-            Contract.Requires(audioSamples != null);
-            Contract.Requires(audioSamples.Length % 2 == 0);
-            Contract.Requires(volume >= 0f && volume <= 1f);
-
-            var output = new byte[audioSamples.Length];
-            if (Math.Abs(volume - 1f) < 0.0001f)
-            {
-                Buffer.BlockCopy(audioSamples, 0, output, 0, audioSamples.Length);
-                return output;
-            }
-
-            // 16-bit precision for the multiplication
-            int volumeFixed = (int)Math.Round(volume * 65536d);
-
-            for (var i = 0; i < output.Length; i += 2)
-            {
-                // The cast to short is necessary to get a sign-extending conversion
-                int sample = (short)((audioSamples[i + 1] << 8) | audioSamples[i]);
-                int processed = (sample * volumeFixed) >> 16;
-
-                output[i] = (byte)processed;
-                output[i + 1] = (byte)(processed >> 8);
-            }
-
-            return output;
-        }
 
         /// <summary>
         ///     Sends the flag to skip the current track

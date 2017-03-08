@@ -3,6 +3,7 @@ using Discord.Commands;
 using discordMusicBot.src.sys;
 using discordMusicBot.src.audio;
 using System;
+using discordMusicBot.src.Services;
 
 namespace discordMusicBot.src.Modules
 {
@@ -152,7 +153,7 @@ namespace discordMusicBot.src.Modules
                     var builder = await _embed.SucessEmbedAsync("ConfigureSmutRoom", $"The current playing track has been removed from the library as requested.", Context.User.Username);
                     await ReplyAsync("", false, builder.Build());
 
-                    await _logs.logMessageAsync("Info", $"{configuration.LoadFile().Prefix}NowPlayingRemove", $"URL: {playlist.npUrl} was removed from the Library", Context.User.Username);
+                    await _logs.logMessageAsync("Info", $"{configuration.LoadFile().Prefix}NowPlayingRemove", $"URL: {AudioService.npUrl} was removed from the Library", Context.User.Username);
                 }
                 else
                 {

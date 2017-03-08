@@ -101,6 +101,21 @@ namespace discordMusicBot.src.Modules
 
         }
 
+        [Command("SetReminder")]
+        [Remarks("Adds reminders to the bot.")]
+        [Alias("sr")]
+        public async Task SetReminderAsync()
+        {
+            try
+            {
+
+            }
+            catch
+            {
+
+            }
+        }
+
         [Command("RemoveMessage")]
         [Remarks("Removes lines of messages from the current text channel.")]
         [Alias("rm")]

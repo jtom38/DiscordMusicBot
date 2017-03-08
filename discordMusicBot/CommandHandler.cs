@@ -11,7 +11,6 @@ namespace discordMusicBot
     {
         private DiscordSocketClient _client;
         private CommandService _cmds;
-        private configuration _config;
 
 
         public async Task Install(DiscordSocketClient c)
@@ -32,7 +31,7 @@ namespace discordMusicBot
 
             var map = new DependencyMap();                      // Create a new dependecy map.
             map.Add(_cmds);
-            map.Add(new AudioService(map));
+            
 
             var context = new SocketCommandContext(_client, msg);     // Create a new command context.
 
